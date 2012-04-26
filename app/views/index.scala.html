@@ -1,0 +1,28 @@
+@(searchForm: Form[Query])
+
+@main("UW Open Information Extraction") {
+  <div class="container">
+      <div class="page-header">
+          <h1>UW OpenIE (Experimental)</h1>
+      </div>
+
+      <p>You may want to <a href="http://reverb.cs.washington.edu">download ReVerb</a>, our Open Information Extractor</p>
+
+      @helper.form(action = routes.Application.submit, 'class -> "well") {
+          @helper.inputText(
+              searchForm("arg1"),
+              '_label -> "Argument 1")
+          @helper.inputText(
+              searchForm("rel"),
+              '_label -> "Relation")
+          @helper.inputText(
+              searchForm("arg2"),
+              '_label -> "Argument 2")
+          <button class="btn primary"><i class="icon-search"></i> Search</button>
+      }
+
+      <footer>
+          Type selection is based on the <a href="http://schemas.freebaseapps.com/">FreeBase type schema</a>.
+      </footer>
+  </div>
+}
