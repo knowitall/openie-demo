@@ -1,12 +1,33 @@
 @(searchForm: Form[Query])
 
 @main("UW Open Information Extraction") {
+  <script type="text/javascript">
+    function fillForm(arg1, rel, arg2) {
+      document.getElementById('arg1').value=arg1;
+      document.getElementById('rel').value=rel;
+      document.getElementById('arg2').value=arg2;
+    }
+  </script>
   <div class="container">
       <div class="page-header">
-          <h1>UW OpenIE (Experimental)</h1>
+          <h1><img src="assets/images/knowitall.jpg"> UW OpenIE (Experimental)</h1>
       </div>
 
-      <p>You may want to <a href="http://reverb.cs.washington.edu">download ReVerb</a>, our Open Information Extractor</p>
+      Example Queries:
+      <table style="padding: 5 px">
+          <tr>
+              <td><a href="#" onclick="javascript:fillForm('','built','pyramids')">"Who built the Pyramids?"</a></td>
+              <td width="20px" />
+              <td><a href="#" onclick="javascript:fillForm('Thomas Edison','invent','')">"What did Thomas Edison invent?"</a></td>
+          </tr>
+          <tr>
+              <td><a href="#" onclick="javascript:fillForm('','kills','bacteria')">"What kills bacteria?"</a></td>
+              <td width="20px" />
+              <td><a href="#" onclick="javascript:fillForm('','contains','antioxidant')">"What contains antioxidants?"</a></td>
+          </tr>
+      </table>
+      
+      <p />
 
       @helper.form(action = routes.Application.submit, 'class -> "well") {
           @helper.inputText(
@@ -20,6 +41,8 @@
               '_label -> "Argument 2")
           <button class="btn primary"><i class="icon-search"></i> Search</button>
       }
+
+      <p>These extractions where discovered by <a href="http://reverb.cs.washington.edu">ReVerb, our Open Information Extractor</a>.</p>
 
       <footer>
           Type selection is based on the <a href="http://schemas.freebaseapps.com/">FreeBase type schema</a>.
