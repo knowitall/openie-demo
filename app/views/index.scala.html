@@ -1,5 +1,7 @@
 @(searchForm: Form[Query])
 
+@import helper.twitterBootstrap._
+
 @main("UW Open Information Extraction") {
   <script type="text/javascript">
     function fillForm(arg1, rel, arg2) {
@@ -10,42 +12,71 @@
   </script>
   <div class="container">
       <div class="page-header">
-          <h1><img src="assets/images/knowitall.jpg"> UW OpenIE (Experimental)</h1>
+          <div class="hidden-phone">
+              <h1><img src="assets/images/knowitall.jpg"> UW Open Information Extraction</h1>
+          </div>
+          <div class="visible-phone">
+              <h1><img src="assets/images/knowitall-small.jpg"> UW OpenIE</h1>
+          </div>
       </div>
 
-      Example Queries:
-      <table style="padding: 5 px">
-          <tr>
-              <td><a href="#" onclick="javascript:fillForm('','built','pyramids')">"Who built the Pyramids?"</a></td>
-              <td width="20px" />
-              <td><a href="#" onclick="javascript:fillForm('Thomas Edison','invent','')">"What did Thomas Edison invent?"</a></td>
-          </tr>
-          <tr>
-              <td><a href="#" onclick="javascript:fillForm('','kills','bacteria')">"What kills bacteria?"</a></td>
-              <td width="20px" />
-              <td><a href="#" onclick="javascript:fillForm('','contains','antioxidant')">"What contains antioxidants?"</a></td>
-          </tr>
-      </table>
+      <div class="row">
+          <div class="span6">
+              <b>Example Queries:</b>
+              <table style="padding: 5 px">
+                  <tr>
+                      <td><a href="#" onclick="javascript:fillForm('','built','pyramids')">Who built the Pyramids?</a></td>
+                  </tr>
+                  <tr class="hidden-phone">
+                      <td><a href="#" onclick="javascript:fillForm('Thomas Edison','invent','')">What did Thomas Edison invent?</a></td>
+                  </tr>
+                  <tr>
+                      <td><a href="#" onclick="javascript:fillForm('','kills','bacteria')">What kills bacteria?</a></td>
+                  </tr>
+                  <tr class="hidden-phone">
+                      <td><a href="#" onclick="javascript:fillForm('','contains','antioxidant')">What contains antioxidants?</a></td>
+                  </tr>
+              </table>
+          </div>
+
+          <div class="span6">
+              <b>Typed Example Queries:</b>
+              <table style="padding: 5 px">
+                  <tr>
+                      <td><a href="#" onclick="javascript:fillForm('Country','is located in','Africa')">What countries are located in Africa?</a></td>
+                  </tr>
+                  <tr class="hidden-phone">
+                      <td><a href="#" onclick="javascript:fillForm('Sport','originate','China')">What sports originated in China</a></td>
+                  </tr>
+                  <tr>
+                      <td><a href="#" onclick="javascript:fillForm('Thomas Edison','invent','')">What foods are grown in what countries?</a></td>
+                  </tr>
+                  <tr class="hidden-phone">
+                      <td><a href="#" onclick="javascript:fillForm('FDA','approved','chemical')">What chemicals has the FDA approved?</a></td>
+                  </tr>
+              </table>
+          </div>
+      </div>
       
       <p />
 
       @helper.form(action = routes.Application.submit, 'class -> "well") {
           @helper.inputText(
               searchForm("arg1"),
-              '_label -> "Argument 1")
+              '_label -> "Argument 1:")
           @helper.inputText(
               searchForm("rel"),
-              '_label -> "Relation")
+              '_label -> "Relation:")
           @helper.inputText(
               searchForm("arg2"),
-              '_label -> "Argument 2")
+              '_label -> "Argument 2:")
           <button class="btn primary"><i class="icon-search"></i> Search</button>
       }
 
-      <p>These extractions where discovered by <a href="http://reverb.cs.washington.edu">ReVerb, our Open Information Extractor</a>.</p>
-
       <footer>
-          Type selection is based on the <a href="http://schemas.freebaseapps.com/">FreeBase type schema</a>.
+          <p>Powered by <a href="http://reverb.cs.washington.edu">ReVerb, our Open Information Extractor</a>.</p>
+
+          <p>Type selection is based on the <a href="http://schemas.freebaseapps.com/">FreeBase type schema</a>.</p>
       </footer>
   </div>
 }
