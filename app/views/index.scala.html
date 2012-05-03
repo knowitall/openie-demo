@@ -10,19 +10,37 @@
       document.getElementById('arg2').value=arg2;
     }
   </script>
+  <style>
+    label { font-weight: bold }
+  </style>
   <div class="container">
       <div class="page-header">
           <div class="hidden-phone">
-              <h1><img src="assets/images/knowitall.jpg"> UW Open Information Extraction</h1>
+              <h1><img src="assets/images/textrunner.jpg"> UW Open Information Extraction</h1>
           </div>
           <div class="visible-phone">
-              <h1><img src="assets/images/knowitall-small.jpg"> UW OpenIE</h1>
+              <h1><img src="assets/images/textrunner-small.jpg"> UW OpenIE</h1>
           </div>
       </div>
-
-      <div class="row">
-          <div class="span6">
-              <b>Example Queries:</b>
+ 
+      <p />
+      <div class="row well">
+          <div class="span4 offset1">
+                @helper.form(action = routes.Application.submit) {
+          @helper.inputText(
+              searchForm("arg1"),
+              '_label -> "Argument 1:")
+          @helper.inputText(
+              searchForm("rel"),
+              '_label -> "Relation:")
+          @helper.inputText(
+              searchForm("arg2"),
+              '_label -> "Argument 2:")
+          <button class="btn primary"><i class="icon-search"></i> Search</button>
+          }
+          </div>
+          <div class="span offset1">
+              <b>Example Queries: </b>
               <table style="padding: 5 px">
                   <tr>
                       <td><a href="#" onclick="javascript:fillForm('','built','pyramids')">Who built the Pyramids?</a></td>
@@ -37,10 +55,8 @@
                       <td><a href="#" onclick="javascript:fillForm('','contains','antioxidant')">What contains antioxidants?</a></td>
                   </tr>
               </table>
-          </div>
-
-          <div class="span6">
-              <b>Typed Example Queries:</b>
+              <br />
+              <b>Typed Example Queries: </b>
               <table style="padding: 5 px">
                   <tr>
                       <td><a href="#" onclick="javascript:fillForm('Country','is located in','Africa')">What countries are located in Africa?</a></td>
@@ -57,26 +73,15 @@
               </table>
           </div>
       </div>
-      
-      <p />
-
-      @helper.form(action = routes.Application.submit, 'class -> "well") {
-          @helper.inputText(
-              searchForm("arg1"),
-              '_label -> "Argument 1:")
-          @helper.inputText(
-              searchForm("rel"),
-              '_label -> "Relation:")
-          @helper.inputText(
-              searchForm("arg2"),
-              '_label -> "Argument 2:")
-          <button class="btn primary"><i class="icon-search"></i> Search</button>
-      }
 
       <footer>
           <p>Powered by <a href="http://reverb.cs.washington.edu">ReVerb, our Open Information Extractor</a>.</p>
 
           <p>Type selection is based on the <a href="http://schemas.freebaseapps.com/">FreeBase type schema</a>.</p>
       </footer>
+      
+      <script type="text/javascript">
+            $('.tooltiparea').tooltip()
+      </script>
   </div>
 }
