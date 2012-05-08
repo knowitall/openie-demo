@@ -10,7 +10,7 @@ object Application extends Controller {
   /**
     * The actual definition of the search form.
     */
-  val searchForm: Form[Query] = Form(
+  def searchForm: Form[Query] = Form(
     // Defines a mapping that will handle Contact values
     mapping(
       "arg1" -> optional(text),
@@ -32,7 +32,7 @@ object Application extends Controller {
   def submit = Action { implicit request =>
     searchForm.bindFromRequest.fold(
       errors => BadRequest(views.html.index(errors)),
-      query => Ok(views.html.results(query.arg1.getOrElse(""), query.rel.getOrElse(""), query.arg2.getOrElse(""))))
+      query => Ok(views.html.results(searchForm, query)))
   }
 
   /**
@@ -46,6 +46,6 @@ object Application extends Controller {
     * Search with specified query.  Used for POST requests.
     */
   def search(query: Query) = Action {
-    Ok(views.html.results(query.arg1.getOrElse(""), query.rel.getOrElse(""), query.arg2.getOrElse("")))
+    Ok(views.html.results(searchForm, query))
   }
 }

@@ -12,4 +12,8 @@ case class Query(
 
   def this(arg1: String, rel: String, arg2: String) =
     this(Some(arg1), Some(rel), Some(arg2))
+
+  def arg1String = arg1.getOrElse("")
+  def relString = rel.getOrElse("")
+  def arg2String = arg2.getOrElse("")
 }

@@ -1,16 +1,91 @@
-@(arg1: String, rel: String, arg2: String)
+@(searchForm: Form[Query], query: Query)
+
+@import helper.twitterBootstrap._
 
 @main("UW Open Information Extraction") {
   <div class="container">
       <div class="page-header">
-          <h1><img src="assets/images/knowitall.jpg"> UW Open Information Extraction</h1>
+          <h1><img src="assets/images/textrunner.jpg"> UW Open Information Extraction</h1>
       </div>
 
-      Results:
-      <table class="table table-condensed table-bordered">
-          <tr><td>arg1</td><td>'@arg1'</td>
-          <tr><td>rel</td><td>'@rel'</td></tr>
-          <tr><td>arg2</td><td>'@arg2'</td></tr>
-      </table>
+      @helper.form(action = routes.Application.submit, 'class -> "well form-inline") {
+          <label for="arg1">Argument 1:</label>
+          <span class="input">
+              <input type="text" id="arg1" name="arg1" value="@query.arg1" >
+              <span class="help-inline"></span>
+          </span>
+          <label for="rel">Relation:</label>
+          <span class="input">
+              <input type="text" id="rel" name="rel" value="@query.rel" >
+              <span class="help-inline"></span>
+          </span>
+          <label for="arg2">Argument 2:</label>
+          <span class="input">
+              <input type="text" id="arg2" name="arg2" value="@query.arg2" >
+              <span class="help-inline"></span>
+          </span>
+          <button class="btn primary"><i class="icon-search"></i> Search</button>
+      }
+
+      <b>Types:</b> 
+  <div class="btn-group" data-toggle="buttons-checkbox">
+  <button class="btn">Chemicals</button>
+  <button class="btn">Products</button>
+  <button class="btn">Elements</button>
+  <button class="btn">Other</button>
+</div>
+      <!--<input type="checkbox">Chemical</input> <input type="checkbox">Product</input> <input type="checkbox">Element</input>-->
+
+      <dl>
+          <dt>antibiotics <span class="badge badge-info">322</span></dt>
+          <dd><span style="color: darkblue">Antibiotics</span> <span style="color: darkred">kill</span> <span style="color: darkblue">disease-causing bacteria</span>. <a href="http://www.orchidtreeexotics.net/1106506.html"><i class="icon-globe"></i></a></dd>
+          <dd>On Sundays, <span style="color: darkblue">Antibiotics</span> <span style="color: darkred">kill</span> <span style="color: darkblue">specific bacteria</span> with a fervor. <a href="http://dhhs.ne.gov/pages/urlchange.aspx"><i class="icon-globe"></i></a></dd>
+          <dd><span style="color: darkblue">Antibiotics</span> <span style="color: darkred">kill</span> <span style="color: darkblue">the bacteria</span>. <a href="http://www.sisadvice.com/teenskinwoes.html"><i class="icon-globe"></i></a></dd>
+          <dd><a href="#">(show 50 more)</a></dd>
+      </dl>
+      
+      <dl>
+          <dt>heat (40)</dt>
+          <dd><span class="un">Heat</span> <span class="un">kills</span> <span class="un">the bacteria</span>. <a href="http://www.whcenter.org/body.cfm?id=555587&action=articleDetail&AEProductID=Adam2004_1&AEArticleID=002433">(www.whcenter.org)</a></dd>
+          <dd><span class="un">The heat</span> <span class="un">kills</span> <span class="un">the bacteria</span>. (<a href=http://www.yakult07.co.uk/Public/consumer/product/Who.aspx>www.yakult.co.uk</a>)</dd>
+          <dd><span class="un">Heat</span> <span class="un">kills</span> <span class="un">the friendly bacteria</span>. (<a href="http://forums.moneysavingexpert.com/showthread.php?t=639503">forms.moneysavingexpert.com</a>)</dd>
+          <dd><a href="#">(show 40 more)</a></dd>
+      </dl>
+      
+          <div class="accordion" id="accordion1">
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseOne">antibiotics (322)</a>
+              </div>
+              <div id="collapseOne" class="accordion-body collapse in">
+                <div class="accordion-inner">
+                  <dd>Antibiotics</span> kill</span> disease-causing bacteria</span>. <a href="http://www.orchidtreeexotics.net/1106506.html"><i class="icon-globe"></i></a></dd>
+                  <dd>On Sundays, Antibiotics</span> kill</span> specific bacteria</span> with a fervor. <a href="http://dhhs.ne.gov/pages/urlchange.aspx"><i class="icon-globe"></i></a></dd>
+                  <dd>Antibiotics</span> kill</span> the bacteria</span>. <a href="http://www.sisadvice.com/teenskinwoes.html"><i class="icon-globe"></i></a></dd>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseTwo">heat (40)</a>
+              </div>
+              <div id="collapseTwo" class="accordion-body collapse">
+                <div class="accordion-inner">
+                  <dd>Heat kills the bacteria. <a href="http://www.whcenter.org/body.cfm?id=555587&action=articleDetail&AEProductID=Adam2004_1&AEArticleID=002433">(www.whcenter.org)</a></dd>
+                  <dd>The heat kills the bacteria. (<a href=http://www.yakult07.co.uk/Public/consumer/product/Who.aspx>www.yakult.co.uk</a>)</dd>
+                  <dd>Heat kills the friendly bacteria. (<a href="http://forums.moneysavingexpert.com/showthread.php?t=639503">forms.moneysavingexpert.com</a>)</dd>
+                </div>
+              </div>
+            </div>
+          </div>
   </div>
+  
+  <script>
+    $(".un").hover(function (){
+        $(this).css("text-decoration", "underline");
+    },function(){
+        $(this).css("text-decoration", "none");
+    }
+);
+  </script>
 }
