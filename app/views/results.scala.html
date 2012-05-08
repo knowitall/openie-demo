@@ -27,59 +27,63 @@
           <button class="btn primary"><i class="icon-search"></i> Search</button>
       }
 
+<!--
       <b>Types:</b> 
-  <div class="btn-group" data-toggle="buttons-checkbox">
-  <button class="btn">Chemicals</button>
-  <button class="btn">Products</button>
-  <button class="btn">Elements</button>
-  <button class="btn">Other</button>
-</div>
-      <!--<input type="checkbox">Chemical</input> <input type="checkbox">Product</input> <input type="checkbox">Element</input>-->
+      <div class="btn-group" data-toggle="buttons-checkbox">
+          <button class="btn">Chemicsals</button>
+          <button class="btn">Products</button>
+          <button class="btn">Elements</button>
+          <button class="btn">Other</button>
+      </div>
+-->
 
-      <dl>
-          <dt>antibiotics <span class="badge badge-info">322</span></dt>
-          <dd><span style="color: darkblue">Antibiotics</span> <span style="color: darkred">kill</span> <span style="color: darkblue">disease-causing bacteria</span>. <a href="http://www.orchidtreeexotics.net/1106506.html"><i class="icon-globe"></i></a></dd>
-          <dd>On Sundays, <span style="color: darkblue">Antibiotics</span> <span style="color: darkred">kill</span> <span style="color: darkblue">specific bacteria</span> with a fervor. <a href="http://dhhs.ne.gov/pages/urlchange.aspx"><i class="icon-globe"></i></a></dd>
-          <dd><span style="color: darkblue">Antibiotics</span> <span style="color: darkred">kill</span> <span style="color: darkblue">the bacteria</span>. <a href="http://www.sisadvice.com/teenskinwoes.html"><i class="icon-globe"></i></a></dd>
-          <dd><a href="#">(show 50 more)</a></dd>
-      </dl>
-      
-      <dl>
-          <dt>heat (40)</dt>
-          <dd><span class="un">Heat</span> <span class="un">kills</span> <span class="un">the bacteria</span>. <a href="http://www.whcenter.org/body.cfm?id=555587&action=articleDetail&AEProductID=Adam2004_1&AEArticleID=002433">(www.whcenter.org)</a></dd>
-          <dd><span class="un">The heat</span> <span class="un">kills</span> <span class="un">the bacteria</span>. (<a href=http://www.yakult07.co.uk/Public/consumer/product/Who.aspx>www.yakult.co.uk</a>)</dd>
-          <dd><span class="un">Heat</span> <span class="un">kills</span> <span class="un">the friendly bacteria</span>. (<a href="http://forums.moneysavingexpert.com/showthread.php?t=639503">forms.moneysavingexpert.com</a>)</dd>
-          <dd><a href="#">(show 40 more)</a></dd>
-      </dl>
-      
-          <div class="accordion" id="accordion1">
-            <div class="accordion-group">
-              <div class="accordion-heading">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseOne">antibiotics (322)</a>
-              </div>
-              <div id="collapseOne" class="accordion-body collapse in">
-                <div class="accordion-inner">
-                  <dd>Antibiotics</span> kill</span> disease-causing bacteria</span>. <a href="http://www.orchidtreeexotics.net/1106506.html"><i class="icon-globe"></i></a></dd>
-                  <dd>On Sundays, Antibiotics</span> kill</span> specific bacteria</span> with a fervor. <a href="http://dhhs.ne.gov/pages/urlchange.aspx"><i class="icon-globe"></i></a></dd>
-                  <dd>Antibiotics</span> kill</span> the bacteria</span>. <a href="http://www.sisadvice.com/teenskinwoes.html"><i class="icon-globe"></i></a></dd>
-                </div>
-              </div>
-            </div>
-            <div class="accordion-group">
-              <div class="accordion-heading">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseTwo">heat (40)</a>
-              </div>
-              <div id="collapseTwo" class="accordion-body collapse">
-                <div class="accordion-inner">
-                  <dd>Heat kills the bacteria. <a href="http://www.whcenter.org/body.cfm?id=555587&action=articleDetail&AEProductID=Adam2004_1&AEArticleID=002433">(www.whcenter.org)</a></dd>
-                  <dd>The heat kills the bacteria. (<a href=http://www.yakult07.co.uk/Public/consumer/product/Who.aspx>www.yakult.co.uk</a>)</dd>
-                  <dd>Heat kills the friendly bacteria. (<a href="http://forums.moneysavingexpert.com/showthread.php?t=639503">forms.moneysavingexpert.com</a>)</dd>
-                </div>
-              </div>
-            </div>
+      <div style="height: 25px"></div>
+
+      <div class="tabbable tabs-left">
+        <ul class="nav nav-tabs">
+          <li class="active"><a href="#lA" data-toggle="tab">antibiotics <span class="badge badge-info">322</span></a></li>
+          <li><a href="#lB" data-toggle="tab">heat <span class="badge badge-info">40</span></a></li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="lA">
+            <p><a class="sent" title="http://www.orchidtreeexotics.net/1106506.html" href="http://www.orchidtreeexotics.net/1106506.html">Antibiotics kill disease-causing bacteria.</a></p>
+            <p><a class="sent" title="http://dhhs.ne.gov/pages/urlchange.aspx" href="http://dhhs.ne.gov/pages/urlchange.aspx">On Sundays, Antibiotics kill specific bacteria with a fervor.</a></p>
+            <p><a class="sent" title="http://www.sisadvice.com/teenskinwoes.html" href="http://www.sisadvice.com/teenskinwoes.html">Antibiotics kill the bacteria.</a></p>
           </div>
+          <div class="tab-pane" id="lB">
+            <p><a class="sent" title="http://www.whcenter.org/body.cfm?id=555587&action=articleDetail&AEProductID=Adam2004_1&AEArticleID=002433" href="http://www.whcenter.org/body.cfm?id=555587&action=articleDetail&AEProductID=Adam2">Heat kills the bacteria.</a></p>
+            <p><a class="sent" title="http://www.yakult07.co.uk/Public/consumer/product/Who.aspx">The heat kills the bacteria.</a></p>
+            <p><a class="sent" title="http://forums.moneysavingexpert.com/showthread.php?t=639503">Heat kills the friendly bacteria.</a></p>
+          </div>
+        </div>
+      </div> <!-- /tabbable -->
+
+      <div class="row">
+          <div class="span4">
+          </div>
+          <div class="span8">
+              <div name="antibiotics" class="hid">
+                  <p><a class="sent" title="http://www.orchidtreeexotics.net/1106506.html" href="http://www.orchidtreeexotics.net/1106506.html">Antibiotics kill disease-causing bacteria.</a></p>
+                  <p><a class="sent" title="http://dhhs.ne.gov/pages/urlchange.aspx" href="http://dhhs.ne.gov/pages/urlchange.aspx">On Sundays, Antibiotics kill specific bacteria with a fervor.</a></p>
+                  <p><a class="sent" title="http://www.sisadvice.com/teenskinwoes.html" href="http://www.sisadvice.com/teenskinwoes.html">Antibiotics kill the bacteria.</a></p>
+              </div>
+              <div name="heat" class="hid">
+                  <p><a class="sent" title="http://www.whcenter.org/body.cfm?id=555587&action=articleDetail&AEProductID=Adam2004_1&AEArticleID=002433" href="http://www.whcenter.org/body.cfm?id=555587&action=articleDetail&AEProductID=Adam2">Heat kills the bacteria.</a></p>
+                  <p><a class="sent" title="http://www.yakult07.co.uk/Public/consumer/product/Who.aspx" href="http://www.yakult07.co.uk/Public/consumer/product/Who.aspx">The heat kills the bacteria.</a></p>
+                  <p><a class="sent" title="http://forums.moneysavingexpert.com/showthread.php?t=639503" href="http://forums.moneysavingexpert.com/showthread.php?t=639503">Heat kills the friendly bacteria.</a></p>
+              </div>
+          </div>
+      </div>
   </div>
   
+  <style>
+    .sent:link, .sent:hover, .sent:visited, .sent:active { 
+      cursor: pointer;
+      text-decoration: none;
+      color: black
+    }
+    .hid { display: none }
+  </style>
   <script>
     $(".un").hover(function (){
         $(this).css("text-decoration", "underline");
