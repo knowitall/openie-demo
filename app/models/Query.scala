@@ -6,6 +6,9 @@ import edu.washington.cs.knowitall.browser.extraction.ReVerbExtraction
 
 object Query {
   type REG = ExtractionGroup[ReVerbExtraction]
+
+  val indexPath = "/homes/gws/schmmd/reliable/common/openie-demo/index"
+  val fetcher = new ExtractionGroupFetcher(indexPath)
 }
 
 case class Query(
@@ -41,10 +44,7 @@ case class Query(
       case (None, None, None) => (eg: REG) => eg.arg1Norm + " " + eg.relNorm + " " + eg.arg2Norm
     }
 
-    val indexPath = "/scratch/common/browserplus/test-index"
-    val fetcher = new ExtractionGroupFetcher(indexPath)
-    val results = fetcher.
-        getGroups(this.arg1.getOrElse(""), this.rel.getOrElse(""), this.arg2.getOrElse(""))
+    val results = Query.fetcher.getGroups(this.arg1, this.rel, this.arg2)
     val groups = Group.fromExtractionGroups(results, group)
 
     groups
