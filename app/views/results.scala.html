@@ -1,4 +1,4 @@
-@(searchForm: Form[Query], query: Query, groups: Iterable[Group])
+@(searchForm: Form[Query], query: Query, groups: Iterable[Group], pageno: Int, pageCount: Int)
 
 @import helper.twitterBootstrap._
 @import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
@@ -70,6 +70,27 @@
             }
           </div>
           }
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" align="center">
+            <ul>
+@if(pageno > 0) {
+                <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, pageno - 1)}">Prev</a></li>
+}
+@for(i <- pageno-4 to pageno-1; if i >= 0) {
+                <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, i)}">@i</a></li>
+}
+                <li class="active">
+                <a href="#">@pageno</a>
+                </li>
+@for(i <- pageno+1 to pageno+4; if i < pageCount) {
+                <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, i)}">@i</a></li>
+}
+@if(pageno + 1 < pageCount) {
+                <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, pageno + 1)}">Next</a></li>
+}
+            </ul>
         </div>
       </div> <!-- /tabbable -->
 }

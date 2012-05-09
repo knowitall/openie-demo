@@ -4,9 +4,8 @@
 
 # Home page
 GET     /                           controllers.Application.index
-#GET     /search                     controllers.Application.searchParams(arg1: Option[String], rel: Option[String], arg2: Option[String])
-#GET     /search/                    controllers.Application.searchParams(arg1: Option[String], rel: Option[String], arg2: Option[String])
 GET     /search                     controllers.Application.submit
+GET     /search/                    controllers.Application.search(arg1: Option[String], rel: Option[String], arg2: Option[String], page: Int)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

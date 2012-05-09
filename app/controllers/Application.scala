@@ -39,29 +39,36 @@ object Application extends Controller {
   def submit = Action { implicit request =>
     searchForm.bindFromRequest.fold(
       errors => BadRequest(views.html.index(errors)),
-      query => {
-        val groups = Cache.getAs[List[Group]](query.toString) match {
-          case Some(groups) =>
-            // cache hit
-            Logger.info(query.toString + 
-              " retrieved from cache" +
-              " with " + groups.size + " groups" + 
-              " and " + groups.iterator.map(_.contents.size).sum + " results")
-            groups
-          case None =>
-            // cache miss
-            val (ns, groups) = Timing.time(query.execute())
-            Logger.info(query.toString + 
-              " executed in " + Timing.Seconds.format(ns) + 
-              " with " + groups.size + " groups" + 
-              " and " + groups.iterator.map(_.contents.size).sum + " results")
-            Cache.set(query.toString, groups)
-            groups
-        }
+      query => doSearch(query, 0))
+  }
 
-        // val page = groups.drop(query.page * PAGE_SIZE).take(PAGE_SIZE)
+  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], page: Int) = Action {
+    println("search")
+    doSearch(Query(arg1, rel, arg2), page)
+  }
 
-        Ok(views.html.results(searchForm, query, groups))
-      })
+  def doSearch(query: Query, pageNumber: Int) = {
+    val groups = Cache.getAs[List[Group]](query.toString) match {
+      case Some(groups) =>
+        // cache hit
+        Logger.info(query.toString + 
+          " retrieved from cache" +
+          " with " + groups.size + " groups" + 
+          " and " + groups.iterator.map(_.contents.size).sum + " results")
+        groups
+      case None =>
+        // cache miss
+        val (ns, groups) = Timing.time(query.execute())
+        Logger.info(query.toString + 
+          " executed in " + Timing.Seconds.format(ns) + 
+          " with " + groups.size + " groups" + 
+          " and " + groups.iterator.map(_.contents.size).sum + " results")
+        Cache.set(query.toString, groups)
+        groups
+    }
+
+    val page = groups.drop(pageNumber * PAGE_SIZE).take(PAGE_SIZE)
+
+    Ok(views.html.results(searchForm, query, page, pageNumber, math.ceil(groups.size.toDouble / PAGE_SIZE.toDouble).toInt))
   }
 }
