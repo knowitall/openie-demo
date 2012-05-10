@@ -44,8 +44,7 @@ object Application extends Controller {
       query => doSearch(query, 0))
   }
 
-  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], page: Int) = Action { implicit request =>
-    println("search")
+  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], page: Int) = Action {
     doSearch(Query(arg1, rel, arg2), page)
   }
 

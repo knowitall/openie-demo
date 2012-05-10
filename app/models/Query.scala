@@ -36,7 +36,7 @@ case class Query(
   def execute() = {
     def group: REG=>String = (this.arg1, this.rel, this.arg2) match {
       case (Some(arg1), None, None) => (eg: REG) => eg.relNorm + " " + eg.arg2Norm
-      case (None, Some(rel), None) => (eg: REG) => eg.arg1Norm + ", " + eg.arg2Norm
+      case (None, Some(rel), None) => (eg: REG) => eg.arg1Norm + "; " + eg.arg2Norm
       case (None, None, Some(arg2)) => (eg: REG) => eg.arg1Norm + " " + eg.relNorm
 
       case (Some(arg1), Some(rel), None) => (eg: REG) => eg.arg2Norm
