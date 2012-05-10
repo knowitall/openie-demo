@@ -48,7 +48,10 @@
     <div class="tab-content">
       @for((g, i) <- groups.zipWithIndex) {
       <div class="tab-pane" id="L@{i}">
-        @helper.sentences(g)
+        @helper.sentences(g.copy(contents=g.contents.take(100)))
+        @if(g.contents.size > 100) {
+          <p style="text-align: center"><a href="@{routes.Application.sentences(query.arg1, query.rel, query.arg2, g.title)}">Show all sentences (@{g.contents.size - 100} more)</a></p>
+        }
       </div>
       }
     </div>
