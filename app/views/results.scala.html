@@ -3,79 +3,74 @@
 @import helper.twitterBootstrap._
 @import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
 
-@main("UW Open Information Extraction") {
+@helper.main("UW Open Information Extraction") {
   <style>
     .hid { display: none }
   </style>
 
-  <div class="container">
-      <div class="page-header">
-          <h1><img src="@routes.Assets.at("images/textrunner.jpg")"> UW Open Information Extraction</h1>
-      </div>
-
-      @helper.form(action = routes.Application.submit, 'class -> "well form-inline") {
-          <label for="arg1">Argument 1:</label>
-          <span class="input">
-              <input type="text" id="arg1" name="arg1" value="@query.arg1" >
-              <span class="help-inline"></span>
-          </span>
-          <label for="rel">Relation:</label>
-          <span class="input">
-              <input type="text" id="rel" name="rel" value="@query.rel" >
-              <span class="help-inline"></span>
-          </span>
-          <label for="arg2">Argument 2:</label>
-          <span class="input">
-              <input type="text" id="arg2" name="arg2" value="@query.arg2" >
-              <span class="help-inline"></span>
-          </span>
-          <button class="btn primary"><i class="icon-search"></i> Search</button>
-      }
+  @helper.form(action = routes.Application.submit, 'class -> "well form-inline") {
+      <label for="arg1">Argument 1:</label>
+      <span class="input">
+          <input type="text" id="arg1" name="arg1" value="@query.arg1" >
+          <span class="help-inline"></span>
+      </span>
+      <label for="rel">Relation:</label>
+      <span class="input">
+          <input type="text" id="rel" name="rel" value="@query.rel" >
+          <span class="help-inline"></span>
+      </span>
+      <label for="arg2">Argument 2:</label>
+      <span class="input">
+          <input type="text" id="arg2" name="arg2" value="@query.arg2" >
+          <span class="help-inline"></span>
+      </span>
+      <button class="btn primary"><i class="icon-search"></i> Search</button>
+  }
 
 <!--
-      <b>Types:</b> 
-      <div class="btn-group" data-toggle="buttons-checkbox">
-          <button class="btn">Chemicsals</button>
-          <button class="btn">Products</button>
-          <button class="btn">Elements</button>
-          <button class="btn">Other</button>
-      </div>
+  <b>Types:</b> 
+  <div class="btn-group" data-toggle="buttons-checkbox">
+      <button class="btn">Chemicsals</button>
+      <button class="btn">Products</button>
+      <button class="btn">Elements</button>
+      <button class="btn">Other</button>
+  </div>
 -->
 
-      <div style="height: 25px"></div>
+  <div style="height: 25px"></div>
 
-      <div class="tabbable tabs-left">
-        <ul class="nav nav-tabs">
-          @for((g, i) <- groups.zipWithIndex) {
-          <li><a href="#L@{i}" data-toggle="tab">@g.title <span class="badge badge-info">@g.contents.size</span></a></li>
-          }
-        </ul>
-        <div class="tab-content">
-          @for((g, i) <- groups.zipWithIndex) {
-          <div class="tab-pane" id="L@{i}">
-            @sentences(g)
-          </div>
-          }
-        </div>
-      </div> <!-- /tabbable -->
-        <!-- Pagination -->
-        <div class="pagination" align="center">
-            <ul>
+  <div class="tabbable tabs-left">
+    <ul class="nav nav-tabs">
+      @for((g, i) <- groups.zipWithIndex) {
+      <li><a href="#L@{i}" data-toggle="tab">@g.title <span class="badge badge-info">@g.contents.size</span></a></li>
+      }
+    </ul>
+    <div class="tab-content">
+      @for((g, i) <- groups.zipWithIndex) {
+      <div class="tab-pane" id="L@{i}">
+        @helper.sentences(g)
+      </div>
+      }
+    </div>
+  </div> <!-- /tabbable -->
+    <!-- Pagination -->
+    <div class="pagination" align="center">
+        <ul>
 @if(pageno > 0) {
-                <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, pageno - 1)}">Prev</a></li>
+            <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, pageno - 1)}">Prev</a></li>
 }
 @for(i <- pageno-4 to pageno-1; if i >= 0) {
-                <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, i)}">@i</a></li>
+            <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, i)}">@i</a></li>
 }
-                <li class="active">
-                <a href="#">@pageno</a>
-                </li>
+            <li class="active">
+            <a href="#">@pageno</a>
+            </li>
 @for(i <- pageno+1 to pageno+4; if i < pageCount) {
-                <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, i)}">@i</a></li>
+            <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, i)}">@i</a></li>
 }
 @if(pageno + 1 < pageCount) {
-                <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, pageno + 1)}">Next</a></li>
+            <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, pageno + 1)}">Next</a></li>
 }
-            </ul>
-        </div>
+        </ul>
+    </div>
 }

@@ -2,7 +2,7 @@
 
 @import helper.twitterBootstrap._
 
-@main("UW Open Information Extraction") {
+@helper.main("UW Open Information Extraction") {
   <script type="text/javascript">
     function fillForm(arg1, rel, arg2) {
       document.getElementById('arg1').value=arg1;
@@ -13,75 +13,64 @@
   <style>
     label { font-weight: bold }
   </style>
-  <div class="container">
-      <div class="page-header">
-          <div class="hidden-phone">
-              <h1><img src="assets/images/textrunner.jpg"> UW Open Information Extraction</h1>
-          </div>
-          <div class="visible-phone">
-              <h1><img src="assets/images/textrunner-small.jpg"> UW OpenIE</h1>
-          </div>
+  <p />
+  <div class="row well">
+      <div class="span4 offset1">
+      @helper.form(action = routes.Application.submit) {
+      @helper.inputText(
+          searchForm("arg1"),
+          '_label -> "Argument 1:")
+      @helper.inputText(
+          searchForm("rel"),
+          '_label -> "Relation:")
+      @helper.inputText(
+          searchForm("arg2"),
+          '_label -> "Argument 2:")
+      <button class="btn primary"><i class="icon-search"></i> Search</button>
+      }
       </div>
- 
-      <p />
-      <div class="row well">
-          <div class="span4 offset1">
-                @helper.form(action = routes.Application.submit) {
-          @helper.inputText(
-              searchForm("arg1"),
-              '_label -> "Argument 1:")
-          @helper.inputText(
-              searchForm("rel"),
-              '_label -> "Relation:")
-          @helper.inputText(
-              searchForm("arg2"),
-              '_label -> "Argument 2:")
-          <button class="btn primary"><i class="icon-search"></i> Search</button>
-          }
-          </div>
-          <div class="span offset1">
-              <b>Example Queries: <a href="#" class="tooltiparea" rel="tooltip", title="Click an example question to see a sample relation search query."><i class="icon-question-sign"></i></a></b>
-              <table style="padding: 5 px">
-                  <tr>
-                      <td><a href="#" onclick="javascript:fillForm('','built','pyramids')">Who built the Pyramids?</a></td>
-                  </tr>
-                  <tr class="hidden-phone">
-                      <td><a href="#" onclick="javascript:fillForm('Thomas Edison','invent','')">What did Thomas Edison invent?</a></td>
-                  </tr>
-                  <tr>
-                      <td><a href="#" onclick="javascript:fillForm('','kills','bacteria')">What kills bacteria?</a></td>
-                  </tr>
-                  <tr class="hidden-phone">
-                      <td><a href="#" onclick="javascript:fillForm('','contains','antioxidant')">What contains antioxidants?</a></td>
-                  </tr>
-              </table>
-              <br />
-              <b>Typed Example Queries: <a href="#" class="tooltiparea" rel="tooltip", title="Click an example question to see a sample relation search query.  These examples constrain one field to a FreeBase type."><i class="icon-question-sign"></i></a></b>
-              <table style="padding: 5 px">
-                  <tr>
-                      <td><a href="#" onclick="javascript:fillForm('Country','is located in','Africa')">What countries are located in Africa?</a></td>
-                  </tr>
-                  <tr class="hidden-phone">
-                      <td><a href="#" onclick="javascript:fillForm('Sport','originate','China')">What sports originated in China</a></td>
-                  </tr>
-                  <tr>
-                      <td><a href="#" onclick="javascript:fillForm('Food','grown in','Country')">What foods are grown in what countries?</a></td>
-                  </tr>
-                  <tr class="hidden-phone">
-                      <td><a href="#" onclick="javascript:fillForm('FDA','approved','chemical')">What chemicals has the FDA approved?</a></td>
-                  </tr>
-              </table>
-          </div>
+      <div class="span offset1">
+          <b>Example Queries: <a href="#" class="tooltiparea" rel="tooltip", title="Click an example question to see a sample relation search query."><i class="icon-question-sign"></i></a></b>
+          <table style="padding: 5 px">
+              <tr>
+                  <td><a href="#" onclick="javascript:fillForm('','built','pyramids')">Who built the Pyramids?</a></td>
+              </tr>
+              <tr class="hidden-phone">
+                  <td><a href="#" onclick="javascript:fillForm('Thomas Edison','invent','')">What did Thomas Edison invent?</a></td>
+              </tr>
+              <tr>
+                  <td><a href="#" onclick="javascript:fillForm('','kills','bacteria')">What kills bacteria?</a></td>
+              </tr>
+              <tr class="hidden-phone">
+                  <td><a href="#" onclick="javascript:fillForm('','contains','antioxidant')">What contains antioxidants?</a></td>
+              </tr>
+          </table>
+          <br />
+          <b>Typed Example Queries: <a href="#" class="tooltiparea" rel="tooltip", title="Click an example question to see a sample relation search query.  These examples constrain one field to a FreeBase type."><i class="icon-question-sign"></i></a></b>
+          <table style="padding: 5 px">
+              <tr>
+                  <td><a href="#" onclick="javascript:fillForm('Country','is located in','Africa')">What countries are located in Africa?</a></td>
+              </tr>
+              <tr class="hidden-phone">
+                  <td><a href="#" onclick="javascript:fillForm('Sport','originate','China')">What sports originated in China</a></td>
+              </tr>
+              <tr>
+                  <td><a href="#" onclick="javascript:fillForm('Food','grown in','Country')">What foods are grown in what countries?</a></td>
+              </tr>
+              <tr class="hidden-phone">
+                  <td><a href="#" onclick="javascript:fillForm('FDA','approved','chemical')">What chemicals has the FDA approved?</a></td>
+              </tr>
+          </table>
       </div>
-
-      <footer>
-          <p>Powered by <a href="http://reverb.cs.washington.edu">ReVerb, our Open Information Extractor</a>.</p>
-
-          <p>Type selection is based on the <a href="http://schemas.freebaseapps.com/">FreeBase type schema</a>.</p>
-      </footer>
-      
-      <script type="text/javascript">
-            $('.tooltiparea').tooltip()
-      </script>
   </div>
+
+  <footer>
+      <p>Powered by <a href="http://reverb.cs.washington.edu">ReVerb, our Open Information Extractor</a>.</p>
+
+      <p>Type selection is based on the <a href="http://schemas.freebaseapps.com/">FreeBase type schema</a>.</p>
+  </footer>
+  
+  <script type="text/javascript">
+        $('.tooltiparea').tooltip()
+  </script>
 }
