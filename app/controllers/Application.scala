@@ -13,7 +13,7 @@ import edu.washington.cs.knowitall.browser.lucene.ExtractionGroupFetcher
 import edu.washington.cs.knowitall.common.Timing
 
 object Application extends Controller {
-  final val PAGE_SIZE = 100
+  final val PAGE_SIZE = 500
   /**
     * The actual definition of the search form.
     */
@@ -47,8 +47,19 @@ object Application extends Controller {
     doSearch(Query(arg1, rel, arg2), page)
   }
 
-  def doSearch(query: Query, pageNumber: Int) = {
-    val groups = Cache.getAs[List[Group]](query.toString) match {
+  def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String) = Action {
+    val group = searchGroups(Query(arg1, rel, arg2)).find(_.title == title) match {
+      case None => throw new IllegalArgumentException("could not find group title: " + title)
+      case Some(group) => group
+    }
+
+    println(group.contents.mkString("\n"))
+
+    Ok(views.html.sentences(group))
+  }
+
+  def searchGroups(query: Query) = {
+    Cache.getAs[List[Group]](query.toString) match {
       case Some(groups) =>
         // cache hit
         Logger.info(query.toString + 
@@ -66,7 +77,10 @@ object Application extends Controller {
         Cache.set(query.toString, groups)
         groups
     }
+  }
 
+  def doSearch(query: Query, pageNumber: Int) = {
+    val groups = searchGroups(query)
     val page = groups.drop(pageNumber * PAGE_SIZE).take(PAGE_SIZE)
 
     Ok(views.html.results(searchForm, query, page, pageNumber, math.ceil(groups.size.toDouble / PAGE_SIZE.toDouble).toInt))
