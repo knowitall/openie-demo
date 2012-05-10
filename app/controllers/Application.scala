@@ -13,7 +13,9 @@ import edu.washington.cs.knowitall.browser.lucene.ExtractionGroupFetcher
 import edu.washington.cs.knowitall.common.Timing
 
 object Application extends Controller {
-  final val PAGE_SIZE = 500
+  final val PAGE_SIZE = 50
+  final val MAX_SENTENCE_COUNT = 50
+
   /**
     * The actual definition of the search form.
     */
@@ -83,6 +85,6 @@ object Application extends Controller {
     val groups = searchGroups(query)
     val page = groups.drop(pageNumber * PAGE_SIZE).take(PAGE_SIZE)
 
-    Ok(views.html.results(searchForm, query, page, pageNumber, math.ceil(groups.size.toDouble / PAGE_SIZE.toDouble).toInt))
+    Ok(views.html.results(searchForm, query, page, pageNumber, math.ceil(groups.size.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT))
   }
 }
