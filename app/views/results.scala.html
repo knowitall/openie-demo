@@ -52,12 +52,12 @@
       <div class="tabbable tabs-left">
         <ul class="nav nav-tabs">
           @for((g, i) <- groups.zipWithIndex) {
-          <li@if(i==0){ class="active"}else{}><a href="#L@{i}" data-toggle="tab">@g.title <span class="badge badge-info">@g.contents.size</span></a></li>
+          <li><a href="#L@{i}" data-toggle="tab">@g.title <span class="badge badge-info">@g.contents.size</span></a></li>
           }
         </ul>
         <div class="tab-content">
           @for((g, i) <- groups.zipWithIndex) {
-          <div class="tab-pane@if(i==0){ active}else{}" id="L@{i}">
+          <div class="tab-pane" id="L@{i}">
             @for(c <- g.contents) {
             <p><a class="sent" title="@c.url" href="@c.url">
               @for((string, i) <- c.strings.zipWithIndex) {
