@@ -29,10 +29,10 @@ object Group {
     groups.map { case (title, contents) =>
       val instances = contents.flatMap(_.instances).filter(Group.filterInstances)
       val list = instances.toList.sortBy { instance =>
-        -instance.confidence.getOrElse(0.0)
+        -instance.confidence
       }.map { instance =>
         val sentence = instance.extraction.source.getSentence.getTokens
-        val url = instance.extraction.sourceUrl.getOrElse("")
+        val url = instance.extraction.sourceUrl
         val ranges = List(
             instance.extraction.source.getArgument1.getRange,
             instance.extraction.source.getRelation.getRange,

@@ -1,14 +1,17 @@
 package models
 
-import edu.washington.cs.knowitall.browser.lucene.ExtractionGroupFetcher
+import edu.washington.cs.knowitall.browser.lucene.ParallelExtractionGroupFetcher
 import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
 import edu.washington.cs.knowitall.browser.extraction.ReVerbExtraction
 
 object Query {
   type REG = ExtractionGroup[ReVerbExtraction]
 
-  val indexPath = "/homes/gws/schmmd/reliable/common/openie-demo/index"
-  val fetcher = new ExtractionGroupFetcher(indexPath)
+  val paths = Seq("/scratch/common/openie-demo/test-index",
+    "/scratch2/common/openie-demo/test-index",
+    "/scratch3/common/openie-demo/test-index",
+    "/scratch4/common/openie-demo/test-index")
+  val fetcher = new ParallelExtractionGroupFetcher(paths)
 }
 
 case class Query(
