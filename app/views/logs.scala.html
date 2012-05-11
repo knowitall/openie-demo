@@ -1,0 +1,19 @@
+@(entries: Iterable[LogEntry])
+
+@import helper.twitterBootstrap._
+
+@helper.main("UW Open Information Extraction") {
+<table class="table table-bordered table-striped">
+  <tr><th>Argument 1</th><th>Relation</th><th>Argument 2</th><th>Results</th><th>Groups</th><th>Date</th></tr>
+@for(entry <- entries) {
+  <tr>
+    <td>@entry.query.arg1</td>
+    <td>@entry.query.rel</td>
+    <td>@entry.query.arg2</td>
+    <td>@entry.groupCount</td>
+    <td>@entry.resultCount</td>
+    <td>@entry.date</td>
+  </tr>
+}
+</table>
+}

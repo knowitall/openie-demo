@@ -49,14 +49,18 @@ object Application extends Controller {
   }
 
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String) = Action {
-    val group = searchGroups(Query(arg1, rel, arg2)).find(_.title == title) match {
+    val query = Query(arg1, rel, arg2)
+    Logger.info("Showing sentences for title " + title + " in " + query)
+    val group = searchGroups(query).find(_.title == title) match {
       case None => throw new IllegalArgumentException("could not find group title: " + title)
       case Some(group) => group
     }
 
-    println(group.contents.mkString("\n"))
-
     Ok(views.html.sentences(group))
+  }
+
+  def logs(year: Int, month: Int, day: Int) = Action {
+    Ok(views.html.logs(LogEntry.logs(year, month, day)))
   }
 
   def searchGroups(query: Query) = {
@@ -72,7 +76,6 @@ object Application extends Controller {
         // cache miss
         val (ns, groups) = Timing.time(query.execute())
         Logger.info(query.toString +
-          " from " +
           " executed in " + Timing.Seconds.format(ns) +
           " with " + groups.size + " groups" +
           " and " + groups.iterator.map(_.contents.size).sum + " results")

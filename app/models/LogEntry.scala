@@ -1,5 +1,7 @@
 package models
 
+import play.api.Logger
+
 import scala.actors.Futures.future
 
 import java.io.{PrintWriter, FileOutputStream, File}
@@ -31,8 +33,7 @@ case class LogEntry (
       LOG_DIRECTORY_FILE.mkdirs()
     }
 
-    val date = new java.util.Date
-    val file = new File(LOG_DIRECTORY_FILE, LogEntry.logFileName())
+    val file = LogEntry.logFile()
 
     LogEntry.synchronized {
       using(new PrintWriter(new FileOutputStream(file, true))) { writer =>
@@ -45,12 +46,30 @@ case class LogEntry (
 object LogEntry {
   final val LOG_DIRECTORY_FILE = new File(System.getProperty("user.home") + "/openiedemo/logs")
 
-  def logFileName(): String = {
+  def logFile(): File = {
     val cal = Calendar.getInstance
-    logFileName(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
+    logFile(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH)+1, cal.get(Calendar.DAY_OF_MONTH))
   }
 
-  def logFileName(year: Int, month: Int, day: Int): String = {
-    "%0.4d.%0.2d.%0.2d.log".format(year, month, day)
+  def logFile(year: Int, month: Int, day: Int): File = {
+    new File(LOG_DIRECTORY_FILE, "%04d.%02d.%02d.log".format(year, month, day))
+  }
+
+  def logs(year: Int, month: Int, day: Int): Seq[LogEntry] = {
+    val file = logFile(year, month, day)
+    val exists = file.exists()
+    Logger.info("Retrieving logs in " + file + (if (!exists) "(not found)" else ""));
+    if (!exists) Seq()
+    else {
+      using (io.Source.fromFile(logFile(year, month, day))) { source => 
+        (for (line <- source.getLines) yield LogEntry.fromRow(line)).toList
+      }
+    }
+  }
+
+  def fromRow(row: String) = {
+    def noneIfEmpty(string: String) = if (string.isEmpty) None else Some(string)
+    val Array(arg1, rel, arg2, groupCount, resultCount, date) = row.split("\t")
+    LogEntry(Query(noneIfEmpty(arg1), noneIfEmpty(rel), noneIfEmpty(arg2)), groupCount.toInt, resultCount.toInt, new Date(date.toLong))
   }
 }
