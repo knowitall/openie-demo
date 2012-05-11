@@ -1,6 +1,6 @@
 @(title: GroupTitle)
 
-@title.parts.map(part=>part.entity match {
-  case Some(entity) => <b>{entity.name}</b>
-  case None => part.lemma
-})
+@Html(title.parts.map(part=>part.entity match {
+  case Some(entity) => <span class="title-entity" rel="popover" title={part.text} data-content={part.synonyms.mkString("<br/>")}>{entity.name}</span>
+  case None => <span class="title-string" rel="popover" title={part.text} data-content={part.synonyms.mkString("<br/>")}>{part.lemma}</span>
+}).mkString(title.connector))
