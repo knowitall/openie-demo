@@ -1,0 +1,6 @@
+@(title: GroupTitle)
+
+@title.parts.map(part=>part.entity match {
+  case Some(entity) => <b>{entity.name}</b>
+  case None => part.lemma
+})
