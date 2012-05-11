@@ -42,7 +42,7 @@
   <div class="tabbable tabs-left">
     <ul class="nav nav-tabs">
       @for((g, i) <- groups.zipWithIndex) {
-      <li><a href="#L@{i}" data-toggle="tab">@g.title (@g.contents.size)</a></li>
+      <li><a href="#L@{i}" data-toggle="tab" title="@g.title.parts.flatMap(_.synonyms.mkString(", "))">@g.title.text (@g.contents.size)</a></li>
       }
     </ul>
     <div class="tab-content">
@@ -50,7 +50,7 @@
       <div class="tab-pane" id="L@{i}">
         @helper.sentences(g.copy(contents=g.contents.take(maxSentenceCount)))
         @if(g.contents.size > maxSentenceCount) {
-          <p style="text-align: center"><a href="@{routes.Application.sentences(query.arg1, query.rel, query.arg2, g.title)}">Show all sentences (@{g.contents.size - maxSentenceCount} more)</a></p>
+          <p style="text-align: center"><a href="@{routes.Application.sentences(query.arg1, query.rel, query.arg2, g.title.text)}">Show all sentences (@{g.contents.size - maxSentenceCount} more)</a></p>
         }
       </div>
       }

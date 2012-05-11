@@ -11,6 +11,7 @@ import play.api.Play.current
 import edu.washington.cs.knowitall.browser.lucene.ExtractionGroupFetcher
 
 import edu.washington.cs.knowitall.common.Timing
+import edu.washington.cs.knowitall.common.Resource.using
 
 object Application extends Controller {
   final val PAGE_SIZE = 50
@@ -51,7 +52,7 @@ object Application extends Controller {
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String) = Action {
     val query = Query(arg1, rel, arg2)
     Logger.info("Showing sentences for title " + title + " in " + query)
-    val group = searchGroups(query).find(_.title == title) match {
+    val group = searchGroups(query).find(_.title.text == title) match {
       case None => throw new IllegalArgumentException("could not find group title: " + title)
       case Some(group) => group
     }
