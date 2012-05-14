@@ -18,17 +18,17 @@ case class Query(
 
   import Query._
 
-  require(arg1.isDefined ||
-    rel.isDefined ||
-    arg2.isDefined,
-    "At least one relation part must be specified.")
-
   def this(arg1: String, rel: String, arg2: String) =
     this(Some(arg1), Some(rel), Some(arg2))
 
   def arg1String = arg1.getOrElse("")
   def relString = rel.getOrElse("")
   def arg2String = arg2.getOrElse("")
+
+  def humanString = "a query with " + Iterable(
+      arg1.map("Argument 1 containing '" + _ + "'"),
+      rel.map("Relation containing '" + _ + "'"),
+      arg2.map("Argument 2 containing '" + _ + "'")).flatten.mkString(" and ")
 
   def execute() = {
     def part(eg: REG, part: Symbol) = part match {
@@ -50,7 +50,7 @@ case class Query(
       case (None, None, None) => (eg: REG) => GroupTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
     }
 
-    val results = Query.fetcher.getGroups(this.arg1, this.rel, this.arg2).map { reg =>
+    val results = Query.fetcher.getGroups(this.arg1, this.rel, this.arg2).iterator.map { reg =>
       reg.copy(
           instances = reg.instances filter filterInstances,
           arg1Norm = clean(reg.arg1Norm),
@@ -82,6 +82,10 @@ object Query {
   private final val leadingArticle = Pattern.compile("^\\s*(the|this|these|those|that|a|an)\\s*", Pattern.CASE_INSENSITIVE)
   private final val startCap = Pattern.compile(".*\\b[A-Z].*")
   private final val likelyError = Pattern.compile(".*(http|\\(|\\)|\\\"|\\[|thing).*", Pattern.CASE_INSENSITIVE)
+
+  def apply(tuple: (Option[String], Option[String], Option[String])) = tuple match {
+    case (arg1, rel, arg2) => println(arg1); println(rel); new Query(arg1, rel, arg2)
+  }
 
   def fromFile(file: File) = {
     using (new FileInputStream(file)) { fis =>

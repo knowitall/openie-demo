@@ -1,4 +1,4 @@
-@(searchForm: Form[Query], query: Query, groups: Iterable[Group], pageno: Int, pageCount: Int, maxSentenceCount: Int)
+@(searchForm: Form[Query], query: Query, answers: AnswerSet, pageno: Int, pageCount: Int, maxSentenceCount: Int)
 
 @import helper.twitterBootstrap._
 @import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
@@ -7,8 +7,9 @@
   <style>
     .hid { display: none }
     .title-entity { font-weight: bold }
+    .answer { font-size: large }
   </style>
-   
+  
   @helper.form(action = routes.Application.submit, 'class -> "well form-inline") {
       <label for="arg1">Argument 1:</label>
       <span class="input">
@@ -27,6 +28,9 @@
       </span>
       <button class="btn primary"><i class="icon-search"></i> Search</button>
   }
+  
+  <div id="stats"><b>@answers.answerCount answers</b> from <b>@answers.sentenceCount sentences</b></div>
+
 
 <!--
   <b>Types:</b> 
@@ -42,12 +46,12 @@
 
   <div class="tabbable tabs-left">
     <ul class="nav nav-tabs">
-      @for((g, i) <- groups.zipWithIndex) {
-      <li><a href="#L@{i}" data-toggle="tab">@helper.grouptitle(g.title) (@g.contents.size)</a></li>
+      @for((g, i) <- answers.groups.zipWithIndex) {
+      <li><a href="#L@{i}" class="answer" data-toggle="tab">@helper.grouptitle(g.title) (@g.contents.size)</a></li>
       }
     </ul>
     <div class="tab-content">
-      @for((g, i) <- groups.zipWithIndex) {
+      @for((g, i) <- answers.groups.zipWithIndex) {
       <div class="tab-pane" id="L@{i}">
         @helper.sentences(g.copy(contents=g.contents.take(maxSentenceCount)))
         @if(g.contents.size > maxSentenceCount) {

@@ -37,13 +37,13 @@ case class Content(strings: List[String], url: String, intervals: List[Interval]
 }
 
 object Group {
-  def fromExtractionGroups(reg: Iterable[ExtractionGroup[ReVerbExtraction]],
+  def fromExtractionGroups(reg: Iterator[ExtractionGroup[ReVerbExtraction]],
       group: ExtractionGroup[ReVerbExtraction]=>GroupTitle): Seq[Group] = {
     def rangeToInterval(range: Range) = {
       Interval.open(range.getStart, range.getEnd)
     }
 
-    val groups = (reg map (reg => (group(reg), reg)) groupBy { case (title, reg) => title.parts.map(_.lemma) }).toList.
+    val groups = ((reg map (reg => (group(reg), reg))).toList groupBy { case (title, reg) => title.parts.map(_.lemma) }).toList.
       sortBy { case (text, list) => -list.iterator.map { case (title, reg) => reg.instances.size }.sum }
 
     val collapsed: Seq[(GroupTitle, Iterable[ExtractionGroup[ReVerbExtraction]])] = groups.map { case (text, list) =>

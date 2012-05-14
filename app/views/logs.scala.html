@@ -4,14 +4,15 @@
 
 @helper.main("UW Open Information Extraction") {
 <table class="table table-bordered table-striped">
-  <tr><th>Argument 1</th><th>Relation</th><th>Argument 2</th><th>Results</th><th>Groups</th><th>Date</th></tr>
+  <tr><th></th><th>Argument 1</th><th>Relation</th><th>Argument 2</th><th>Answers</th><th>Sentences</th><th>Date</th></tr>
 @for(entry <- entries) {
   <tr>
+    <td><a href="@routes.Application.search(entry.query.arg1, entry.query.rel, entry.query.arg2, 0)"><i class="icon-search"></i></a></td>
     <td>@entry.query.arg1</td>
     <td>@entry.query.rel</td>
     <td>@entry.query.arg2</td>
-    <td>@entry.groupCount</td>
-    <td>@entry.resultCount</td>
+    <td>@entry.answerCount</td>
+    <td>@entry.sentenceCount</td>
     <td>@entry.date</td>
   </tr>
 }

@@ -12,8 +12,8 @@ import edu.washington.cs.knowitall.common.Resource.using
 
 case class LogEntry (
   query: Query,
-  groupCount: Int,
-  resultCount: Int,
+  answerCount: Int,
+  sentenceCount: Int,
   date: Date = new Date
 ) {
   import LogEntry._
@@ -23,8 +23,8 @@ case class LogEntry (
         query.arg1String,
         query.relString,
         query.arg2String,
-        groupCount.toString,
-        resultCount.toString,
+        answerCount.toString,
+        sentenceCount.toString,
         date.getTime.toString).mkString("\t")
   }
 
@@ -61,7 +61,7 @@ object LogEntry {
     Logger.info("Retrieving logs in " + file + (if (!exists) "(not found)" else ""));
     if (!exists) Seq()
     else {
-      using (io.Source.fromFile(logFile(year, month, day))) { source => 
+      using (io.Source.fromFile(logFile(year, month, day))) { source =>
         (for (line <- source.getLines) yield LogEntry.fromRow(line)).toList
       }
     }
