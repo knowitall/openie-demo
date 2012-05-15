@@ -43,12 +43,11 @@ object Group {
       Interval.open(range.getStart, range.getEnd)
     }
 
-    val groups = ((reg map (reg => (group(reg), reg))).toList groupBy { case (title, reg) => title.parts.map(_.lemma) }).toList.
+    val groups = ((reg map (reg => (group(reg), reg))).toList groupBy { case (title, reg) => title.parts.map(_.lemma.toLowerCase) }).toList.
       sortBy { case (text, list) => -list.iterator.map { case (title, reg) => reg.instances.size }.sum }
 
     val collapsed: Seq[(GroupTitle, Iterable[ExtractionGroup[ReVerbExtraction]])] = groups.map { case (text, list) =>
       val (headTitle, _) = list.head
-      val titles = list.map { case (title, reg) => title }
 
       // safe because of our groupBy
       val length = headTitle.parts.length

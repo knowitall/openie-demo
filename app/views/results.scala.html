@@ -8,6 +8,14 @@
     .hid { display: none }
     .title-entity { font-weight: bold }
     .answer { font-size: large }
+    .popover-image {
+      float: left;
+      border: 1px solid;
+      margin: 5px;
+    }
+    .close-tab {
+      float: right
+    }
   </style>
   
   @helper.form(action = routes.Application.submit, 'class -> "well form-inline") {
@@ -53,6 +61,7 @@
     <div class="tab-content">
       @for((g, i) <- answers.groups.zipWithIndex) {
       <div class="tab-pane" id="L@{i}">
+        <span class="close-tab"><a href="#close@{i}" class="close-tab" title="close tab"><i class="icon-remove"></i></a></span>
         @helper.sentences(g.copy(contents=g.contents.take(maxSentenceCount)))
         @if(g.contents.size > maxSentenceCount) {
           <p style="text-align: center"><a href="@{routes.Application.sentences(query.arg1, query.rel, query.arg2, g.title.text)}">Show all sentences (@{g.contents.size - maxSentenceCount} more)</a></p>
@@ -83,6 +92,34 @@
     </div>
   
     <script type="text/javascript">
-      $('[rel=popover]').popover({ delay: { show: 500, hide: 100 }})
+      var download_popover = function() {
+        // this refers to a different object in 
+        // a nested anonymous function
+        var span = this
+
+        // we don't want to run this particular action again,
+        // but we don't want to remove all hover actions
+        $(span).unbind('hover', download_popover)
+
+        $.getJSON("https://www.googleapis.com/freebase/v1/text/m/"+span.id+'?format=plain&lang=en&maxlength=200&callback=?', function(response) {
+          var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+span.id+'?maxheight=75&maxwidth=75'
+          $(span).attr('data-content', function(index, attr) { 
+            return '<img class="popover-image" src="'+src+'">' + '<span class="popover-desc">'+response.result+"</span>" + '<div style="height: 10px"></div>Synonyms:<blockquote>'+attr+"</blockquote>"
+          })
+
+          var image = new Image()
+          image.src = src
+        })
+      }
+
+      $('.title-string').popover({ delay: { show: 1000, hide: 100 }})
+
+      $('.title-entity').popover({ delay: { html: true, show: 1000, hide: 100 }})
+      $('.title-entity').hover(download_popover)
+
+      $('.close-tab').click(function() {
+        var $active = $('.tab-content').find('> .active')
+        $active.removeClass('active')
+      })
     </script>
 }
