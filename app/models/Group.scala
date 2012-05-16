@@ -39,9 +39,6 @@ case class Content(strings: List[String], url: String, intervals: List[Interval]
 object Group {
   def fromExtractionGroups(reg: Iterator[ExtractionGroup[ReVerbExtraction]],
       group: ExtractionGroup[ReVerbExtraction]=>GroupTitle): Seq[Group] = {
-    def rangeToInterval(range: Range) = {
-      Interval.open(range.getStart, range.getEnd)
-    }
 
     val groups = ((reg map (reg => (group(reg), reg))).toList groupBy { case (title, reg) => title.parts.map(_.lemma.toLowerCase) }).toList.
       sortBy { case (text, list) => -list.iterator.map { case (title, reg) => reg.instances.size }.sum }
@@ -79,13 +76,13 @@ object Group {
     collapsed.map { case (title, contents) =>
       val instances = (contents flatMap (_.instances)).toList sortBy (- _.confidence)
       val list = instances.map { instance =>
-        val sentence = instance.extraction.source.getSentence.getTokens
+        val sentence = instance.extraction.sentenceTokens.map(_.string)
         val url = instance.extraction.sourceUrl
-        val ranges = List(
-            instance.extraction.source.getArgument1.getRange,
-            instance.extraction.source.getRelation.getRange,
-            instance.extraction.source.getArgument2.getRange)
-        Content(sentence.asScala.toList.map(Query.clean), url, ranges map rangeToInterval)
+        val intervals = List(
+            instance.extraction.arg1Interval,
+            instance.extraction.relInterval,
+            instance.extraction.arg2Interval)
+        Content(sentence.toList.map(Query.clean), url, intervals)
       }.toList
 
       Group(title, list)

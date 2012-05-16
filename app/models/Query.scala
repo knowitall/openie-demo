@@ -32,9 +32,9 @@ case class Query(
 
   def execute() = {
     def part(eg: REG, part: Symbol) = part match {
-      case 'rel => GroupTitlePart(eg.relNorm, eg.instances.iterator.map(_.extraction.source.getRelation.getText).map(clean).toSeq, None, Seq.empty)
-      case 'arg1 => GroupTitlePart(eg.arg1Norm, eg.instances.iterator.map(_.extraction.source.getArgument1.getText).map(clean).toSeq, eg.arg1Entity, eg.arg1Types)
-      case 'arg2 => GroupTitlePart(eg.arg2Norm, eg.instances.iterator.map(_.extraction.source.getArgument2.getText).map(clean).toSeq, eg.arg2Entity, eg.arg2Types)
+      case 'rel => GroupTitlePart(eg.relNorm, eg.instances.iterator.map(_.extraction.relTokens).map(clean).toSeq, None, Seq.empty)
+      case 'arg1 => GroupTitlePart(eg.arg1Norm, eg.instances.iterator.map(_.extraction.arg1Tokens).map(clean).toSeq, eg.arg1Entity, eg.arg1Types.toSeq)
+      case 'arg2 => GroupTitlePart(eg.arg2Norm, eg.instances.iterator.map(_.extraction.arg2Tokens).map(clean).toSeq, eg.arg2Entity, eg.arg2Types.toSeq)
     }
 
     def group: REG=>GroupTitle = (this.arg1, this.rel, this.arg2) match {
@@ -66,11 +66,11 @@ case class Query(
 object Query {
   type REG = ExtractionGroup[ReVerbExtraction]
 
-  val paths = Seq("/scratch/common/openie-demo/test-index",
-    "/scratch2/common/openie-demo/test-index",
-    "/scratch3/common/openie-demo/test-index",
-    "/scratch4/common/openie-demo/test-index")
-  val fetcher = new ParallelExtractionGroupFetcher(paths)
+  val paths = Seq("/scratch/common/openie-demo/test-index-0.0.4",
+    "/scratch2/common/openie-demo/test-index-0.0.4",
+    "/scratch3/common/openie-demo/test-index-0.0.4",
+    "/scratch4/common/openie-demo/test-index-0.0.4")
+  val fetcher = new ParallelExtractionGroupFetcher(paths, 2000, 10000)
 
   private final val pronouns: Set[String] = Set("he", "she", "they", "them",
    "that", "this", "who", "whom", "i", "you", "him", "her", "we",
@@ -122,30 +122,32 @@ object Query {
       part.size - nonQuestionableChars.matcher(part).replaceAll("").size <= 2
     }
 
-    val arg1clean = clean(inst.extraction.source.getArgument1.getTokensAsString)
-    val arg2clean = clean(inst.extraction.source.getArgument2.getTokensAsString)
-    val relclean = clean(inst.extraction.source.getRelation.getTokensAsString)
+    val relTokens = inst.extraction.sentenceTokens.slice(inst.extraction.relInterval.start, inst.extraction.relInterval.end)
+    val arg2Tokens = inst.extraction.sentenceTokens.slice(inst.extraction.arg2Interval.start, inst.extraction.arg2Interval.end)
+
+    def negative = {
+      val negatives = Set("no", "not", "none", "n't", "never")
+      relTokens.exists(token => 
+        negatives.contains(token.string.toLowerCase)
+      ) ||
+      arg2Tokens.exists(token => 
+        negatives.contains(token.string.toLowerCase)
+      )
+    }
+
+    val arg1clean = clean(inst.extraction.arg1Tokens)
+    val arg2clean = clean(inst.extraction.arg2Tokens)
+    val relclean = clean(inst.extraction.relTokens)
     val extr = arg1clean + relclean + arg2clean
 
-    if (arg1clean.length + relclean.length + arg2clean.length > 120) {
-      false
-    }
-    else if (pronouns.contains(arg1clean) || pronouns.contains(arg2clean)) {
-      false
-    }
-    else if (arg1clean.isEmpty || relclean.isEmpty || arg2clean.isEmpty) {
-      false
-    }
-    else if (arg1clean == arg2clean) {
-      false
-    }
-    else if (nonQuestionableChars.matcher(extr).replaceAll("").size >= 5) {
-      false
-    }
-    else if (tooShort(arg1clean) || tooShort(relclean) || tooShort(arg2clean)) {
-      false
-    }
-    else if (likelyError.matcher(arg1clean).matches() || likelyError.matcher(arg2clean).matches()) {
+    if (negative ||
+      (arg1clean.length + relclean.length + arg2clean.length > 120) ||
+      (pronouns.contains(arg1clean) || pronouns.contains(arg2clean)) ||
+      (arg1clean.isEmpty || relclean.isEmpty || arg2clean.isEmpty) ||
+      (arg1clean == arg2clean) ||
+      (nonQuestionableChars.matcher(extr).replaceAll("").size >= 5) ||
+      (tooShort(arg1clean) || tooShort(relclean) || tooShort(arg2clean)) ||
+      (likelyError.matcher(arg1clean).matches() || likelyError.matcher(arg2clean).matches())) {
       false
     }
     else {

@@ -61,7 +61,7 @@
     <div class="tab-content">
       @for((g, i) <- answers.groups.zipWithIndex) {
       <div class="tab-pane" id="L@{i}">
-        <span class="close-tab"><a href="#close@{i}" class="close-tab" title="close tab"><i class="icon-remove"></i></a></span>
+        <span class="close-tab"><a href="#close@{i}" class="close-tab" title="close sentences"><i class="icon-remove"></i></a></span>
         @helper.sentences(g.copy(contents=g.contents.take(maxSentenceCount)))
         @if(g.contents.size > maxSentenceCount) {
           <p style="text-align: center"><a href="@{routes.Application.sentences(query.arg1, query.rel, query.arg2, g.title.text)}">Show all sentences (@{g.contents.size - maxSentenceCount} more)</a></p>
