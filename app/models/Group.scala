@@ -16,7 +16,7 @@ import edu.washington.cs.knowitall.browser.extraction.FreeBaseEntity
 import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
 
 @SerialVersionUID(42L)
-case class GroupTitlePart(lemma: String, synonyms: Seq[String], entity: Option[FreeBaseEntity], types: Seq[FreeBaseType]) {
+case class GroupTitlePart(lemma: String, synonyms: Seq[String], entity: Option[FreeBaseEntity], types: Set[FreeBaseType]) {
   def text = entity match {
     case Some(entity) => entity.name
     case None => lemma
@@ -58,7 +58,7 @@ object Group {
         val entities: Option[FreeBaseEntity] =
           list.flatMap(_._1.parts(i).entity).headOption
 
-        val types: Seq[FreeBaseType] =
+        val types: Set[FreeBaseType] =
           list.flatMap(_._1.parts(i).types)(scala.collection.breakOut)
 
         val sortedUniqueSynonyms =

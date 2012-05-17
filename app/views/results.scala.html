@@ -1,4 +1,4 @@
-@(searchForm: Form[Query], query: Query, answers: AnswerSet, pageno: Int, pageCount: Int, maxSentenceCount: Int)
+@(searchForm: Form[Query], query: Query, answers: AnswerSet, filters: Set[TypeFilter], pageno: Int, pageCount: Int, maxSentenceCount: Int)
 
 @import helper.twitterBootstrap._
 @import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
@@ -40,15 +40,14 @@
   <div id="stats"><b>@answers.answerCount answers</b> from <b>@answers.sentenceCount sentences</b></div>
 
 
-<!--
   <b>Types:</b> 
-  <div class="btn-group" data-toggle="buttons-checkbox">
-      <button class="btn">Chemicsals</button>
-      <button class="btn">Products</button>
-      <button class="btn">Elements</button>
-      <button class="btn">Other</button>
-  </div>
--->
+  <span id="types">
+@for(typ<-answers.typeFilters) {
+  @defining(filters.contains(typ)) { active =>
+    <button id="type-@typ.base" href="foo" class="btn btn-primary @{if(active) "active" else ""}" data-toggle="button" onclick="window.location.href='@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), (if (active) filters - typ else filters + typ).iterator.map(_.base).mkString(","), 0)}'">@typ.displayName</button>
+  }
+}
+  </span>
 
   <div style="height: 25px"></div>
 
@@ -64,7 +63,7 @@
         <span class="close-tab"><a href="#close@{i}" class="close-tab" title="close sentences"><i class="icon-remove"></i></a></span>
         @helper.sentences(g.copy(contents=g.contents.take(maxSentenceCount)))
         @if(g.contents.size > maxSentenceCount) {
-          <p style="text-align: center"><a href="@{routes.Application.sentences(query.arg1, query.rel, query.arg2, g.title.text)}">Show all sentences (@{g.contents.size - maxSentenceCount} more)</a></p>
+          <p style="text-align: center"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), g.title.text)}">Show all sentences (@{g.contents.size - maxSentenceCount} more)</a></p>
         }
       </div>
       }
@@ -74,24 +73,41 @@
     <div class="pagination" align="center">
         <ul>
 @if(pageno > 0) {
-            <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, pageno - 1)}">Prev</a></li>
+            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "", pageno - 1)}">Prev</a></li>
 }
 @for(i <- pageno-4 to pageno-1; if i >= 0) {
-            <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, i)}">@i</a></li>
+            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "", i)}">@i</a></li>
 }
             <li class="active">
             <a href="#">@pageno</a>
             </li>
 @for(i <- pageno+1 to pageno+4; if i < pageCount) {
-            <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, i)}">@i</a></li>
+            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "", i)}">@i</a></li>
 }
 @if(pageno + 1 < pageCount) {
-            <li><a href="@{routes.Application.search(query.arg1, query.rel, query.arg2, pageno + 1)}">Next</a></li>
+            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "", pageno + 1)}">Next</a></li>
 }
         </ul>
     </div>
   
     <script type="text/javascript">
+    $.extend({
+  getUrlVars: function(){
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for(var i = 0; i < hashes.length; i++)
+    {
+      hash = hashes[i].split('=');
+      vars.push(hash[0]);
+      vars[hash[0]] = hash[1];
+    }
+    return vars;
+  },
+  getUrlVar: function(name){
+    return $.getUrlVars()[name];
+  }
+});
+
       var download_popover = function() {
         // this refers to a different object in 
         // a nested anonymous function
@@ -104,7 +120,7 @@
         $.getJSON("https://www.googleapis.com/freebase/v1/text/m/"+span.id+'?format=plain&lang=en&maxlength=200&callback=?', function(response) {
           var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+span.id+'?maxheight=75&maxwidth=75'
           $(span).attr('data-content', function(index, attr) { 
-            return '<img class="popover-image" src="'+src+'">' + '<span class="popover-desc">'+response.result+"</span>" + '<div style="height: 10px"></div>Synonyms:<blockquote>'+attr+"</blockquote>"
+            return '<img class="popover-image" src="'+src+'">' + '<span class="popover-desc">'+response.result+"</span>" + '<div style="height: 10px"></div>'+attr
           })
 
           var image = new Image()

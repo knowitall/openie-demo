@@ -12,14 +12,11 @@ import java.io.File
 
 
 case class Query(
-  arg1: Option[String],
-  rel: Option[String],
-  arg2: Option[String]) {
+  arg1: Option[Query.Constraint],
+  rel: Option[Query.Constraint],
+  arg2: Option[Query.Constraint]) {
 
   import Query._
-
-  def this(arg1: String, rel: String, arg2: String) =
-    this(Some(arg1), Some(rel), Some(arg2))
 
   def arg1String = arg1.getOrElse("")
   def relString = rel.getOrElse("")
@@ -32,22 +29,27 @@ case class Query(
 
   def execute() = {
     def part(eg: REG, part: Symbol) = part match {
-      case 'rel => GroupTitlePart(eg.relNorm, eg.instances.iterator.map(_.extraction.relTokens).map(clean).toSeq, None, Seq.empty)
-      case 'arg1 => GroupTitlePart(eg.arg1Norm, eg.instances.iterator.map(_.extraction.arg1Tokens).map(clean).toSeq, eg.arg1Entity, eg.arg1Types.toSeq)
-      case 'arg2 => GroupTitlePart(eg.arg2Norm, eg.instances.iterator.map(_.extraction.arg2Tokens).map(clean).toSeq, eg.arg2Entity, eg.arg2Types.toSeq)
+      case 'rel => GroupTitlePart(eg.relNorm, eg.instances.iterator.map(_.extraction.relTokens).map(clean).toSeq, None, Set.empty)
+      case 'arg1 => GroupTitlePart(eg.arg1Norm, eg.instances.iterator.map(_.extraction.arg1Tokens).map(clean).toSeq, eg.arg1Entity, eg.arg1Types.toSet)
+      case 'arg2 => GroupTitlePart(eg.arg2Norm, eg.instances.iterator.map(_.extraction.arg2Tokens).map(clean).toSeq, eg.arg2Entity, eg.arg2Types.toSet)
     }
 
     def group: REG=>GroupTitle = (this.arg1, this.rel, this.arg2) match {
-      case (Some(arg1), None, None) => (eg: REG) => GroupTitle(" ", Seq(part(eg, 'rel), part(eg, 'arg2)))
-      case (None, Some(rel), None) => (eg: REG) => GroupTitle(", ", Seq(part(eg, 'arg1), part(eg, 'arg2)))
-      case (None, None, Some(arg2)) => (eg: REG) => GroupTitle(", ", Seq(part(eg, 'arg1), part(eg, 'rel)))
+      case (Some(TermConstraint(arg1)), None, None) => (eg: REG) => GroupTitle(" ", Seq(part(eg, 'rel), part(eg, 'arg2)))
+      case (None, Some(TermConstraint(rel)), None) => (eg: REG) => GroupTitle(", ", Seq(part(eg, 'arg1), part(eg, 'arg2)))
+      case (None, None, Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle(", ", Seq(part(eg, 'arg1), part(eg, 'rel)))
 
-      case (Some(arg1), Some(rel), None) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg2)))
-      case (None, Some(rel), Some(arg2)) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg1)))
-      case (Some(arg1), None, Some(arg2)) => (eg: REG) => GroupTitle("", Seq(part(eg, 'rel)))
+      case (Some(TermConstraint(arg1)), Some(TermConstraint(rel)), None) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg2)))
+      case (None, Some(TermConstraint(rel)), Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg1)))
+      case (Some(TermConstraint(arg1)), None, Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle("", Seq(part(eg, 'rel)))
 
-      case (Some(arg1), Some(rel), Some(arg2)) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg2)))
-      case (None, None, None) => (eg: REG) => GroupTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
+      case (Some(TermConstraint(arg1)), Some(TermConstraint(rel)), Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg2)))
+      case _ => (eg: REG) => GroupTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
+    }
+
+    def query(constraint: Option[Query.Constraint]): Option[String] = constraint match {
+      case Some(TermConstraint(term)) => Some(term)
+      case _ => None
     }
 
     val results = Query.fetcher.getGroups(this.arg1, this.rel, this.arg2).iterator.map { reg =>
@@ -66,12 +68,31 @@ case class Query(
 object Query {
   type REG = ExtractionGroup[ReVerbExtraction]
 
+  object Constraint {
+    def parse(string: String) = {
+      if (string.toLowerCase.startsWith("type:")) {
+        new TypeConstraint(string.drop(5))
+      }
+      else {
+        new TermConstraint(string)
+      }
+    }
+  }
+  sealed abstract class Constraint
+  case class TermConstraint(term: String) extends Constraint {
+    override def toString = term
+  }
+  case class TypeConstraint(typ: String) extends Constraint {
+    override def toString = "type:" + typ
+  }
+
   val paths = Seq("/scratch/common/openie-demo/test-index-0.0.4",
     "/scratch2/common/openie-demo/test-index-0.0.4",
     "/scratch3/common/openie-demo/test-index-0.0.4",
     "/scratch4/common/openie-demo/test-index-0.0.4")
-  val fetcher = new ParallelExtractionGroupFetcher(paths, 2000, 10000)
+  val fetcher = new ParallelExtractionGroupFetcher(Seq.empty[String], 2000, 10000)
 
+  private final val CONFIDENCE_THRESHOLD: Double = 0.5
   private final val pronouns: Set[String] = Set("he", "she", "they", "them",
    "that", "this", "who", "whom", "i", "you", "him", "her", "we",
    "it", "the", "a", "an")
@@ -81,11 +102,22 @@ object Query {
   private final val leadingBadChars = Pattern.compile("^\\s*(\\.|,|\\\"|\\'|\\()\\s")
   private final val leadingArticle = Pattern.compile("^\\s*(the|this|these|those|that|a|an)\\s*", Pattern.CASE_INSENSITIVE)
   private final val startCap = Pattern.compile(".*\\b[A-Z].*")
-  private final val likelyError = Pattern.compile(".*(http|\\(|\\)|\\\"|\\[|thing).*", Pattern.CASE_INSENSITIVE)
+  private final val likelyErrorPattern = Pattern.compile(".*(http|\\(|\\)|\\\"|\\[|thing).*", Pattern.CASE_INSENSITIVE)
 
-  def apply(tuple: (Option[String], Option[String], Option[String])) = tuple match {
-    case (arg1, rel, arg2) => println(arg1); println(rel); new Query(arg1, rel, arg2)
+  def apply(tuple: (Option[String], Option[String], Option[String])): Query = tuple match {
+    case (arg1, rel, arg2) =>
+      new Query(arg1.map(Constraint.parse), rel.map(Constraint.parse), arg2.map(Constraint.parse))
   }
+
+  def noneIfEmpty(string: String): Option[String] =
+    if (string.isEmpty) None
+    else Some(string)
+
+  def fromStrings(arg1: Option[String], rel: Option[String], arg2: Option[String]): Query =
+    this.apply(arg1 map Constraint.parse, rel map Constraint.parse, arg2 map Constraint.parse)
+
+  def fromStrings(arg1: String, rel: String, arg2: String): Query =
+    this.fromStrings(noneIfEmpty(arg1), noneIfEmpty(rel), noneIfEmpty(arg2))
 
   def fromFile(file: File) = {
     using (new FileInputStream(file)) { fis =>
@@ -125,29 +157,40 @@ object Query {
     val relTokens = inst.extraction.sentenceTokens.slice(inst.extraction.relInterval.start, inst.extraction.relInterval.end)
     val arg2Tokens = inst.extraction.sentenceTokens.slice(inst.extraction.arg2Interval.start, inst.extraction.arg2Interval.end)
 
-    def negative = {
-      val negatives = Set("no", "not", "none", "n't", "never")
-      relTokens.exists(token => 
-        negatives.contains(token.string.toLowerCase)
-      ) ||
-      arg2Tokens.exists(token => 
-        negatives.contains(token.string.toLowerCase)
-      )
-    }
-
     val arg1clean = clean(inst.extraction.arg1Tokens)
     val arg2clean = clean(inst.extraction.arg2Tokens)
     val relclean = clean(inst.extraction.relTokens)
     val extr = arg1clean + relclean + arg2clean
 
+    def negative = {
+      val negatives = Set("no", "not", "none", "n't", "never")
+      relTokens.exists(token =>
+        negatives.contains(token.string.toLowerCase)
+      ) ||
+      arg2Tokens.exists(token =>
+        negatives.contains(token.string.toLowerCase)
+      )
+    }
+
+    def tooLong =
+      arg1clean.length + relclean.length + arg2clean.length > 120
+
+    def containsPronoun =
+      pronouns.contains(arg1clean) || pronouns.contains(arg2clean)
+
+    def likelyError =
+      likelyErrorPattern.matcher(arg1clean).matches() ||
+      likelyErrorPattern.matcher(arg2clean).matches()
+
     if (negative ||
-      (arg1clean.length + relclean.length + arg2clean.length > 120) ||
-      (pronouns.contains(arg1clean) || pronouns.contains(arg2clean)) ||
+      tooLong ||
+      containsPronoun ||
+      inst.confidence < CONFIDENCE_THRESHOLD ||
       (arg1clean.isEmpty || relclean.isEmpty || arg2clean.isEmpty) ||
       (arg1clean == arg2clean) ||
       (nonQuestionableChars.matcher(extr).replaceAll("").size >= 5) ||
       (tooShort(arg1clean) || tooShort(relclean) || tooShort(arg2clean)) ||
-      (likelyError.matcher(arg1clean).matches() || likelyError.matcher(arg2clean).matches())) {
+      likelyError) {
       false
     }
     else {

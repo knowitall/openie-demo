@@ -70,6 +70,6 @@ object LogEntry {
   def fromRow(row: String) = {
     def noneIfEmpty(string: String) = if (string.isEmpty) None else Some(string)
     val Array(arg1, rel, arg2, groupCount, resultCount, date) = row.split("\t")
-    LogEntry(Query(noneIfEmpty(arg1), noneIfEmpty(rel), noneIfEmpty(arg2)), groupCount.toInt, resultCount.toInt, new Date(date.toLong))
+    LogEntry(Query.fromStrings(arg1, rel, arg2), groupCount.toInt, resultCount.toInt, new Date(date.toLong))
   }
 }

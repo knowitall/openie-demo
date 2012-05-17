@@ -5,7 +5,7 @@
 # Home page
 GET     /                           controllers.Application.index
 GET     /search                     controllers.Application.submit
-GET     /search/                    controllers.Application.search(arg1: Option[String], rel: Option[String], arg2: Option[String], page: Int)
+GET     /search/                    controllers.Application.search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int)
 GET     /sentences/                 controllers.Application.sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String)
 GET     /logs/:year/:month/:day     controllers.Application.logs(year: Int, month: Int, day: Int)
 
