@@ -37,7 +37,7 @@ case class Content(strings: List[String], url: String, intervals: List[Interval]
 }
 
 object Group {
-  def fromExtractionGroups(reg: Iterator[ExtractionGroup[ReVerbExtraction]],
+  def fromExtractionGroups(reg: Iterable[ExtractionGroup[ReVerbExtraction]],
       group: ExtractionGroup[ReVerbExtraction]=>GroupTitle): Seq[Group] = {
 
     val groups = ((reg map (reg => (group(reg), reg))).toList groupBy { case (title, reg) => title.parts.map(_.lemma.toLowerCase) }).toList.
@@ -86,8 +86,6 @@ object Group {
       }.toList
 
       Group(title, list)
-    }.filter(_.contents.size > 0)
-
-    .sortBy(-_.contents.size)
+    }.filter(_.contents.size > 0).sortBy(-_.contents.size)
   }
 }

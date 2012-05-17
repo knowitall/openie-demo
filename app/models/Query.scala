@@ -3,6 +3,7 @@ package models
 import edu.washington.cs.knowitall.browser.extraction.Instance
 import edu.washington.cs.knowitall.common.Resource.using
 import edu.washington.cs.knowitall.browser.lucene.ParallelExtractionGroupFetcher
+import edu.washington.cs.knowitall.browser.lucene.{Success, Limited, Timeout}
 import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
 import edu.washington.cs.knowitall.browser.extraction.ReVerbExtraction
 import java.util.regex.Pattern
@@ -29,9 +30,9 @@ case class Query(
 
   def execute() = {
     def part(eg: REG, part: Symbol) = part match {
-      case 'rel => GroupTitlePart(eg.relNorm, eg.instances.iterator.map(_.extraction.relTokens).map(clean).toSeq, None, Set.empty)
-      case 'arg1 => GroupTitlePart(eg.arg1Norm, eg.instances.iterator.map(_.extraction.arg1Tokens).map(clean).toSeq, eg.arg1Entity, eg.arg1Types.toSet)
-      case 'arg2 => GroupTitlePart(eg.arg2Norm, eg.instances.iterator.map(_.extraction.arg2Tokens).map(clean).toSeq, eg.arg2Entity, eg.arg2Types.toSet)
+      case 'rel => GroupTitlePart(eg.relNorm, eg.instances.iterator.map(_.extraction.relText).map(clean).toSeq, None, Set.empty)
+      case 'arg1 => GroupTitlePart(eg.arg1Norm, eg.instances.iterator.map(_.extraction.arg1Text).map(clean).toSeq, eg.arg1Entity, eg.arg1Types.toSet)
+      case 'arg2 => GroupTitlePart(eg.arg2Norm, eg.instances.iterator.map(_.extraction.arg2Text).map(clean).toSeq, eg.arg2Entity, eg.arg2Types.toSet)
     }
 
     def group: REG=>GroupTitle = (this.arg1, this.rel, this.arg2) match {
@@ -52,14 +53,21 @@ case class Query(
       case _ => None
     }
 
-    val results = Query.fetcher.getGroups(this.arg1, this.rel, this.arg2).iterator.map { reg =>
+    val results = Query.fetcher.getGroups(query(this.arg1), query(this.rel), query(this.arg2)) match {
+      case Success(results, num) => results
+      case Limited(results, num) => results
+      case Timeout(results, num) => results
+    }
+
+    val converted = results.map { reg =>
       reg.copy(
           instances = reg.instances filter filterInstances,
           arg1Norm = clean(reg.arg1Norm),
           relNorm = clean(reg.relNorm),
           arg2Norm = clean(reg.arg2Norm))
     } filter filterGroups
-    val groups = Group.fromExtractionGroups(results, group).filter(!_.title.text.trim.isEmpty)
+
+    val groups = Group.fromExtractionGroups(converted.toList, group).filter(!_.title.text.trim.isEmpty)
 
     groups
   }
@@ -86,11 +94,11 @@ object Query {
     override def toString = "type:" + typ
   }
 
-  val paths = Seq("/scratch/common/openie-demo/test-index-0.0.4",
-    "/scratch2/common/openie-demo/test-index-0.0.4",
-    "/scratch3/common/openie-demo/test-index-0.0.4",
-    "/scratch4/common/openie-demo/test-index-0.0.4")
-  val fetcher = new ParallelExtractionGroupFetcher(Seq.empty[String], 2000, 10000)
+  val paths = Seq("/scratch/common/openie-demo/test-index-0.0.5",
+    "/scratch2/common/openie-demo/test-index-0.0.5",
+    "/scratch3/common/openie-demo/test-index-0.0.5",
+    "/scratch4/common/openie-demo/test-index-0.0.5")
+  val fetcher = new ParallelExtractionGroupFetcher(paths, 2000, 10000)
 
   private final val CONFIDENCE_THRESHOLD: Double = 0.5
   private final val pronouns: Set[String] = Set("he", "she", "they", "them",
@@ -157,9 +165,9 @@ object Query {
     val relTokens = inst.extraction.sentenceTokens.slice(inst.extraction.relInterval.start, inst.extraction.relInterval.end)
     val arg2Tokens = inst.extraction.sentenceTokens.slice(inst.extraction.arg2Interval.start, inst.extraction.arg2Interval.end)
 
-    val arg1clean = clean(inst.extraction.arg1Tokens)
-    val arg2clean = clean(inst.extraction.arg2Tokens)
-    val relclean = clean(inst.extraction.relTokens)
+    val arg1clean = clean(inst.extraction.arg1Text)
+    val arg2clean = clean(inst.extraction.arg2Text)
+    val relclean = clean(inst.extraction.relText)
     val extr = arg1clean + relclean + arg2clean
 
     def negative = {
