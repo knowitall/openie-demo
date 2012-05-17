@@ -1,6 +1,6 @@
 package models
 
-case class AnswerSet(groups: Seq[Group], typeFilters: Seq[TypeFilter]) {
+case class AnswerSet(groups: Seq[Group], filters: Seq[(TypeFilter, Int)]) {
   def answerCount = groups.size
   def sentenceCount = groups.iterator.map(_.contents.size).sum
 
@@ -12,4 +12,10 @@ case class AnswerSet(groups: Seq[Group], typeFilters: Seq[TypeFilter]) {
     else this.copy(groups = groups filter (group =>
       group.title.parts.exists(part => filters.exists(_(part)))
   ))}
+}
+
+object AnswerSet {
+  def from(groups: Seq[Group], filters: Seq[TypeFilter]) = {
+    this(groups, filters.map(filter => (filter, groups.count(group => group.title.parts.exists(part => filter(part))))))
+  }
 }

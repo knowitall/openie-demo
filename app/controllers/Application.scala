@@ -9,6 +9,7 @@ import play.api.cache.Cache
 import play.api.Play.current
 
 import edu.washington.cs.knowitall.browser.lucene.ExtractionGroupFetcher
+import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
 
 import edu.washington.cs.knowitall.common.Timing
 import edu.washington.cs.knowitall.common.Resource.using
@@ -91,14 +92,14 @@ object Application extends Controller {
           " executed in " + Timing.Seconds.format(ns) +
           " with " + groups.size + " answers" +
           " and " + groups.iterator.map(_.contents.size).sum + " sentences")
-        val answers = AnswerSet(groups, TypeFilters.fromGroups(groups))
+        val answers = AnswerSet.from(groups, TypeFilters.fromGroups(groups))
         Cache.set(query.toString, answers)
         answers
     }
   }
 
   def doSearch(query: Query, filterStrings: Set[String], pageNumber: Int) = {
-    val filters = filterStrings.map(TypeFilter(_))
+    val filters = filterStrings.map(s => TypeFilter(FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string"))))
     val answers = searchGroups(query) filter filters
     Logger.info(query + " with " + filters + " has " + answers.answerCount + " answers " + answers.sentenceCount + " results")
     val page = answers.page(pageNumber, PAGE_SIZE)

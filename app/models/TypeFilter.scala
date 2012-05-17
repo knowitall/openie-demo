@@ -3,21 +3,13 @@ package models
 import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
 import edu.washington.cs.knowitall.common.enrich.Traversables._
 
-case class TypeFilter(base: String) {
-  def displayName = base
+case class TypeFilter(typ: FreeBaseType) {
+  def displayName = typ.typ.replaceAll("_", " ")
 
   def apply(answer: GroupTitlePart): Boolean =
     answer.types.exists( typ =>
-      TypeFilter.baseName(typ.name) == this.base
+      typ == this.typ
     )
-}
-
-object TypeFilter {
-  def baseOfFreebaseType(typ: FreeBaseType) = {
-    TypeFilter(baseName(typ.name))
-  }
-
-  private def baseName(typ: String) = typ.dropWhile(_ == '/').takeWhile(_ != '/')
 }
 
 object TypeFilters {
@@ -29,8 +21,8 @@ object TypeFilters {
       group <- groups
       part <- group.title.parts
       typ <- part.types
-      if !typ.name.startsWith("/base/") && !typ.name.startsWith("/user/")
-    } yield (TypeFilter.baseOfFreebaseType(typ))
+      if typ.domain != "base" && typ.domain != "user"
+    } yield (TypeFilter(typ))
 
     val ordered = it.histogram.filter { case (filter, count) =>
       count > MINIMUM_OCCURRENCE

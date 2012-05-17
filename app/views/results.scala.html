@@ -42,9 +42,9 @@
 
   <b>Types:</b> 
   <span id="types">
-@for(typ<-answers.typeFilters) {
-  @defining(filters.contains(typ)) { active =>
-    <button id="type-@typ.base" href="foo" class="btn btn-primary @{if(active) "active" else ""}" data-toggle="button" onclick="window.location.href='@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), (if (active) filters - typ else filters + typ).iterator.map(_.base).mkString(","), 0)}'">@typ.displayName</button>
+@for((filter, count)<-answers.filters.sortBy(-_._2)) {
+  @defining(filters.contains(filter)) { active =>
+    <button id="type-@filter.typ.name" href="foo" class="btn btn-primary @{if(active) "active" else ""}" data-toggle="button" onclick="window.location.href='@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), (if (active) filters - filter else filters + filter).iterator.map(_.typ.name).mkString(","), 0)}'">@filter.displayName (@count)</button>
   }
 }
   </span>
