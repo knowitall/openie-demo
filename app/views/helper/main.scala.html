@@ -1,4 +1,4 @@
-@(title: String)(content: Html)
+@(title: String, compact: Boolean)(content: Html)
 
 @import helper.twitterBootstrap._
 
@@ -20,7 +20,7 @@
         <div class="container">
             <div class="page-header">
                 <div class="hidden-phone">
-                    <h1><a href="@routes.Application.index"><img src="@routes.Assets.at("images/textrunner.jpg")"></a> UW Open Information Extraction</h1>
+                    <h1><a href="@routes.Application.index"><img src="@if(compact) { @routes.Assets.at("images/textrunner-small.jpg") } else { @routes.Assets.at("images/textrunner.jpg") }"></a> UW Open Information Extraction</h1>
                 </div>
                 <div class="visible-phone">
                     <h1><a href="@routes.Application.index"><img src="@routes.Assets.at("images/textrunner-small.jpg")"></a> UW OpenIE</h1>

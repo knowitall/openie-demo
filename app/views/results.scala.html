@@ -3,7 +3,7 @@
 @import helper.twitterBootstrap._
 @import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
 
-@helper.main("UW Open Information Extraction") {
+@helper.main("UW Open Information Extraction", compact=true) {
   <style>
     .hid { display: none }
     .title-entity { font-weight: bold }
@@ -39,15 +39,18 @@
   
   <div id="stats"><b>@totalAnswerCount answers</b> from <b>@totalSentenceCount sentences</b></div>
 
-
-  <b>Types:</b> 
-  <span id="types">
+<br/>
+@if(answers.filters.size > 0) {
+  <ul class="nav nav-tabs">
+    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0)}">all types</a></li>
 @for((filter, count)<-answers.filters.sortBy(-_._2)) {
   @defining(filters.contains(filter)) { active =>
-    <button id="type-@filter.typ.name" href="foo" class="btn btn-primary @{if(active) "active" else ""}" data-toggle="button" onclick="window.location.href='@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), (if (active) filters - filter else filters + filter).iterator.map(_.typ.name).mkString(","), 0)}'">@filter.displayName (@count)</button>
+    <li class="@{if(active) "active" else ""}"><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.typ.name, 0)}">@filter.displayName (@count)</a></li>
   }
 }
-  </span>
+    <li class="@{if(filters.size > 1) "active" else ""}"><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "other", 0)}">other</a></li>
+  </ul>
+}
 
   <div style="height: 25px"></div>
 
@@ -70,6 +73,7 @@
     </div>
   </div> <!-- /tabbable -->
     <!-- Pagination -->
+@if(pageCount > 1) {
     <div class="pagination" align="center">
         <ul>
 @if(pageno > 0) {
@@ -86,6 +90,7 @@
 }
 @if(pageno + 1 < pageCount) {
             <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "", pageno + 1)}">Next</a></li>
+}
 }
         </ul>
     </div>

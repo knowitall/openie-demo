@@ -1,6 +1,6 @@
 package controllers
 
-import models.{Query, Group, LogEntry, AnswerSet, TypeFilter, TypeFilters}
+import models.{Query, Group, LogEntry, AnswerSet, PositiveTypeFilter, NegativeTypeFilter, TypeFilter, TypeFilters}
 import play.api._
 import play.api.mvc._
 import play.api.data._
@@ -15,8 +15,8 @@ import edu.washington.cs.knowitall.common.Timing
 import edu.washington.cs.knowitall.common.Resource.using
 
 object Application extends Controller {
-  final val PAGE_SIZE = 50
-  final val MAX_SENTENCE_COUNT = 50
+  final val PAGE_SIZE = 30
+  final val MAX_SENTENCE_COUNT = 30
 
   /**
     * The actual definition of the search form.
@@ -52,11 +52,11 @@ object Application extends Controller {
   def submit = Action { implicit request =>
     searchForm.bindFromRequest.fold(
       errors => BadRequest(views.html.index(errors)),
-      query => doSearch(query, Set.empty, 0))
+      query => doSearch(query, "all", 0))
   }
 
-  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filters: String, page: Int) = Action {
-    doSearch(Query.fromStrings(arg1, rel, arg2), filters.split(",").filterNot(_.isEmpty).toSet, page)
+  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int) = Action {
+    doSearch(Query.fromStrings(arg1, rel, arg2), filter, page)
   }
 
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String) = Action {
@@ -98,15 +98,22 @@ object Application extends Controller {
     }
   }
 
-  def doSearch(query: Query, filterStrings: Set[String], pageNumber: Int) = {
-    val filters = filterStrings.map(s => TypeFilter(FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string"))))
-    val answers = searchGroups(query) filter filters
-    Logger.info(query + " with " + filters + " has " + answers.answerCount + " answers " + answers.sentenceCount + " results")
-    val page = answers.page(pageNumber, PAGE_SIZE)
+  def doSearch(query: Query, filterString: String, pageNumber: Int) = {
+    val answers = searchGroups(query)
+
+    val filters = filterString match {
+      case "" | "all" => Set()
+      case "other" => answers.filters.map(filter => NegativeTypeFilter(filter._1.typ))
+      case s => println(s); Set(PositiveTypeFilter(FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string: " + s))))
+    }
+
+    val filtered = answers filter filters
+    Logger.info(query + " with " + filters + " has " + filtered.answerCount + " answers " + filtered.sentenceCount + " results")
+    val page = filtered.page(pageNumber, PAGE_SIZE)
 
     val entry = new LogEntry(query, answers.answerCount, answers.sentenceCount)
     entry.log()
 
-    Ok(views.html.results(searchForm, query, page, answers.answerCount, answers.sentenceCount, filters, pageNumber, math.ceil(answers.groups.size.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT))
+    Ok(views.html.results(searchForm, query, page, filtered.answerCount, filtered.sentenceCount, filters.toSet, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT))
   }
 }
