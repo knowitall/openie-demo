@@ -1,4 +1,4 @@
-@(searchForm: Form[Query], query: Query, answers: AnswerSet, filters: Set[TypeFilter], pageno: Int, pageCount: Int, maxSentenceCount: Int)
+@(searchForm: Form[Query], query: Query, answers: AnswerSet, totalAnswerCount: Int, totalSentenceCount: Int, filters: Set[TypeFilter], pageno: Int, pageCount: Int, maxSentenceCount: Int)
 
 @import helper.twitterBootstrap._
 @import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
@@ -37,7 +37,7 @@
       <button class="btn primary"><i class="icon-search"></i> Search</button>
   }
   
-  <div id="stats"><b>@answers.answerCount answers</b> from <b>@answers.sentenceCount sentences</b></div>
+  <div id="stats"><b>@totalAnswerCount answers</b> from <b>@totalSentenceCount sentences</b></div>
 
 
   <b>Types:</b> 

@@ -107,6 +107,6 @@ object Application extends Controller {
     val entry = new LogEntry(query, answers.answerCount, answers.sentenceCount)
     entry.log()
 
-    Ok(views.html.results(searchForm, query, page, filters, pageNumber, math.ceil(answers.groups.size.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT))
+    Ok(views.html.results(searchForm, query, page, answers.answerCount, answers.sentenceCount, filters, pageNumber, math.ceil(answers.groups.size.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT))
   }
 }
