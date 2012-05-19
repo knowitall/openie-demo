@@ -65,7 +65,7 @@ case class Query(
           arg1Norm = clean(reg.arg1Norm),
           relNorm = clean(reg.relNorm),
           arg2Norm = clean(reg.arg2Norm))
-    } filter filterGroups
+    }.toList filter filterGroups filter (_.instances.size > 0)
 
     val groups = Group.fromExtractionGroups(converted.toList, group).filter(!_.title.text.trim.isEmpty)
 

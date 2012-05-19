@@ -40,11 +40,16 @@ object Group {
   def fromExtractionGroups(reg: Iterable[ExtractionGroup[ReVerbExtraction]],
       group: ExtractionGroup[ReVerbExtraction]=>GroupTitle): Seq[Group] = {
 
-    val groups = ((reg map (reg => (group(reg), reg))).toList groupBy { case (title, reg) => title.parts.map(_.lemma.toLowerCase) }).toList.
-      sortBy { case (text, list) => -list.iterator.map { case (title, reg) => reg.instances.size }.sum }
+    val groups = ((reg map (reg => ((group(reg), reg.instances.size), reg))).toList groupBy { case ((title, size), reg) =>
+        title.parts.map(_.lemma.toLowerCase)
+      }).toList.sortBy { case (text, list) =>
+        -list.iterator.map { case (title, reg) =>
+          reg.instances.size
+        }.sum
+      }
 
     val collapsed: Seq[(GroupTitle, Iterable[ExtractionGroup[ReVerbExtraction]])] = groups.map { case (text, list) =>
-      val (headTitle, _) = list.head
+      val ((headTitle, headTitleSize), _) = list.head
 
       // safe because of our groupBy
       val length = headTitle.parts.length
@@ -53,13 +58,19 @@ object Group {
       var types: Array[Seq[FreeBaseType]] = Array.fill(length)(Seq.empty)
       val parts = for (i <- 0 until length) yield {
         val synonyms: Seq[String] =
-          list.flatMap(_._1.parts(i).synonyms)(scala.collection.breakOut)
+          list.flatMap(_._1._1.parts(i).synonyms)(scala.collection.breakOut)
 
-        val entities: Option[FreeBaseEntity] =
-          list.flatMap(_._1.parts(i).entity).headOption
+        val entities: Option[FreeBaseEntity] = list.flatMap { case ((title, size), _) => title.parts(i).entity.map((_, size)) } match {
+          case Nil => None
+          case entities => Some(entities.mergeHistograms.maxBy(_._2)._1)
+        }
 
         val types: Set[FreeBaseType] =
-          list.flatMap(_._1.parts(i).types)(scala.collection.breakOut)
+          entities.flatMap(entity => list.find { case((title, size), _) =>
+            title.parts(i).entity == Some(entity)
+          }).map { case ((title, size), _) =>
+            title.parts(i).types
+          }.getOrElse(Set.empty)
 
         val sortedUniqueSynonyms =
           synonyms.groupBy(_.toLowerCase).toList.map { case (name, synonyms) =>
@@ -74,8 +85,8 @@ object Group {
     }
 
     collapsed.map { case (title, contents) =>
-      val instances = (contents flatMap (_.instances)).toList sortBy (- _.confidence)
-      val list = instances.map { instance =>
+      val instances = (contents flatMap (c => c.instances.map((c.arg1Entity, _)))).toList sortBy (- _._2.confidence)
+      val list = instances.map { case (e, instance) =>
         val sentence = instance.extraction.sentenceTokens.map(_.string)
         val url = instance.extraction.sourceUrl
         val intervals = List(
