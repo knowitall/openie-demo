@@ -112,10 +112,10 @@
 @if(pageno + 1 < pageCount) {
             <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "", pageno + 1)}">Next</a></li>
 }
-}
         </ul>
     </div>
-    
+}
+
     <div style="height: 60px"></div>
     <div class="freebase-attribution">
         <img alt="Freebase CC-BY" height="23px" style="border: 0;" width="61px" src="http://www.freebase.com/policies/freebase-cc-by-61x23.png"/>
@@ -128,8 +128,7 @@
             licensed under <a href="http://creativecommons.org/licenses/by-sa/2.5/">CC BY-SA</a>
         </div>
     </div>
-    </div>
-  
+
     <script type="text/javascript">
     $.extend({
   getUrlVars: function(){
