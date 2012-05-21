@@ -10,7 +10,7 @@ case class AnswerSet(groups: Seq[Group], filters: Seq[(TypeFilter, Int)]) {
   def filter(filters: Iterable[TypeFilter]) = {
     if (filters.isEmpty) this
     else this.copy(groups = groups filter (group =>
-      group.title.parts.exists(part => filters.exists(_(part)))
+      group.title.parts.exists(part => filters.forall(_(part)))
   ))}
 }
 
