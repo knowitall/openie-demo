@@ -70,7 +70,7 @@ object Group {
             title.parts(i).entity == Some(entity)
           }).map { case ((title, size), _) =>
             title.parts(i).types
-          }.getOrElse(Set.empty)
+          }.getOrElse(Set.empty).filter(typ => typ.domain != "base" && typ.domain != "user")
 
         val sortedUniqueSynonyms =
           synonyms.groupBy(_.toLowerCase).toList.map { case (name, synonyms) =>
