@@ -29,6 +29,7 @@ case class NegativeTypeFilter(override val typ: FreeBaseType) extends TypeFilter
 
 object TypeFilters {
   final val MINIMUM_OCCURRENCE = 2
+  final val MAXIMUM_FILTER_COUNT = 5
 
   def fromGroups(groups: Iterable[Group]) = {
     // build all possible filters
@@ -41,7 +42,7 @@ object TypeFilters {
 
     val ordered = it.histogram.filter { case (filter, count) =>
       count > MINIMUM_OCCURRENCE
-    }.toSeq.sortBy(-_._2).map(_._1)
+    }.toSeq.sortBy(-_._2).map(_._1).take(MAXIMUM_FILTER_COUNT)
 
     ordered
   }
