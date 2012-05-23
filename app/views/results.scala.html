@@ -1,80 +1,9 @@
-@(searchForm: Form[Query], query: Query, answers: AnswerSet, totalAnswerCount: Int, totalSentenceCount: Int, filters: Set[TypeFilter], pageno: Int, pageCount: Int, maxSentenceCount: Int)
+@(searchForm: Form[Query], query: Query, answers: AnswerSet, pageno: Int, pageCount: Int, maxSentenceCount: Int)
 
 @import helper.twitterBootstrap._
 @import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
 
-@helper.main("UW Open Information Extraction", compact=true) {
-  <style>
-    .hid { display: none }
-    .title-entity { font-weight: bold }
-    .answer { font-size: large }
-    .popover-image {
-      float: left;
-      border: 1px solid;
-      margin: 5px;
-    }
-    .close-tab {
-      float: right
-    }
-    
-    .uri-title {
-      font-weight: bold
-    }
-    .uri-body {
-      font-weight: normal
-    }
-    
-    .types-title {
-      font-weight: bold
-    }
-    .types-body {
-      font-weight: normal
-    }
-    
-    .syns-title {
-      font-weight: bold
-    }
-    .syns-body {
-      font-weight: normal
-    }
-  </style>
-  
-  @helper.form(action = routes.Application.submit, 'class -> "well form-inline") {
-      <label for="arg1">Argument 1:</label>
-      <span class="input">
-          <input type="text" id="arg1" name="arg1" value="@query.arg1" >
-          <span class="help-inline"></span>
-      </span>
-      <label for="rel">Relation:</label>
-      <span class="input">
-          <input type="text" id="rel" name="rel" value="@query.rel" >
-          <span class="help-inline"></span>
-      </span>
-      <label for="arg2">Argument 2:</label>
-      <span class="input">
-          <input type="text" id="arg2" name="arg2" value="@query.arg2" >
-          <span class="help-inline"></span>
-      </span>
-      <button class="btn primary"><i class="icon-search"></i> Search</button>
-  }
-  
-  <div id="stats"><b>@totalAnswerCount answers</b> from <b>@totalSentenceCount sentences</b></div>
-
-<br/>
-@if(answers.filters.size > 0) {
-  <ul class="nav nav-tabs">
-    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0)}">all types</a></li>
-@for((filter, count)<-answers.filters.sortBy(-_._2)) {
-  @defining(filters.contains(filter)) { active =>
-    <li class="@{if(active) "active" else ""}"><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.typ.name, 0)}">@filter.displayName (@count)</a></li>
-  }
-}
-    <li class="@{if(filters.size > 1) "active" else ""}"><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "other", 0)}">other</a></li>
-  </ul>
-}
-
-  <div style="height: 25px"></div>
-
+<div id="result-contents">
   <div class="tabbable tabs-left">
     <ul class="nav nav-tabs">
       @for((g, i) <- answers.groups.zipWithIndex) {
@@ -177,4 +106,4 @@
         $active.removeClass('active')
       })
     </script>
-}
+</div>

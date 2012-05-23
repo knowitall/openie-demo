@@ -34,7 +34,7 @@ object Application extends Controller {
       )(Query.fromStrings)(unapply)).verifying("All search fields cannot be empty", { query =>
         query.arg1.isDefined || query.rel.isDefined || query.arg2.isDefined
       })
-  )
+    )
   }
 
   def index = form
@@ -114,6 +114,9 @@ object Application extends Controller {
     val entry = new LogEntry(query, answers.answerCount, answers.sentenceCount)
     entry.log()
 
-    Ok(views.html.results(searchForm, query, page, filtered.answerCount, filtered.sentenceCount, filters.toSet, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT))
+    Ok(
+        views.html.frame.resultsframe(
+            searchForm, query, page, filtered.answerCount, filtered.sentenceCount, filters.toSet)(
+            views.html.results(searchForm, query, page, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT)))
   }
 }

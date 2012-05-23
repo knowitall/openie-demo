@@ -1,0 +1,32 @@
+.hid { display: none }
+.title-entity { font-weight: bold }
+.answer { font-size: large }
+.popover-image {
+  float: left;
+  border: 1px solid;
+  margin: 5px;
+}
+.close-tab {
+  float: right
+}
+
+.uri-title {
+  font-weight: bold
+}
+.uri-body {
+  font-weight: normal
+}
+
+.types-title {
+  font-weight: bold
+}
+.types-body {
+  font-weight: normal
+}
+
+.syns-title {
+  font-weight: bold
+}
+.syns-body {
+  font-weight: normal
+}
