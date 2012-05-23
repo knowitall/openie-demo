@@ -10,6 +10,7 @@ import java.util.regex.Pattern
 import java.io.FileInputStream
 import java.io.ObjectInputStream
 import java.io.File
+import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
 
 
 case class Query(
@@ -36,15 +37,16 @@ case class Query(
     }
 
     def group: REG=>GroupTitle = (this.arg1, this.rel, this.arg2) match {
-      case (Some(TermConstraint(arg1)), None, None) => (eg: REG) => GroupTitle(" ", Seq(part(eg, 'rel), part(eg, 'arg2)))
-      case (None, Some(TermConstraint(rel)), None) => (eg: REG) => GroupTitle(", ", Seq(part(eg, 'arg1), part(eg, 'arg2)))
-      case (None, None, Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle(", ", Seq(part(eg, 'arg1), part(eg, 'rel)))
-
-      case (Some(TermConstraint(arg1)), Some(TermConstraint(rel)), None) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg2)))
-      case (None, Some(TermConstraint(rel)), Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg1)))
-      case (Some(TermConstraint(arg1)), None, Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle("", Seq(part(eg, 'rel)))
-
       case (Some(TermConstraint(arg1)), Some(TermConstraint(rel)), Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg2)))
+
+      case (Some(TermConstraint(arg1)), Some(TermConstraint(rel)), _) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg2)))
+      case (_, Some(TermConstraint(rel)), Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg1)))
+      case (Some(TermConstraint(arg1)), _, Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle("", Seq(part(eg, 'rel)))
+
+      case (Some(TermConstraint(arg1)), _, _) => (eg: REG) => GroupTitle(" ", Seq(part(eg, 'rel), part(eg, 'arg2)))
+      case (_, Some(TermConstraint(rel)), _) => (eg: REG) => GroupTitle(", ", Seq(part(eg, 'arg1), part(eg, 'arg2)))
+      case (_, _, Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle(", ", Seq(part(eg, 'arg1), part(eg, 'rel)))
+
       case _ => (eg: REG) => GroupTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
     }
 
@@ -57,9 +59,22 @@ case class Query(
       case Success(results, num) => results
       case Limited(results, num) => results
       case Timeout(results, num) => results
+    }*/
+
+    val filtered = results.filter { result =>
+      def filterTypes(constraint: Option[Constraint], types: Iterable[FreeBaseType]) = {
+        constraint.map {
+          _ match {
+            case TypeConstraint(typ) => types.exists(_.typ equalsIgnoreCase typ)
+            case _ => true
+          }
+        }.getOrElse(true)
+      }
+
+      filterTypes(this.arg1, result.arg1Types) && filterTypes(this.arg2, result.arg2Types)
     }
 
-    val converted = results.map { reg =>
+    val converted = filtered.map { reg =>
       reg.copy(
           instances = reg.instances filter filterInstances,
           arg1Norm = clean(reg.arg1Norm),
@@ -81,7 +96,7 @@ object Query {
   object Constraint {
     def parse(string: String) = {
       if (string.toLowerCase.startsWith("type:")) {
-        new TypeConstraint(string.drop(5))
+        new TypeConstraint(string.drop(5).replaceAll(" ", "_"))
       }
       else {
         new TermConstraint(string)
