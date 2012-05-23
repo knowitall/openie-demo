@@ -12,7 +12,7 @@
     <li class="@{if(active) "active" else ""}"><a href="#@filter.typ.typ" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.typ.name, 0)}')">@filter.displayName (@count)</a></li>
   }
 }
-    <li class="@{if(filters.size > 1) "active" else ""}"><a href="#other" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "other", 0)}')">other</a></li>
+    <li class="@{if(filterString == "other") "active" else ""}"><a href="#other" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "other", 0)}')">other</a></li>
   </ul>
 }
 
