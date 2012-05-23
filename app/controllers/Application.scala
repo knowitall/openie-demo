@@ -98,7 +98,11 @@ object Application extends Controller {
     }
   }
 
-  def doSearch(query: Query, filterString: String, pageNumber: Int) = {
+  def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int) = Action {
+    doSearch(Query.fromStrings(arg1, rel, arg2), filterString, pageNumber, true)
+  }
+
+  def doSearch(query: Query, filterString: String, pageNumber: Int, justResults: Boolean = false) = {
     val answers = searchGroups(query)
 
     val filters = filterString match {
@@ -114,9 +118,13 @@ object Application extends Controller {
     val entry = new LogEntry(query, answers.answerCount, answers.sentenceCount)
     entry.log()
 
-    Ok(
+    if (justResults) {
+      Ok(views.html.results(query, page, filters.toSet, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT))
+    } else {
+      Ok(
         views.html.frame.resultsframe(
-            searchForm, query, page, filtered.answerCount, filtered.sentenceCount, filters.toSet)(
-            views.html.results(searchForm, query, page, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT)))
+          searchForm, query, page, filtered.answerCount, filtered.sentenceCount)(
+            views.html.results(query, page, filters.toSet, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT)))
+    }
   }
 }

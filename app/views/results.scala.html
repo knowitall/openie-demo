@@ -1,9 +1,23 @@
-@(searchForm: Form[Query], query: Query, answers: AnswerSet, pageno: Int, pageCount: Int, maxSentenceCount: Int)
+@(query: Query, answers: AnswerSet, filters: Set[TypeFilter], pageno: Int, pageCount: Int, maxSentenceCount: Int)
 
 @import helper.twitterBootstrap._
 @import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
 
-<div id="result-contents">
+<br/>
+@if(answers.filters.size > 0) {
+  <ul class="nav nav-tabs">
+    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0)}')">all</a></li>
+@for((filter, count)<-answers.filters.sortBy(-_._2)) {
+  @defining(filters.contains(filter)) { active =>
+    <li class="@{if(active) "active" else ""}"><a href="#@filter.typ.typ" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.typ.name, 0)}')">@filter.displayName (@count)</a></li>
+  }
+}
+    <li class="@{if(filters.size > 1) "active" else ""}"><a href="#other" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "other", 0)}')">other</a></li>
+  </ul>
+}
+
+  <div style="height: 25px"></div>
+
   <div class="tabbable tabs-left">
     <ul class="nav nav-tabs">
       @for((g, i) <- answers.groups.zipWithIndex) {
@@ -106,4 +120,3 @@
         $active.removeClass('active')
       })
     </script>
-</div>
