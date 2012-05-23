@@ -76,6 +76,8 @@ case class Query(
 object Query {
   type REG = ExtractionGroup[ReVerbExtraction]
 
+  final val MAX_ANSWER_LENGTH = 60
+
   object Constraint {
     def parse(string: String) = {
       if (string.toLowerCase.startsWith("type:")) {
@@ -181,7 +183,7 @@ object Query {
     }
 
     def tooLong =
-      arg1clean.length + relclean.length + arg2clean.length > 120
+      inst.extraction.arg1Text.length + inst.extraction.arg2Text.length + inst.extraction.relText.length > MAX_ANSWER_LENGTH
 
     def containsPronoun =
       pronouns.contains(arg1clean) || pronouns.contains(arg2clean)
