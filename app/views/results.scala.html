@@ -1,4 +1,4 @@
-@(query: Query, answers: AnswerSet, filters: Set[TypeFilter], pageno: Int, pageCount: Int, maxSentenceCount: Int)
+@(query: Query, answers: AnswerSet, filters: Set[TypeFilter], filterString: String, pageno: Int, pageCount: Int, maxSentenceCount: Int)
 
 @import helper.twitterBootstrap._
 @import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
@@ -41,19 +41,19 @@
     <div class="pagination" align="center">
         <ul>
 @if(pageno > 0) {
-            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "", pageno - 1)}">Prev</a></li>
+            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno - 1)}">Prev</a></li>
 }
 @for(i <- pageno-4 to pageno-1; if i >= 0) {
-            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "", i)}">@i</a></li>
+            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i)}">@i</a></li>
 }
             <li class="active">
             <a href="#">@pageno</a>
             </li>
 @for(i <- pageno+1 to pageno+4; if i < pageCount) {
-            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "", i)}">@i</a></li>
+            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i)}">@i</a></li>
 }
 @if(pageno + 1 < pageCount) {
-            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "", pageno + 1)}">Next</a></li>
+            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno + 1)}">Next</a></li>
 }
         </ul>
     </div>

@@ -119,12 +119,12 @@ object Application extends Controller {
     entry.log()
 
     if (justResults) {
-      Ok(views.html.results(query, page, filters.toSet, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT))
+      Ok(views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT))
     } else {
       Ok(
         views.html.frame.resultsframe(
           searchForm, query, page, filtered.answerCount, filtered.sentenceCount)(
-            views.html.results(query, page, filters.toSet, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT)))
+            views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT)))
     }
   }
 }
