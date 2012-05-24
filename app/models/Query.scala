@@ -2,6 +2,7 @@ package models
 
 import edu.washington.cs.knowitall.browser.extraction.Instance
 import edu.washington.cs.knowitall.common.Resource.using
+import edu.washington.cs.knowitall.common.Timing
 import edu.washington.cs.knowitall.browser.lucene.ParallelExtractionGroupFetcher
 import edu.washington.cs.knowitall.browser.lucene.{Success, Limited, Timeout}
 import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
@@ -10,6 +11,7 @@ import java.util.regex.Pattern
 import java.io.FileInputStream
 import java.io.ObjectInputStream
 import java.io.File
+import play.api.Logger
 import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
 
 
@@ -55,11 +57,15 @@ case class Query(
       case _ => None
     }
 
-    val results = Query.fetcher.getGroups(query(this.arg1), query(this.rel), query(this.arg2)) match {
-      case Success(results, num) => results
-      case Limited(results, num) => results
-      case Timeout(results, num) => results
+    val (ns, (results, num)) = Timing.time { 
+      Query.fetcher.getGroups(query(this.arg1), query(this.rel), query(this.arg2)) match {
+        case Success(results, num) => (results, num)
+        case Limited(results, num) => (results, num)
+        case Timeout(results, num) => (results, num)
+      }
     }
+
+    Logger.debug(this.toString + " searched with " + num + " results in " + Timing.Seconds.format(ns))
 
     val filtered = results.filter { result =>
       def filterTypes(constraint: Option[Constraint], types: Iterable[FreeBaseType]) = {
