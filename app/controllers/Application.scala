@@ -3,13 +3,14 @@ package controllers
 import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
 import edu.washington.cs.knowitall.common.Timing
 
-import models.{TypeFilters, Query, PositiveTypeFilter, NegativeTypeFilter, LogEntry, AnswerSet}
+import models.{ TypeFilters, Query, PositiveTypeFilter, NegativeTypeFilter, LogEntry, AnswerSet }
 import play.api.Play.current
 import play.api.cache.Cache
-import play.api.data.Forms.{text, optional, mapping}
+import play.api.data.Forms.{ text, optional, mapping }
 import play.api.data.Form
-import play.api.mvc.{Controller, Action}
+import play.api.mvc.{ Controller, Action }
 import play.api.Logger
+import play.api.libs.concurrent
 
 object Application extends Controller {
   final val PAGE_SIZE = 30
@@ -102,28 +103,38 @@ object Application extends Controller {
   }
 
   def doSearch(query: Query, filterString: String, pageNumber: Int, justResults: Boolean = false) = {
-    val answers = searchGroups(query)
+    val maxQueryTime = 20 * 1000 /* ms */
 
-    val filters = filterString match {
-      case "" | "all" => Set()
-      case "other" => answers.filters.map(filter => NegativeTypeFilter(filter._1.typ)).toSet
-      case s => Set(PositiveTypeFilter(FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string: " + s))))
+    val answers = concurrent.Akka.future {
+      searchGroups(query)
     }
 
-    val filtered = answers filter filters
-    Logger.info(query + " with " + filters + " has " + filtered.answerCount + " answers " + filtered.sentenceCount + " results")
-    val page = filtered.page(pageNumber, PAGE_SIZE)
+    Async {
+      answers.orTimeout("Query timeout after " + maxQueryTime + " ms due to high server load.", maxQueryTime).map {
+        case Right(timeout) => InternalServerError(timeout)
+        case Left(answers) =>
+          val filters = filterString match {
+            case "" | "all" => Set()
+            case "other" => answers.filters.map(filter => NegativeTypeFilter(filter._1.typ)).toSet
+            case s => Set(PositiveTypeFilter(FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string: " + s))))
+          }
 
-    val entry = new LogEntry(query, answers.answerCount, answers.sentenceCount)
-    entry.log()
+          val filtered = answers filter filters
+          Logger.info(query + " with " + filters + " has " + filtered.answerCount + " answers " + filtered.sentenceCount + " results")
+          val page = filtered.page(pageNumber, PAGE_SIZE)
 
-    if (justResults) {
-      Ok(views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug))
-    } else {
-      Ok(
-        views.html.frame.resultsframe(
-          searchForm, query, page, filtered.answerCount, filtered.sentenceCount)(
-            views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+          val entry = new LogEntry(query, answers.answerCount, answers.sentenceCount)
+          entry.log()
+
+          if (justResults) {
+            Ok(views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug))
+          } else {
+            Ok(
+              views.html.frame.resultsframe(
+                searchForm, query, page, filtered.answerCount, filtered.sentenceCount)(
+                  views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+          }
+      }
     }
   }
 }
