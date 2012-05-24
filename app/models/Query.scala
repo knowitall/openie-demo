@@ -96,12 +96,17 @@ case class Query(
       filterPart(this.arg1, result.arg1Entity, result.arg1Types) && filterPart(this.arg2, result.arg2Entity, result.arg2Types)
     }
 
+    def entityFilter(entity: FreeBaseEntity) =
+      entity.score > ENTITY_SCORE_THRESHOLD
+
     val converted = filtered.map { reg =>
       reg.copy(
           instances = reg.instances filter filterInstances,
           arg1Norm = clean(reg.arg1Norm),
           relNorm = clean(reg.relNorm),
-          arg2Norm = clean(reg.arg2Norm))
+          arg2Norm = clean(reg.arg2Norm),
+          arg1Entity = reg.arg1Entity filter entityFilter,
+          arg2Entity = reg.arg2Entity filter entityFilter)
     }.toList filter filterGroups filter (_.instances.size > 0)
 
     val groups = Group.fromExtractionGroups(converted.toList, group).filter(!_.title.text.trim.isEmpty)
@@ -159,6 +164,7 @@ object Query {
       */
 
   private final val CONFIDENCE_THRESHOLD: Double = 0.5
+  private final val ENTITY_SCORE_THRESHOLD: Double = 2.0
   private final val pronouns: Set[String] = Set("he", "she", "they", "them",
    "that", "this", "who", "whom", "i", "you", "him", "her", "we",
    "it", "the", "a", "an")
@@ -207,7 +213,7 @@ object Query {
     clean
   }
 
-  def filterInstances(inst: Instance[ReVerbExtraction]): Boolean = {
+  private def filterInstances(inst: Instance[ReVerbExtraction]): Boolean = {
     def clean(arg: String) = {
       var clean = this.clean(arg.trim)
 
@@ -264,12 +270,27 @@ object Query {
     }
   }
 
-  def filterGroups(group: ExtractionGroup[ReVerbExtraction]): Boolean = {
+  private def filterGroups(group: ExtractionGroup[ReVerbExtraction]): Boolean = {
     if (group.arg1Norm.trim.isEmpty || group.relNorm.trim.isEmpty || group.arg2Norm.trim.isEmpty) {
       false
     }
     else {
       true
     }
+  }
+
+  private def mapGroup(group: ExtractionGroup[ReVerbExtraction]): ExtractionGroup[ReVerbExtraction] = {
+    def entityFilter(entity: FreeBaseEntity) =
+      entity.score > ENTITY_SCORE_THRESHOLD
+
+    new ExtractionGroup[ReVerbExtraction](
+        group.arg1Norm,
+        group.relNorm,
+        group.arg2Norm,
+        group.arg1Entity filter entityFilter,
+        group.arg2Entity filter entityFilter,
+        group.arg1Types,
+        group.arg2Types,
+        group.instances)
   }
 }
