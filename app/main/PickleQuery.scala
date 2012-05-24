@@ -1,10 +1,9 @@
 import models.Query
-
 import java.io.{ File, FileOutputStream, FileInputStream, ObjectOutputStream, ObjectInputStream }
-import edu.washington.cs.knowitall.browser.lucene.{Success, Limited, Timeout}
-
 import edu.washington.cs.knowitall.common.Resource.using
+import edu.washington.cs.knowitall.browser.lucene.Success
 
+/*
 object PickleQuery extends App {
   def so(string: String) = if (string == "" || string == "none") None else Some(string)
 
@@ -38,3 +37,4 @@ object PickleQuery extends App {
     println("done.")
   }
 }
+*/

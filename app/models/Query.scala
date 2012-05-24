@@ -13,6 +13,10 @@ import java.io.ObjectInputStream
 import java.io.File
 import play.api.Logger
 import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
+import akka.actor.TypedActor
+import akka.actor.ActorSystem
+import akka.actor.TypedProps
+import edu.washington.cs.knowitall.browser.lucene.LuceneFetcher
 
 
 case class Query(
@@ -63,11 +67,11 @@ case class Query(
     }
 
     val spec = QuerySpec(query(this.arg1), query(this.rel), query(this.arg2), None, None, queryTypes(this.arg1), queryTypes(this.arg2))
-    val (ns, (results, num)) = Timing.time { 
-      Query.fetcher.getGroups(spec) match {
-        case Success(results, num) => (results, num)
-        case Limited(results, num) => (results, num)
-        case Timeout(results, num) => (results, num)
+    val (ns, (results, num)) = Timing.time {
+      Query.fetcher.fetch(spec) match {
+        case Success(results, instanceCount) => (results, instanceCount)
+        case Limited(results, instanceCount, totalGroupCount) => (results, instanceCount)
+        case Timeout(results, instanceCount, totalGroupCount) => (results, instanceCount)
       }
     }
 
@@ -127,7 +131,20 @@ object Query {
     "/scratch2/common/openie-demo/test-index-0.0.5",
     "/scratch3/common/openie-demo/test-index-0.0.5",
     "/scratch4/common/openie-demo/test-index-0.0.5")
-  val fetcher = new ParallelExtractionGroupFetcher(paths, 2000, 10000)
+
+  val system = ActorSystem("client")
+  val fetcher = TypedActor(system).typedActorOf(TypedProps[LuceneFetcher](), system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
+
+  /*
+  val fetcher = new ParallelExtractionGroupFetcher(
+      paths,
+      /* max search groups (20k) */
+      20000,
+      /* max read instances (10k) */
+      10000,
+      /* timout in millis (10s) */
+      10000)
+      */
 
   private final val CONFIDENCE_THRESHOLD: Double = 0.5
   private final val pronouns: Set[String] = Set("he", "she", "they", "them",
