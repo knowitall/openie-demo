@@ -13,6 +13,8 @@ import java.io.ObjectInputStream
 import java.io.File
 import play.api.Logger
 import edu.washington.cs.knowitall.browser.extraction.{ FreeBaseType, FreeBaseEntity }
+import play.api.Play.current
+import play.api.libs.concurrent.Akka
 import akka.actor.TypedActor
 import akka.actor.ActorSystem
 import akka.actor.TypedProps
@@ -149,8 +151,7 @@ object Query {
     "/scratch3/common/openie-demo/test-index-0.0.5",
     "/scratch4/common/openie-demo/test-index-0.0.5")
 
-  val system = ActorSystem("client")
-  val fetcher = TypedActor(system).typedActorOf(TypedProps[LuceneFetcher](), system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
+  val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
 
   /*
   val fetcher = new ParallelExtractionGroupFetcher(
