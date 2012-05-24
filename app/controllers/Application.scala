@@ -16,8 +16,6 @@ object Application extends Controller {
   final val PAGE_SIZE = 30
   final val MAX_SENTENCE_COUNT = 30
 
-  val debug = false
-
   /**
     * The actual definition of the search form.
     */
@@ -55,8 +53,8 @@ object Application extends Controller {
       query => doSearch(query, "all", 0))
   }
 
-  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int) = Action {
-    doSearch(Query.fromStrings(arg1, rel, arg2), filter, page)
+  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean) = Action {
+    doSearch(Query.fromStrings(arg1, rel, arg2), filter, page, debug)
   }
 
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String) = Action {
@@ -98,11 +96,11 @@ object Application extends Controller {
     }
   }
 
-  def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int) = Action {
-    doSearch(Query.fromStrings(arg1, rel, arg2), filterString, pageNumber, true)
+  def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, debug: Boolean = false) = Action {
+    doSearch(Query.fromStrings(arg1, rel, arg2), filterString, pageNumber, debug, true)
   }
 
-  def doSearch(query: Query, filterString: String, pageNumber: Int, justResults: Boolean = false) = {
+  def doSearch(query: Query, filterString: String, pageNumber: Int, debug: Boolean = false, justResults: Boolean = false) = {
     val maxQueryTime = 20 * 1000 /* ms */
 
     val answers = concurrent.Akka.future {

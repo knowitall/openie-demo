@@ -6,13 +6,13 @@
 <br/>
 @if(answers.filters.size > 0) {
   <ul class="nav nav-tabs">
-    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0)}')">all</a></li>
+    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all</a></li>
 @for((filter, count)<-answers.filters.sortBy(-_._2)) {
   @defining(filters.contains(filter)) { active =>
-    <li class="@{if(active) "active" else ""}"><a href="#@filter.typ.typ" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.typ.name, 0)}')">@filter.displayName (@count)</a></li>
+    <li class="@{if(active) "active" else ""}"><a href="#@filter.typ.typ" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.typ.name, 0, debug)}')">@filter.displayName (@count)</a></li>
   }
 }
-    <li class="@{if(filterString == "other") "active" else ""}"><a href="#other" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "other", 0)}')">other</a></li>
+    <li class="@{if(filterString == "other") "active" else ""}"><a href="#other" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "other", 0, debug)}')">other</a></li>
   </ul>
 }
 
@@ -41,19 +41,19 @@
     <div class="pagination" align="center">
         <ul>
 @if(pageno > 0) {
-            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno - 1)}">Prev</a></li>
+            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno - 1, debug)}">Prev</a></li>
 }
 @for(i <- pageno-4 to pageno-1; if i >= 0) {
-            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i)}">@i</a></li>
+            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i, debug)}">@i</a></li>
 }
             <li class="active">
             <a href="#">@pageno</a>
             </li>
 @for(i <- pageno+1 to pageno+4; if i < pageCount) {
-            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i)}">@i</a></li>
+            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i, debug)}">@i</a></li>
 }
 @if(pageno + 1 < pageCount) {
-            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno + 1)}">Next</a></li>
+            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno + 1, debug)}">Next</a></li>
 }
         </ul>
     </div>
