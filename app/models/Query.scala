@@ -12,7 +12,7 @@ import java.io.FileInputStream
 import java.io.ObjectInputStream
 import java.io.File
 import play.api.Logger
-import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
+import edu.washington.cs.knowitall.browser.extraction.{ FreeBaseType, FreeBaseEntity }
 import akka.actor.TypedActor
 import akka.actor.ActorSystem
 import akka.actor.TypedProps
@@ -66,7 +66,12 @@ case class Query(
       case _ => None
     }
 
-    val spec = QuerySpec(query(this.arg1), query(this.rel), query(this.arg2), None, None, queryTypes(this.arg1), queryTypes(this.arg2))
+    def queryEntity(constraint: Option[Query.Constraint]): Option[String] = constraint match {
+      case Some(EntityConstraint(entity)) => Some(entity)
+      case _ => None
+    }
+
+    val spec = QuerySpec(query(this.arg1), query(this.rel), query(this.arg2), queryEntity(this.arg1), queryEntity(this.arg2), queryTypes(this.arg1), queryTypes(this.arg2))
     val (ns, (results, num)) = Timing.time {
       Query.fetcher.fetch(spec) match {
         case Success(results, instanceCount) => (results, instanceCount)
@@ -78,16 +83,17 @@ case class Query(
     Logger.debug(spec.toString + " searched with " + num + " results in " + Timing.Seconds.format(ns))
 
     val filtered = results.filter { result =>
-      def filterTypes(constraint: Option[Constraint], types: Iterable[FreeBaseType]) = {
+      def filterPart(constraint: Option[Constraint], entity: Option[FreeBaseEntity], types: Iterable[FreeBaseType]) = {
         constraint.map {
           _ match {
             case TypeConstraint(typ) => types.exists(_.typ equalsIgnoreCase typ)
+            case EntityConstraint(ent) => entity.exists(_.name equalsIgnoreCase ent)
             case _ => true
           }
         }.getOrElse(true)
       }
 
-      filterTypes(this.arg1, result.arg1Types) && filterTypes(this.arg2, result.arg2Types)
+      filterPart(this.arg1, result.arg1Entity, result.arg1Types) && filterPart(this.arg2, result.arg2Entity, result.arg2Types)
     }
 
     val converted = filtered.map { reg =>
@@ -114,6 +120,9 @@ object Query {
       if (string.toLowerCase.startsWith("type:")) {
         new TypeConstraint(string.drop(5).replaceAll(" ", "_"))
       }
+      else if (string.toLowerCase.startsWith("entity:")) {
+        new EntityConstraint(string.drop(7))
+      }
       else {
         new TermConstraint(string)
       }
@@ -125,6 +134,9 @@ object Query {
   }
   case class TypeConstraint(typ: String) extends Constraint {
     override def toString = "type:" + typ
+  }
+  case class EntityConstraint(entity: String) extends Constraint {
+    override def toString = "entity:" + entity
   }
 
   val paths = Seq("/scratch/common/openie-demo/test-index-0.0.5",
