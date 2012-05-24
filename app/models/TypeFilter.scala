@@ -31,7 +31,7 @@ object TypeFilters {
   final val MINIMUM_OCCURRENCE = 2
   final val MAXIMUM_FILTER_COUNT = 5
 
-  def fromGroups(groups: Iterable[Group]) = {
+  def fromGroups(groups: Iterable[Group]): Seq[TypeFilter] = {
     // build all possible filters
     val it = for {
       group <- groups
@@ -40,10 +40,24 @@ object TypeFilters {
       if typ.domain != "base" && typ.domain != "user"
     } yield (PositiveTypeFilter(typ))
 
+    // order the filters and take the top few
     val ordered = it.histogram.filter { case (filter, count) =>
       count > MINIMUM_OCCURRENCE
     }.toSeq.sortBy(-_._2).map(_._1).take(MAXIMUM_FILTER_COUNT)
 
-    ordered
+    val grouped = ordered.map(filter =>
+      (filter, groups.toSet filter
+          (group => group.title.parts exists filter.apply)))
+
+    // remove groups that are a proper subset of another
+    val filtered = grouped filter { case (filter, groups) =>
+      !grouped.exists { case (otherFilter, otherGroups) =>
+        !(filter eq otherFilter) &&
+          otherGroups.size > groups.size &&
+          groups.forall(otherGroups.contains)
+      }
+    }
+
+    filtered.map(_._1).toSeq
   }
 }
