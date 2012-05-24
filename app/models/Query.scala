@@ -4,7 +4,7 @@ import edu.washington.cs.knowitall.browser.extraction.Instance
 import edu.washington.cs.knowitall.common.Resource.using
 import edu.washington.cs.knowitall.common.Timing
 import edu.washington.cs.knowitall.browser.lucene.ParallelExtractionGroupFetcher
-import edu.washington.cs.knowitall.browser.lucene.{Success, Limited, Timeout}
+import edu.washington.cs.knowitall.browser.lucene.{QuerySpec, Success, Limited, Timeout}
 import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
 import edu.washington.cs.knowitall.browser.extraction.ReVerbExtraction
 import java.util.regex.Pattern
@@ -57,15 +57,21 @@ case class Query(
       case _ => None
     }
 
+    def queryTypes(constraint: Option[Query.Constraint]): Option[String] = constraint match {
+      case Some(TypeConstraint(typ)) => Some(typ)
+      case _ => None
+    }
+
+    val spec = QuerySpec(query(this.arg1), query(this.rel), query(this.arg2), None, None, queryTypes(this.arg1), queryTypes(this.arg2))
     val (ns, (results, num)) = Timing.time { 
-      Query.fetcher.getGroups(query(this.arg1), query(this.rel), query(this.arg2)) match {
+      Query.fetcher.getGroups(spec) match {
         case Success(results, num) => (results, num)
         case Limited(results, num) => (results, num)
         case Timeout(results, num) => (results, num)
       }
     }
 
-    Logger.debug(this.toString + " searched with " + num + " results in " + Timing.Seconds.format(ns))
+    Logger.debug(spec.toString + " searched with " + num + " results in " + Timing.Seconds.format(ns))
 
     val filtered = results.filter { result =>
       def filterTypes(constraint: Option[Constraint], types: Iterable[FreeBaseType]) = {
