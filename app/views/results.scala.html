@@ -1,4 +1,4 @@
-@(query: Query, answers: AnswerSet, filters: Set[TypeFilter], filterString: String, pageno: Int, pageCount: Int, maxSentenceCount: Int)
+@(query: Query, answers: AnswerSet, filters: Set[TypeFilter], filterString: String, pageno: Int, pageCount: Int, maxSentenceCount: Int, debug: Boolean)
 
 @import helper.twitterBootstrap._
 @import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
@@ -21,7 +21,7 @@
   <div class="tabbable tabs-left">
     <ul class="nav nav-tabs">
       @for((g, i) <- answers.groups.zipWithIndex) {
-      <li><a href="#L@{i}" class="answer" data-toggle="tab">@helper.grouptitle(g.title) (@g.contents.size)</a></li>
+      <li><a href="#L@{i}" class="answer" data-toggle="tab">@helper.grouptitle(g.title, debug) (@g.contents.size)</a></li>
       }
     </ul>
     <div class="tab-content">

@@ -18,6 +18,8 @@ object Application extends Controller {
   final val PAGE_SIZE = 30
   final val MAX_SENTENCE_COUNT = 30
 
+  val debug = false
+
   /**
     * The actual definition of the search form.
     */
@@ -119,12 +121,12 @@ object Application extends Controller {
     entry.log()
 
     if (justResults) {
-      Ok(views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT))
+      Ok(views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug))
     } else {
       Ok(
         views.html.frame.resultsframe(
           searchForm, query, page, filtered.answerCount, filtered.sentenceCount)(
-            views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT)))
+            views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
     }
   }
 }
