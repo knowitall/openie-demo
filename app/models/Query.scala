@@ -59,7 +59,7 @@ case class Query(
       case Success(results, num) => results
       case Limited(results, num) => results
       case Timeout(results, num) => results
-    }*/
+    }
 
     val filtered = results.filter { result =>
       def filterTypes(constraint: Option[Constraint], types: Iterable[FreeBaseType]) = {
