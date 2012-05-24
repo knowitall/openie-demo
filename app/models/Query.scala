@@ -70,15 +70,17 @@ case class Query(
     }
 
     val spec = QuerySpec(query(this.arg1), query(this.rel), query(this.arg2), queryEntity(this.arg1), queryEntity(this.arg2), queryTypes(this.arg1), queryTypes(this.arg2))
-    val (ns, (results, num)) = Timing.time {
-      Query.fetcher.fetch(spec) match {
-        case Success(results, instanceCount) => (results, instanceCount)
-        case Limited(results, instanceCount, totalGroupCount) => (results, instanceCount)
-        case Timeout(results, instanceCount, totalGroupCount) => (results, instanceCount)
-      }
+    val (ns, result) = Timing.time {
+      Query.fetcher.fetch(spec)
     }
 
-    Logger.debug(spec.toString + " searched with " + num + " results in " + Timing.Seconds.format(ns))
+    val (results, num) = result match {
+      case Success(results, instanceCount) => (results, instanceCount)
+      case Limited(results, instanceCount, totalGroupCount) => (results, instanceCount)
+      case Timeout(results, instanceCount, totalGroupCount) => (results, instanceCount)
+    }
+
+    Logger.debug(spec.toString + " searched with " + result.getClass.getSimpleName + " in " + Timing.Seconds.format(ns))
 
     val filtered = results.filter { result =>
       def filterPart(constraint: Option[Constraint], entity: Option[FreeBaseEntity], types: Iterable[FreeBaseType]) = {
