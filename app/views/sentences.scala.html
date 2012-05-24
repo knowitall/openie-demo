@@ -1,7 +1,7 @@
-@(group: Group)
+@(group: Group, debug: Boolean)
 
 @import helper.twitterBootstrap._
 
 @helper.main("UW Open Information Extraction", compact=true) {
-  @helper.sentences(group)
+  @helper.sentences(group, debug)
 }

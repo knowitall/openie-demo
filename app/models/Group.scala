@@ -23,7 +23,7 @@ case class GroupTitle(connector: String, parts: Seq[GroupTitlePart]) {
 case class Group(title: GroupTitle, contents: List[Content])
 
 @SerialVersionUID(45L)
-case class Content(strings: List[String], url: String, intervals: List[Interval]) {
+case class Content(strings: List[String], url: String, intervals: List[Interval], confidence: Double) {
   def sentence = strings.mkString(" ")
 }
 
@@ -84,7 +84,7 @@ object Group {
             instance.extraction.arg1Interval,
             instance.extraction.relInterval,
             instance.extraction.arg2Interval)
-        Content(sentence.toList.map(Query.clean), url, intervals)
+        Content(sentence.toList.map(Query.clean), url, intervals, instance.confidence)
       }.toList
 
       Group(title, list)

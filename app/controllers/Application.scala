@@ -57,7 +57,7 @@ object Application extends Controller {
     doSearch(Query.fromStrings(arg1, rel, arg2), filter, page, debug)
   }
 
-  def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String) = Action {
+  def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean) = Action {
     val query = Query.fromStrings(arg1, rel, arg2)
     Logger.info("Showing sentences for title " + title + " in " + query)
     val group = searchGroups(query).groups.find(_.title.text == title) match {
@@ -65,7 +65,7 @@ object Application extends Controller {
       case Some(group) => group
     }
 
-    Ok(views.html.sentences(group))
+    Ok(views.html.sentences(group, debug))
   }
 
   def logs(year: Int, month: Int, day: Int) = Action {
