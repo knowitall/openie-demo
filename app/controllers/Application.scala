@@ -1,18 +1,15 @@
 package controllers
 
-import models.{Query, Group, LogEntry, AnswerSet, PositiveTypeFilter, NegativeTypeFilter, TypeFilter, TypeFilters}
-import play.api._
-import play.api.mvc._
-import play.api.data._
-import play.api.data.Forms._
-import play.api.cache.Cache
-import play.api.Play.current
-
-import edu.washington.cs.knowitall.browser.lucene.ExtractionGroupFetcher
 import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
-
 import edu.washington.cs.knowitall.common.Timing
-import edu.washington.cs.knowitall.common.Resource.using
+
+import models.{TypeFilters, Query, PositiveTypeFilter, NegativeTypeFilter, LogEntry, AnswerSet}
+import play.api.Play.current
+import play.api.cache.Cache
+import play.api.data.Forms.{text, optional, mapping}
+import play.api.data.Form
+import play.api.mvc.{Controller, Action}
+import play.api.Logger
 
 object Application extends Controller {
   final val PAGE_SIZE = 30

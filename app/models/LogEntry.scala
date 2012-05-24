@@ -1,14 +1,12 @@
 package models
 
-import play.api.Logger
-
-import scala.actors.Futures.future
-
 import java.io.{PrintWriter, FileOutputStream, File}
-import java.util.{Calendar, Date}
+import java.util.{Date, Calendar}
 
-import LogEntry.{LOG_DIRECTORY_FILE}
 import edu.washington.cs.knowitall.common.Resource.using
+
+import LogEntry.LOG_DIRECTORY_FILE
+import play.api.Logger
 
 case class LogEntry (
   query: Query,

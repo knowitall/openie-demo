@@ -1,7 +1,7 @@
 package models
 
 import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
-import edu.washington.cs.knowitall.common.enrich.Traversables._
+import edu.washington.cs.knowitall.common.enrich.Traversables.traversableOnceTo
 
 sealed abstract trait TypeFilter {
   def typ: FreeBaseType

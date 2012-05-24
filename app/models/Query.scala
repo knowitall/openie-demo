@@ -1,24 +1,20 @@
 package models
 
-import edu.washington.cs.knowitall.browser.extraction.Instance
+import java.io.{ObjectInputStream, FileInputStream, File}
+import java.util.regex.Pattern
+
+import scala.Option.option2Iterable
+
+import edu.washington.cs.knowitall.browser.extraction.{ReVerbExtraction, FreeBaseType, FreeBaseEntity, Instance, ExtractionGroup}
+import edu.washington.cs.knowitall.browser.lucene.{Timeout, Success, QuerySpec, LuceneFetcher, Limited}
 import edu.washington.cs.knowitall.common.Resource.using
 import edu.washington.cs.knowitall.common.Timing
-import edu.washington.cs.knowitall.browser.lucene.ParallelExtractionGroupFetcher
-import edu.washington.cs.knowitall.browser.lucene.{QuerySpec, Success, Limited, Timeout}
-import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
-import edu.washington.cs.knowitall.browser.extraction.ReVerbExtraction
-import java.util.regex.Pattern
-import java.io.FileInputStream
-import java.io.ObjectInputStream
-import java.io.File
-import play.api.Logger
-import edu.washington.cs.knowitall.browser.extraction.{ FreeBaseType, FreeBaseEntity }
+
+import Query.{filterInstances, filterGroups, clean, TypeConstraint, TermConstraint, REG, EntityConstraint, ENTITY_SCORE_THRESHOLD, Constraint}
+import akka.actor.{TypedProps, TypedActor}
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
-import akka.actor.TypedActor
-import akka.actor.ActorSystem
-import akka.actor.TypedProps
-import edu.washington.cs.knowitall.browser.lucene.LuceneFetcher
+import play.api.Logger
 
 
 case class Query(

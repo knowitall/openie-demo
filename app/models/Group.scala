@@ -1,19 +1,10 @@
 package models
 
-import java.util.regex.Pattern
+import scala.Option.option2Iterable
 
-import scala.collection.JavaConverters._
-
+import edu.washington.cs.knowitall.browser.extraction.{ReVerbExtraction, FreeBaseType, FreeBaseEntity, ExtractionGroup}
 import edu.washington.cs.knowitall.collection.immutable.Interval
-import edu.washington.cs.knowitall.common.enrich.Traversables._
-import edu.washington.cs.knowitall.commonlib.Range
-
-import edu.washington.cs.knowitall.browser.lucene.ExtractionGroupFetcher
-import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
-import edu.washington.cs.knowitall.browser.extraction.ReVerbExtraction
-import edu.washington.cs.knowitall.browser.extraction.Instance
-import edu.washington.cs.knowitall.browser.extraction.FreeBaseEntity
-import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
+import edu.washington.cs.knowitall.common.enrich.Traversables.traversableOncePairIntTo
 
 @SerialVersionUID(42L)
 case class GroupTitlePart(lemma: String, synonyms: Seq[String], entity: Option[FreeBaseEntity], types: Set[FreeBaseType]) {
