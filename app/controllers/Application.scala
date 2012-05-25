@@ -73,6 +73,7 @@ object Application extends Controller {
   }
 
   def searchGroups(query: Query) = {
+    Logger.debug("incoming " + query)
     Cache.getAs[AnswerSet](query.toString) match {
       case Some(answers) =>
         val AnswerSet(groups, filters) = answers
@@ -109,7 +110,7 @@ object Application extends Controller {
 
     Async {
       answers.orTimeout("Query timeout after " + maxQueryTime + " ms due to high server load.", maxQueryTime).map {
-        case Right(timeout) => InternalServerError(timeout)
+        case Right(timeout) => Logger.warn(query.toString + "timed out after " + maxQueryTime + " ms"); InternalServerError(timeout)
         case Left(answers) =>
           val filters = filterString match {
             case "" | "all" => Set()
