@@ -74,10 +74,10 @@ case class Query(
       Query.fetcher.fetch(spec)
     }
 
-    val (results, num) = result match {
-      case Success(results, instanceCount) => (results, instanceCount)
-      case Limited(results, instanceCount, totalGroupCount) => (results, instanceCount)
-      case Timeout(results, instanceCount, totalGroupCount) => (results, instanceCount)
+    val results = result match {
+      case Success(results) => results
+      case Limited(results, totalGroupCount) => results
+      case Timeout(results, totalGroupCount) => results
     }
 
     Logger.debug(spec.toString + " searched with " + result.getClass.getSimpleName + " in " + Timing.Seconds.format(ns))
