@@ -20,10 +20,16 @@
         <div class="container">
             <div class="page-header">
                 <div class="hidden-phone">
-                    <h1><a href="@routes.Application.index"><img src="@if(compact) { @routes.Assets.at("images/textrunner-small.jpg") } else { @routes.Assets.at("images/textrunner.jpg") }"></a> UW Open Information Extraction</h1>
+                    <h1>
+                      <a href="@routes.Application.index"><img src="@if(compact) { @routes.Assets.at("images/textrunner-small.jpg") } else { @routes.Assets.at("images/textrunner.jpg") }"></a>
+                      Open Information Extraction
+                      @if(!compact) {
+                      <a href="http://www.cs.washington.edu/research/knowitall/" class="pull-right"><img src="@routes.Assets.at("images/turing.png")"></a>
+                      }
+                    </h1>
                 </div>
                 <div class="visible-phone">
-                    <h1><a href="@routes.Application.index"><img src="@routes.Assets.at("images/textrunner-small.jpg")"></a> UW OpenIE</h1>
+                    <h1><a href="@routes.Application.index"><img align="right" src="@routes.Assets.at("images/textrunner-small.jpg")"></a> UW OpenIE</h1>
                 </div>
             </div>
        
