@@ -2,20 +2,18 @@ package models
 
 import java.io.{ObjectInputStream, FileInputStream, File}
 import java.util.regex.Pattern
-
 import scala.Option.option2Iterable
-
 import edu.washington.cs.knowitall.browser.extraction.{ReVerbExtraction, FreeBaseType, FreeBaseEntity, Instance, ExtractionGroup}
 import edu.washington.cs.knowitall.browser.lucene
 import edu.washington.cs.knowitall.browser.lucene.{Timeout, Success, QuerySpec, LuceneFetcher, Limited}
 import edu.washington.cs.knowitall.common.Resource.using
 import edu.washington.cs.knowitall.common.Timing
-
 import Query.{filterInstances, filterGroups, clean, TypeConstraint, TermConstraint, REG, EntityConstraint, ENTITY_SCORE_THRESHOLD, Constraint}
 import akka.actor.{TypedProps, TypedActor}
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import play.api.Logger
+import edu.washington.cs.knowitall.browser.extraction.InstanceDeduplicator
 
 
 case class Query(
@@ -83,9 +81,10 @@ case class Query(
       case lucene.Timeout(results, hitCount) => (results, hitCount)
     }
 
-    Logger.debug(spec.toString + " searched with " + results.size + " results (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(ns))
+    val deduped = results map InstanceDeduplicator.deduplicate
+    Logger.debug(spec.toString + " searched with " + deduped.size + " results (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(ns))
 
-    val filtered = results.filter { result =>
+    val filtered = deduped.filter { result =>
       def filterPart(constraint: Option[Constraint], entity: Option[FreeBaseEntity], types: Iterable[FreeBaseType]) = {
         constraint.map {
           _ match {
