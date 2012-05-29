@@ -132,7 +132,7 @@ object Application extends Controller {
         case Left((answers, message)) =>
           val filters = filterString match {
             case "" | "all" => Set()
-            case "other" => answers.filters.map(filter => NegativeTypeFilter(filter._1.typ)).toSet
+            case "other" => answers.filters.map(tab => NegativeTypeFilter(tab.filter.typ)).toSet
             case s => Set(PositiveTypeFilter(FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string: " + s))))
           }
 

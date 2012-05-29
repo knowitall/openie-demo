@@ -27,7 +27,7 @@ case class NegativeTypeFilter(override val typ: FreeBaseType) extends TypeFilter
 
 object TypeFilters {
   final val MINIMUM_OCCURRENCE = 2
-  final val MAXIMUM_FILTER_COUNT = 5
+  final val MAXIMUM_FILTER_COUNT = 25
 
   def fromGroups(query: Query, groups: Iterable[Group], debug: Boolean): Seq[TypeFilter] = {
     if (query.full) Seq.empty
@@ -53,15 +53,14 @@ object TypeFilters {
             (group => group.title.parts exists filter.apply)))
 
         // remove groups that are a proper subset of another
-        /*
         val filtered = grouped filter { case (filter, groups) =>
           !grouped.exists { case (otherFilter, otherGroups) =>
             !(filter eq otherFilter) &&
               otherGroups.size > groups.size &&
-              groups.forall(otherGroups.contains)
+              groups.forall(otherGroups.contains) &&
+              groups.size > 9 * otherGroups.size / 10
           }
         }
-        */
 
         grouped.map(_._1).toSeq
       }

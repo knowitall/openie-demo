@@ -7,10 +7,22 @@
 @if(answers.filters.size > 0) {
   <ul class="nav nav-tabs">
     <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all</a></li>
-@for((filter, count)<-answers.filters.sortBy(-_._2)) {
+@for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(5)) {
   @defining(filters.contains(filter)) { active =>
     <li class="@{if(active) "active" else ""}"><a href="#@filter.typ.typ" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.typ.name, 0, debug)}')">@filter.displayName (@count)</a></li>
   }
+}
+@if(answers.filters.size > 5) {
+  <li class="dropdown">
+    <a class="dropdown-toggle" data-toggle="dropdown" href="#">more <b class="caret"></b></a>
+    <ul class="dropdown-menu">
+    @for(TypeFilterTab(filter, count)<-answers.filters.iterator.drop(5)) {
+      @defining(filters.contains(filter)) { active =>
+        <li class="@{if(active) "active" else ""}"><a href="#@filter.typ.typ" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.typ.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+      }
+    }
+    </ul>
+  </li>
 }
     <li class="@{if(filterString == "other") "active" else ""}"><a href="#other" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "other", 0, debug)}')">other</a></li>
   </ul>
@@ -118,5 +130,10 @@
       $('.close-tab').click(function() {
         var $active = $('.tab-content').find('> .active')
         $active.removeClass('active')
+      })
+      
+      $('#moreDropdown').click(function (e) {
+        e.preventDefault();
+        $(this).tab('show');
       })
     </script>

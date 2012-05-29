@@ -1,6 +1,9 @@
 package models
 
-case class AnswerSet(groups: Seq[Group], filters: Seq[(TypeFilter, Int)]) {
+import scala.collection.immutable
+import org.apache.http.annotation.Immutable
+
+case class AnswerSet(groups: Seq[Group], filters: immutable.SortedSet[TypeFilterTab]) {
   def answerCount = groups.size
   def sentenceCount = groups.iterator.map(_.contents.size).sum
 
@@ -16,6 +19,15 @@ case class AnswerSet(groups: Seq[Group], filters: Seq[(TypeFilter, Int)]) {
 
 object AnswerSet {
   def from(groups: Seq[Group], filters: Seq[TypeFilter]) = {
-    this(groups, filters.map(filter => (filter, groups.count(group => group.title.parts.exists(part => filter(part))))))
+    this(groups, immutable.SortedSet.empty[TypeFilterTab] ++ filters.map(filter => TypeFilterTab(filter, groups.count(group => group.title.parts.exists(part => filter(part))))))
+  }
+}
+
+case class TypeFilterTab(filter: TypeFilter, count: Int)
+extends Ordered[TypeFilterTab] {
+  override def compare(that: TypeFilterTab): Int = {
+    val compare = -this.count.compareTo(that.count)
+    if (compare != 0) compare
+    else filter.typ.typ.compare(that.filter.typ.typ)
   }
 }
