@@ -94,7 +94,7 @@ object Application extends Controller {
           case Query.Limited(groups, count) => (groups, Some("limited"))
         }
 
-        val answers = AnswerSet.from(groups, TypeFilters.fromGroups(groups))
+        val answers = AnswerSet.from(groups, TypeFilters.fromGroups(query, groups))
 
         Logger.info(query.toString +
           " executed in " + Timing.Seconds.format(ns) +

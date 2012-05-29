@@ -34,6 +34,8 @@ case class Query(
       rel.map("Relation containing '" + _ + "'"),
       arg2.map("Argument 2 containing '" + _ + "'")).flatten.mkString(" and ")
 
+  def full = arg1.isDefined && rel.isDefined && arg2.isDefined
+
   def execute(): Query.Result = {
     def part(eg: REG, part: Symbol) = part match {
       case 'rel => GroupTitlePart(eg.relNorm, eg.instances.iterator.map(_.extraction.relText).map(clean).toSeq, None, Set.empty)

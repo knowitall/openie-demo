@@ -31,13 +31,15 @@ object TypeFilters {
   final val MINIMUM_OCCURRENCE = 2
   final val MAXIMUM_FILTER_COUNT = 5
 
-  def fromGroups(groups: Iterable[Group]): Seq[TypeFilter] = {
+  def fromGroups(query: Query, groups: Iterable[Group]): Seq[TypeFilter] = {
+    if (query.full) Seq.empty
+    else {
     // build all possible filters
     val it = for {
       group <- groups
       part <- group.title.parts
       typ <- part.types
-      if typ.domain != "base" && typ.domain != "user"
+        if typ.domain != "base" && typ.domain != "user"
     } yield (PositiveTypeFilter(typ))
 
     // order the filters and take the top few
@@ -58,6 +60,7 @@ object TypeFilters {
       }
     }
 
-    filtered.map(_._1).toSeq
+      filtered.map(_._1).toSeq
+    }
   }
 }
