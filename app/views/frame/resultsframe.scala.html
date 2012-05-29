@@ -1,4 +1,4 @@
-@(searchForm: Form[Query], query: Query, answers: AnswerSet, totalAnswerCount: Int, totalSentenceCount: Int)(content: Html)
+@(searchForm: Form[Query], query: Query, message: Option[String], answers: AnswerSet, totalAnswerCount: Int, totalSentenceCount: Int)(content: Html)
 
 @import helper.twitterBootstrap._
 @import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
@@ -25,7 +25,7 @@
       <button class="btn primary"><i class="icon-search"></i> Search</button>
   }
 
-  <div id="stats"><b>@totalAnswerCount answers</b> from <b>@totalSentenceCount sentences</b></div>
+  <div id="stats"><b>@totalAnswerCount answers</b>@message.map(" ("+_+")").getOrElse("") from <b>@totalSentenceCount sentences</b></div>
 
   <div id="results-content">
   @content

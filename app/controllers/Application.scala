@@ -60,7 +60,7 @@ object Application extends Controller {
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean) = Action {
     val query = Query.fromStrings(arg1, rel, arg2)
     Logger.info("Showing sentences for title " + title + " in " + query)
-    val group = searchGroups(query).groups.find(_.title.text == title) match {
+    val group = searchGroups(query)._1.groups.find(_.title.text == title) match {
       case None => throw new IllegalArgumentException("could not find group title: " + title)
       case Some(group) => group
     }
@@ -81,19 +81,33 @@ object Application extends Controller {
         // cache hit
         Logger.info(query.toString +
           " retrieved from cache" +
-          " with " + groups.size + " groups" +
+          " with " + groups.size + " answers" +
           " and " + groups.iterator.map(_.contents.size).sum + " results")
-        answers
+        (answers, Some("cache"))
       case None =>
         // cache miss
-        val (ns, groups) = Timing.time(query.execute())
+        val (ns, result) = Timing.time(query.execute())
+
+        val (groups, message) = result match {
+          case Query.Success(groups) => (groups, None)
+          case Query.Timeout(groups, count) => (groups, Some("timeout"))
+          case Query.Limited(groups, count) => (groups, Some("limited"))
+        }
+
+        val answers = AnswerSet.from(groups, TypeFilters.fromGroups(groups))
+
         Logger.info(query.toString +
           " executed in " + Timing.Seconds.format(ns) +
           " with " + groups.size + " answers" +
-          " and " + groups.iterator.map(_.contents.size).sum + " sentences")
-        val answers = AnswerSet.from(groups, TypeFilters.fromGroups(groups))
-        Cache.set(query.toString, answers)
-        answers
+          " and " + groups.iterator.map(_.contents.size).sum + " sentences" + message.map(" (" + _ + ")").getOrElse(""))
+
+        // cache unless we had a timeout
+        if (!result.isInstanceOf[Query.Timeout]) {
+          Logger.debug("Saving " + query.toString + " to cache.")
+          Cache.set(query.toString, answers)
+        }
+
+        (answers, message)
     }
   }
 
@@ -111,7 +125,7 @@ object Application extends Controller {
     Async {
       answers.orTimeout("Query timeout after " + maxQueryTime + " ms due to high server load.", maxQueryTime).map {
         case Right(timeout) => Logger.warn(query.toString + "timed out after " + maxQueryTime + " ms"); InternalServerError(timeout)
-        case Left(answers) =>
+        case Left((answers, message)) =>
           val filters = filterString match {
             case "" | "all" => Set()
             case "other" => answers.filters.map(filter => NegativeTypeFilter(filter._1.typ)).toSet
@@ -130,7 +144,7 @@ object Application extends Controller {
           } else {
             Ok(
               views.html.frame.resultsframe(
-                searchForm, query, page, filtered.answerCount, filtered.sentenceCount)(
+                searchForm, query, message, page, filtered.answerCount, filtered.sentenceCount)(
                   views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
           }
       }

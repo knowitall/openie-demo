@@ -6,6 +6,7 @@ import java.util.regex.Pattern
 import scala.Option.option2Iterable
 
 import edu.washington.cs.knowitall.browser.extraction.{ReVerbExtraction, FreeBaseType, FreeBaseEntity, Instance, ExtractionGroup}
+import edu.washington.cs.knowitall.browser.lucene
 import edu.washington.cs.knowitall.browser.lucene.{Timeout, Success, QuerySpec, LuceneFetcher, Limited}
 import edu.washington.cs.knowitall.common.Resource.using
 import edu.washington.cs.knowitall.common.Timing
@@ -33,7 +34,7 @@ case class Query(
       rel.map("Relation containing '" + _ + "'"),
       arg2.map("Argument 2 containing '" + _ + "'")).flatten.mkString(" and ")
 
-  def execute() = {
+  def execute(): Query.Result = {
     def part(eg: REG, part: Symbol) = part match {
       case 'rel => GroupTitlePart(eg.relNorm, eg.instances.iterator.map(_.extraction.relText).map(clean).toSeq, None, Set.empty)
       case 'arg1 => GroupTitlePart(eg.arg1Norm, eg.instances.iterator.map(_.extraction.arg1Text).map(clean).toSeq, eg.arg1Entity, eg.arg1Types.toSet)
@@ -74,13 +75,13 @@ case class Query(
       Query.fetcher.fetch(spec)
     }
 
-    val results = result match {
-      case Success(results) => results
-      case Limited(results, totalGroupCount) => results
-      case Timeout(results, totalGroupCount) => results
+    val (results, hitCount) = result match {
+      case lucene.Success(results) => (results, results.size)
+      case lucene.Limited(results, hitCount) => (results, hitCount)
+      case lucene.Timeout(results, hitCount) => (results, hitCount)
     }
 
-    Logger.debug(spec.toString + " searched with " + result.getClass.getSimpleName + " in " + Timing.Seconds.format(ns))
+    Logger.debug(spec.toString + " searched with " + results.size + " results (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(ns))
 
     val filtered = results.filter { result =>
       def filterPart(constraint: Option[Constraint], entity: Option[FreeBaseEntity], types: Iterable[FreeBaseType]) = {
@@ -111,7 +112,11 @@ case class Query(
 
     val groups = Group.fromExtractionGroups(converted.toList, group).filter(!_.title.text.trim.isEmpty)
 
-    groups
+    result match {
+      case lucene.Success(results) => Query.Success(groups)
+      case lucene.Limited(results, totalGroupCount) => Query.Limited(groups, hitCount)
+      case lucene.Timeout(results, totalGroupCount) => Query.Timeout(groups, hitCount)
+    }
   }
 }
 
@@ -119,6 +124,11 @@ object Query {
   type REG = ExtractionGroup[ReVerbExtraction]
 
   final val MAX_ANSWER_LENGTH = 60
+
+  abstract class Result
+  case class Success(groups: Seq[Group]) extends Result
+  case class Timeout(groups: Seq[Group], hitCount: Int) extends Result
+  case class Limited(groups: Seq[Group], hitCount: Int) extends Result
 
   object Constraint {
     def parse(string: String) = {
