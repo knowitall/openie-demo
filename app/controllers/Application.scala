@@ -60,7 +60,7 @@ object Application extends Controller {
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean) = Action {
     val query = Query.fromStrings(arg1, rel, arg2)
     Logger.info("Showing sentences for title " + title + " in " + query)
-    val group = searchGroups(query)._1.groups.find(_.title.text == title) match {
+    val group = searchGroups(query, debug)._1.groups.find(_.title.text == title) match {
       case None => throw new IllegalArgumentException("could not find group title: " + title)
       case Some(group) => group
     }
@@ -72,7 +72,7 @@ object Application extends Controller {
     Ok(views.html.logs(LogEntry.logs(year, month, day)))
   }
 
-  def searchGroups(query: Query) = {
+  def searchGroups(query: Query, debug: Boolean) = {
     Logger.debug("incoming " + query)
     Cache.getAs[AnswerSet](query.toString) match {
       case Some(answers) =>
@@ -98,7 +98,7 @@ object Application extends Controller {
           case Query.Limited(groups, count) => (groups, Some("limited"))
         }
 
-        val answers = AnswerSet.from(groups, TypeFilters.fromGroups(query, groups))
+        val answers = AnswerSet.from(groups, TypeFilters.fromGroups(query, groups, debug))
 
         Logger.info(query.toString +
           " executed in " + Timing.Seconds.format(ns) +
@@ -123,7 +123,7 @@ object Application extends Controller {
     val maxQueryTime = 20 * 1000 /* ms */
 
     val answers = concurrent.Akka.future {
-      searchGroups(query)
+      searchGroups(query, debug)
     }
 
     Async {
