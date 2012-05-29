@@ -32,12 +32,18 @@ object Group {
       group: ExtractionGroup[ReVerbExtraction]=>GroupTitle): Seq[Group] = {
 
     val groups = ((reg map (reg => ((group(reg), reg.instances.size), reg))).toList groupBy { case ((title, size), reg) =>
-        title.parts.map(_.lemma.toLowerCase)
+        // hack: remove trailing 's'
+        val text = title.text.toLowerCase.trim
+        if (text.endsWith("s")) text.dropRight(1)
+        else if (text.endsWith("es")) text.dropRight(2)
+        else text
       }).toList.sortBy { case (text, list) =>
         -list.iterator.map { case (title, reg) =>
           reg.instances.size
         }.sum
       }
+
+    println(groups.take(10).map(_._1))
 
     val collapsed: Seq[(GroupTitle, Iterable[ExtractionGroup[ReVerbExtraction]])] = groups.map { case (text, list) =>
       val ((headTitle, headTitleSize), _) = list.head
