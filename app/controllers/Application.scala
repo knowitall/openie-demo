@@ -76,6 +76,8 @@ object Application extends Controller {
     Logger.debug("incoming " + query)
     Cache.getAs[AnswerSet](query.toString) match {
       case Some(answers) =>
+        Logger.debug("retrieving " + query + " from cache")
+
         val AnswerSet(groups, filters) = answers
 
         // cache hit
@@ -85,6 +87,8 @@ object Application extends Controller {
           " and " + groups.iterator.map(_.contents.size).sum + " results")
         (answers, Some("cache"))
       case None =>
+        Logger.debug("executing " + query + " in lucene")
+
         // cache miss
         val (ns, result) = Timing.time(query.execute())
 
