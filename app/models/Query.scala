@@ -174,7 +174,7 @@ object Query {
       */
 
   private final val CONFIDENCE_THRESHOLD: Double = 0.5
-  private final val ENTITY_SCORE_THRESHOLD: Double = 2.0
+  private final val ENTITY_SCORE_THRESHOLD: Double = 5.0
   private final val pronouns: Set[String] = Set("he", "she", "they", "them",
    "that", "this", "who", "whom", "i", "you", "him", "her", "we",
    "it", "the", "a", "an")
