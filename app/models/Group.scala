@@ -10,7 +10,7 @@ import edu.washington.cs.knowitall.common.enrich.Traversables.traversableOncePai
 case class GroupTitlePart(lemma: String, synonyms: Seq[String], entity: Option[FreeBaseEntity], types: Set[FreeBaseType]) {
   def text = entity match {
     case Some(entity) => entity.name
-    case None => lemma
+    case None => synonyms.headOption.getOrElse(lemma)
   }
 }
 
@@ -43,8 +43,6 @@ object Group {
         }.sum
       }
 
-    println(groups.take(10).map(_._1))
-
     val collapsed: Seq[(GroupTitle, Iterable[ExtractionGroup[ReVerbExtraction]])] = groups.map { case (text, list) =>
       val ((headTitle, headTitleSize), _) = list.head
 
@@ -74,7 +72,7 @@ object Group {
             (synonyms.head, synonyms.size)
           }.sortBy(- _._2).map(_._1)
 
-        GroupTitlePart(sortedUniqueSynonyms.headOption.getOrElse(headTitle.parts(i).lemma), sortedUniqueSynonyms, entities, types)
+        GroupTitlePart(headTitle.parts(i).lemma, sortedUniqueSynonyms, entities, types)
       }
 
       val title = GroupTitle(headTitle.connector, parts)

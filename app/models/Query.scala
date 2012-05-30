@@ -35,10 +35,11 @@ case class Query(
   def full = arg1.isDefined && rel.isDefined && arg2.isDefined
 
   def execute(): Query.Result = {
-    def part(eg: REG, part: Symbol) = part match {
+    def part(eg: REG, part: Symbol) = {part match {
       case 'rel => GroupTitlePart(eg.relNorm, eg.instances.iterator.map(_.extraction.relText).map(clean).toSeq, None, Set.empty)
       case 'arg1 => GroupTitlePart(eg.arg1Norm, eg.instances.iterator.map(_.extraction.arg1Text).map(clean).toSeq, eg.arg1Entity, eg.arg1Types.toSet)
       case 'arg2 => GroupTitlePart(eg.arg2Norm, eg.instances.iterator.map(_.extraction.arg2Text).map(clean).toSeq, eg.arg2Entity, eg.arg2Types.toSet)
+    }
     }
 
     def group: REG=>GroupTitle = (this.arg1, this.rel, this.arg2) match {
@@ -133,14 +134,17 @@ object Query {
 
   object Constraint {
     def parse(string: String) = {
-      if (string.toLowerCase.startsWith("type:")) {
-        new TypeConstraint(string.drop(5).replaceAll(" ", "_"))
+      if (string.trim.isEmpty) {
+        None
+      }
+      else if (string.toLowerCase.startsWith("type:")) {
+        Some(new TypeConstraint(string.drop(5).replaceAll(" ", "_")))
       }
       else if (string.toLowerCase.startsWith("entity:")) {
-        new EntityConstraint(string.drop(7))
+        Some(new EntityConstraint(string.drop(7)))
       }
       else {
-        new TermConstraint(string)
+        Some(new TermConstraint(string))
       }
     }
   }
@@ -188,7 +192,7 @@ object Query {
 
   def apply(tuple: (Option[String], Option[String], Option[String])): Query = tuple match {
     case (arg1, rel, arg2) =>
-      new Query(arg1.map(Constraint.parse), rel.map(Constraint.parse), arg2.map(Constraint.parse))
+      new Query(arg1 flatMap Constraint.parse, rel flatMap Constraint.parse, arg2 flatMap Constraint.parse)
   }
 
   def noneIfEmpty(string: String): Option[String] =
@@ -196,7 +200,7 @@ object Query {
     else Some(string)
 
   def fromStrings(arg1: Option[String], rel: Option[String], arg2: Option[String]): Query =
-    this.apply(arg1 map Constraint.parse, rel map Constraint.parse, arg2 map Constraint.parse)
+    this.apply(arg1 flatMap Constraint.parse, rel flatMap Constraint.parse, arg2 flatMap Constraint.parse)
 
   def fromStrings(arg1: String, rel: String, arg2: String): Query =
     this.fromStrings(noneIfEmpty(arg1), noneIfEmpty(rel), noneIfEmpty(arg2))
