@@ -112,13 +112,23 @@
         $(span).unbind('hover', download_popover)
 
         $.getJSON("https://www.googleapis.com/freebase/v1/text/m/"+span.id+'?format=plain&lang=en&maxlength=200&callback=?', function(response) {
-          var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+span.id+'?maxheight=75&maxwidth=75'
-          $(span).attr('data-content', function(index, attr) { 
-            return '<img class="popover-image" src="'+src+'">' + '<span class="popover-desc">'+response.result+"</span>" + '<div style="height: 10px"></div>'+attr
-          })
+          if (response !== undefined && response.result !== undefined) {
+            var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+span.id+'?maxheight=75&maxwidth=75'
+            $(span).attr('data-content', function(index, attr) { 
+              return '<img class="popover-image" src="'+src+'">' + '<span class="popover-desc">'+response.result+"</span>" + '<div style="height: 10px"></div>'+attr
+            })
 
-          var image = new Image()
-          image.src = src
+            try {
+              var image = new Image()
+              image.src = src
+            }
+            catch (e) {
+            }
+          }
+          else {
+            // maybe we can fix it next time
+           $(span).bind('hover', download_popover)
+          }
         })
       }
 
