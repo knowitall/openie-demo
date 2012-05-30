@@ -22,10 +22,10 @@
           <input type="text" id="arg2" name="arg2" value="@query.arg2" >
           <span class="help-inline"></span>
       </span>
-      <button class="btn primary"><i class="icon-search"></i> Search</button>
+      <button class="btn"><i class="icon-search"></i> Search</button>
   }
 
-  <div id="stats"><b>@totalAnswerCount answers</b>@message.map(" ("+_+")").getOrElse("") from <b>@totalSentenceCount sentences</b></div>
+  <div id="stats"><b>@totalAnswerCount answers</b> from <b>@totalSentenceCount sentences</b>@message.map(" ("+_+")").getOrElse("")</div>
 
   <div id="results-content">
   @content

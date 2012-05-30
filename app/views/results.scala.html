@@ -14,7 +14,7 @@
 }
 @if(answers.filters.size > 5) {
   <li class="dropdown">
-    <a class="dropdown-toggle" data-toggle="dropdown" href="#">more <b class="caret"></b></a>
+    <a class="dropdown-toggle" data-toggle="dropdown" href="#">more types<b class="caret"></b></a>
     <ul class="dropdown-menu">
     @for(TypeFilterTab(filter, count)<-answers.filters.iterator.drop(5)) {
       @defining(filters.contains(filter)) { active =>
@@ -24,7 +24,7 @@
     </ul>
   </li>
 }
-    <li class="@{if(filterString == "other") "active" else ""}"><a href="#other" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "other", 0, debug)}')">other</a></li>
+    <li class="@{if(filterString == "misc") "active" else ""}"><a href="#misc" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "misc", 0, debug)}')">misc</a></li>
   </ul>
 }
 
@@ -122,9 +122,9 @@
         })
       }
 
-      $('.title-string').popover({ delay: { show: 1000, hide: 100 }})
+      $('.title-string').popover({ delay: { show: 1000, hide: 100 }, trigger: 'hover' })
 
-      $('.title-entity').popover({ delay: { html: true, show: 1000, hide: 100 }})
+      $('.title-entity').popover({ delay: { show: 1000, hide: 100 }, trigger: 'hover' })
       $('.title-entity').hover(download_popover)
 
       $('.close-tab').click(function() {

@@ -85,7 +85,7 @@ object Application extends Controller {
           " retrieved from cache" +
           " with " + groups.size + " answers" +
           " and " + groups.iterator.map(_.contents.size).sum + " results")
-        (answers, Some("cache"))
+        (answers, Some("cached"))
       case None =>
         Logger.debug("executing " + query + " in lucene")
 
@@ -95,7 +95,7 @@ object Application extends Controller {
         val (groups, message) = result match {
           case Query.Success(groups) => (groups, None)
           case Query.Timeout(groups, count) => (groups, Some("timeout"))
-          case Query.Limited(groups, count) => (groups, Some("limited"))
+          case Query.Limited(groups, count) => (groups, Some("results truncated"))
         }
 
         val answers = AnswerSet.from(groups, TypeFilters.fromGroups(query, groups, debug))
@@ -132,7 +132,7 @@ object Application extends Controller {
         case Left((answers, message)) =>
           val filters = filterString match {
             case "" | "all" => Set()
-            case "other" => answers.filters.map(tab => NegativeTypeFilter(tab.filter.typ)).toSet
+            case "misc" => answers.filters.map(tab => NegativeTypeFilter(tab.filter.typ)).toSet
             case s => Set(PositiveTypeFilter(FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string: " + s))))
           }
 
