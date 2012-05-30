@@ -6,7 +6,7 @@
 @helper.main("Open Information Extraction", compact=true) {
   <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
 
-  @helper.form(action = routes.Application.submit, 'class -> "well form-inline") {
+  @helper.form(action = routes.Application.submit, 'class -> "well form-inline hidden-phone") {
       <label for="arg1">Argument 1:</label>
       <span class="input">
           <input type="text" id="arg1" name="arg1" value="@query.arg1" >

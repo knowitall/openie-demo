@@ -5,7 +5,15 @@
 
 <br/>
 @if(answers.filters.size > 0) {
-  <ul class="nav nav-tabs">
+  <ul class="nav nav-tabs nav-stacked visible-phone">
+    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all types</a></li>
+@for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(4)) {
+  @defining(filters.contains(filter)) { active =>
+    <li class="@{if(active) "active" else ""}"><a href="#@filter.typ.typ" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.typ.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+  }
+}
+  </ul>
+  <ul class="nav nav-tabs hidden-phone">
     <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all</a></li>
 @for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(5)) {
   @defining(filters.contains(filter)) { active =>
@@ -33,10 +41,11 @@
   <div class="tabbable tabs-left">
     <ul class="nav nav-tabs">
       @for((g, i) <- answers.groups.zipWithIndex) {
-      <li><a href="#L@{i}" class="answer" data-toggle="tab">@helper.grouptitle(g.title, debug) (@g.contents.size)</a></li>
+      <li class="hidden-phone"><a href="#L@{i}" class="answer" data-toggle="tab">@helper.grouptitle(g.title, debug) (@g.contents.size)</a></li>
+      <li class="visible-phone"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), g.title.text, debug)}" class="answer">@Html(g.title.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", ")) (@g.contents.size)</a></li>
       }
     </ul>
-    <div class="tab-content">
+    <div class="tab-content hidden-phone">
       @for((g, i) <- answers.groups.zipWithIndex) {
       <div class="tab-pane" id="L@{i}">
         <span class="close-tab"><a href="#close@{i}" class="close-tab" title="close sentences"><i class="icon-remove"></i></a></span>
