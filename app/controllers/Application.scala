@@ -74,7 +74,7 @@ object Application extends Controller {
 
   def searchGroups(query: Query, debug: Boolean) = {
     Logger.debug("incoming " + query)
-    Cache.getAs[AnswerSet](query.toString) match {
+    Cache.getAs[AnswerSet](query.toString.toLowerCase) match {
       case Some(answers) =>
         Logger.debug("retrieving " + query + " from cache")
 
@@ -108,7 +108,7 @@ object Application extends Controller {
         // cache unless we had a timeout
         if (!result.isInstanceOf[Query.Timeout]) {
           Logger.debug("Saving " + query.toString + " to cache.")
-          Cache.set(query.toString, answers)
+          Cache.set(query.toString.toLowerCase, answers)
         }
 
         (answers, message)
