@@ -11,8 +11,8 @@
       }>{if (debug) entity.toString else entity.name}</span>
 
     // display a card if there are synonyms or it's debug mode
-    case None if part.otherSynonyms.size > 0 => <span class="title-string" rel="popover" title={part.text + (if (debug) " / " + part.lemma else "")} data-content={"<span class='syns-title'>Extracted Synonyms:</span><blockquote class='types-body'>" + part.synonyms.mkString("<br/>") + "</blockquote>"}>{part.text}</span>
-    case None if debug => <span class="title-string" rel="popover" title={part.text + (if (debug) " / " + part.lemma else "")} data-content={"<span class='syns-title'>Extracted Synonyms:</span><blockquote class='types-body'>" + part.synonyms.mkString("<br/>") + "</blockquote>"}>{part.text}</span>
+    case None if part.otherSynonyms.size > 0 => <span class="title-string" rel="popover" title={part.text + (if (debug) " / " + part.lemma else "")} data-content={"<span class='syns-title'>Extracted Synonyms:</span><blockquote class='types-body'>" + part.otherSynonyms.mkString("<br/>") + "</blockquote>"}>{part.text}</span>
+    case None if debug => <span class="title-string" rel="popover" title={part.text + (if (debug) " / " + part.lemma else "")} data-content={"<span class='syns-title'>Extracted Synonyms:</span><blockquote class='types-body'>" + part.otherSynonyms.mkString("<br/>") + "</blockquote>"}>{part.text}</span>
     case None => <span class="title-string">{part.text}</span>
   }
 ).mkString(title.connector))
