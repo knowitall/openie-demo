@@ -25,39 +25,39 @@
       @helper.inputText(
           searchForm("arg2"),
           '_label -> "Argument 2:")
-      <button class="btn"><i class="icon-search"></i> Search</button>
+      <button id="search-button" class="btn btn-large"><i id="search-icon" class="icon-search"></i> Search</button>
       }
       </div>
       <div class="span offset1">
           <b>Example Queries: <a href="#" class="tooltiparea" rel="tooltip" title="Click an example question to see a sample relation search query."><i class="icon-question-sign"></i></a></b>
           <table style="padding: 5 px">
               <tr>
-                  <td><a href="#" onclick="javascript:fillForm('','kills','bacteria')">What kills bacteria?</a></td>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('','kills','bacteria')">What kills bacteria?</a></td>
               </tr>
               <tr>
-                  <td><a href="#" onclick="javascript:fillForm('','built','pyramids')">Who built the Pyramids?</a></td>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('','built','pyramids')">Who built the Pyramids?</a></td>
               </tr>
               <tr class="hidden-phone">
-                  <td><a href="#" onclick="javascript:fillForm('Thomas Edison','invent','')">What did Thomas Edison invent?</a></td>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Thomas Edison','invent','')">What did Thomas Edison invent?</a></td>
               </tr>
               <tr class="hidden-phone">
-                  <td><a href="#" onclick="javascript:fillForm('','contains','antioxidant')">What contains antioxidants?</a></td>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('','contains','antioxidant')">What contains antioxidants?</a></td>
               </tr>
           </table>
           <br />
           <b>Typed Example Queries: <a href="#" class="tooltiparea" rel="tooltip", title="Click an example question to see a sample relation search query.  These examples constrain one field to a FreeBase type."><i class="icon-question-sign"></i></a></b>
           <table style="padding: 5 px">
               <tr>
-                  <td><a href="#" onclick="javascript:fillForm('type:Country','is located in','Africa')">What countries are located in Africa?</a></td>
-              </tr>
-              <tr class="hidden-phone">
-                  <td><a href="#" onclick="javascript:fillForm('type:Actor','starred in','type:Film')">What actors starred in which films?</a></td>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('type:Country','is located in','Africa')">What countries are located in Africa?</a></td>
               </tr>
               <tr>
-                  <td><a href="#" onclick="javascript:fillForm('type:Food','grown in','type:Country')">What foods are grown in which countries?</a></td>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('type:Actor','starred in','type:Film')">What actors starred in which films?</a></td>
+              </tr>
+              <tr>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('type:Food','grown in','type:Country')">What foods are grown in which countries?</a></td>
               </tr>
               <tr class="hidden-phone">
-                  <td><a href="#" onclick="javascript:fillForm('FDA','approved','type:Chemical_Compound')">What chemicals has the FDA approved?</a></td>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('FDA','approved','type:Chemical_Compound')">What chemicals has the FDA approved?</a></td>
               </tr>
           </table>
       </div>
@@ -75,8 +75,15 @@
       <li><a href="http://turing.cs.washington.edu/papers/ijcai07.pdf">TextRunner</a> (IJCAI 2007)</li>
       </ul>
   </footer>
-  
+
   <script type="text/javascript">
-        $('.tooltiparea').tooltip()
+        $(document).ready(function() {
+          $('.tooltiparea').tooltip()
+
+          $('.example-link').click(function(event) {
+            $('#search-button').addClass('btn-primary');
+            $('#search-icon').addClass('icon-white');
+          });
+        });
   </script>
 }
