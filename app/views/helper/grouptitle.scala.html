@@ -2,12 +2,17 @@
 
 @Html(title.parts.map(part=>
   part.entity match {
+    // always display a card
     case Some(entity) => 
       <span id={entity.fbid} class="title-entity" rel="popover" title={part.text + (if (debug) " / " + part.lemma else "")} data-content={
       "<div><span class='uri-title'>URI:</span> <blockquote class='uri-body'>http://www.freebase.com/view/m/"+entity.fbid+"</blockquote></div>" +
-      "<div><span class='types-title'>Types:</span>" + (if(part.types.size == 0) " <span class='types-body'>None</span><blockquote></blockquote>" else "<blockquote class='types-body'>"+part.types.toSeq.sortBy(_.name).iterator.map(_.name).mkString("<br/>")+"</blockquote></div>") +
-      "<div><span class='syns-title'>Extracted Synonyms:</span><blockquote class='syns-body'>"+part.synonyms.mkString("<br/>")+"</blockquote></div>"
+      (if (part.types.size > 0) "<div><span class='types-title'>Types:</span><blockquote class='types-body'>"+part.types.toSeq.sortBy(_.name).iterator.map(_.name).mkString("<br/>")+"</blockquote></div>" else "") +
+      (if (part.otherSynonyms.size > 0) "<div><span class='syns-title'>Extracted Synonyms:</span><blockquote class='syns-body'>"+part.otherSynonyms.mkString("<br/>")+"</blockquote></div>" else "") 
       }>{if (debug) entity.toString else entity.name}</span>
-    case None => <span class="title-string" rel="popover" title={part.text + (if (debug) " / " + part.lemma else "")} data-content={part.synonyms.mkString("<br/>")}>{part.text}</span>
+
+    // display a card if there are synonyms or it's debug mode
+    case None if part.otherSynonyms.size > 0 => <span class="title-string" rel="popover" title={part.text + (if (debug) " / " + part.lemma else "")} data-content={"<span class='syns-title'>Extracted Synonyms:</span><blockquote class='types-body'>" + part.synonyms.mkString("<br/>") + "</blockquote>"}>{part.text}</span>
+    case None if debug => <span class="title-string" rel="popover" title={part.text + (if (debug) " / " + part.lemma else "")} data-content={"<span class='syns-title'>Extracted Synonyms:</span><blockquote class='types-body'>" + part.synonyms.mkString("<br/>") + "</blockquote>"}>{part.text}</span>
+    case None => <span class="title-string">{part.text}</span>
   }
 ).mkString(title.connector))

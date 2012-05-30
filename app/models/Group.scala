@@ -12,6 +12,9 @@ case class GroupTitlePart(lemma: String, synonyms: Seq[String], entity: Option[F
     case Some(entity) => entity.name
     case None => synonyms.headOption.getOrElse(lemma)
   }
+
+  /** Show synonyms other than the text of this part */
+  def otherSynonyms = synonyms filterNot (_ equalsIgnoreCase text)
 }
 
 @SerialVersionUID(43L)
