@@ -13,8 +13,8 @@ import play.api.Logger
 import play.api.libs.concurrent
 
 object Application extends Controller {
-  final val PAGE_SIZE = 30
-  final val MAX_SENTENCE_COUNT = 30
+  final val PAGE_SIZE = 25
+  final val MAX_SENTENCE_COUNT = 20
 
   /**
     * The actual definition of the search form.
