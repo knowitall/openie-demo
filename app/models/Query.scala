@@ -34,11 +34,20 @@ case class Query(
 
   def full = arg1.isDefined && rel.isDefined && arg2.isDefined
 
+  def freeParts: List[ExtractionPart] = {
+    Iterable((arg1, Argument1), (rel, Relation), (arg2, Argument2)).filter { case (constraint, part) =>
+      constraint match {
+        case None => true
+        case Some(constraint) => constraint.free
+      }
+    }.map(_._2)(scala.collection.breakOut)
+  }
+
   def execute(): Query.Result = {
     def part(eg: REG, part: Symbol) = {part match {
-      case 'rel => GroupTitlePart(eg.relNorm, eg.instances.iterator.map(_.extraction.relText).map(clean).toSeq, None, Set.empty)
-      case 'arg1 => GroupTitlePart(eg.arg1Norm, eg.instances.iterator.map(_.extraction.arg1Text).map(clean).toSeq, eg.arg1Entity, eg.arg1Types.toSet)
-      case 'arg2 => GroupTitlePart(eg.arg2Norm, eg.instances.iterator.map(_.extraction.arg2Text).map(clean).toSeq, eg.arg2Entity, eg.arg2Types.toSet)
+      case 'rel => GroupTitlePart(eg.relNorm, Relation, eg.instances.iterator.map(_.extraction.relText).map(clean).toSeq, None, Set.empty)
+      case 'arg1 => GroupTitlePart(eg.arg1Norm, Argument1, eg.instances.iterator.map(_.extraction.arg1Text).map(clean).toSeq, eg.arg1Entity, eg.arg1Types.toSet)
+      case 'arg2 => GroupTitlePart(eg.arg2Norm, Argument2, eg.instances.iterator.map(_.extraction.arg2Text).map(clean).toSeq, eg.arg2Entity, eg.arg2Types.toSet)
     }
     }
 
@@ -148,7 +157,9 @@ object Query {
       }
     }
   }
-  sealed abstract class Constraint
+  sealed abstract class Constraint {
+    def free: Boolean = false
+  }
   case class TermConstraint(term: String) extends Constraint {
     override def toString = term
   }

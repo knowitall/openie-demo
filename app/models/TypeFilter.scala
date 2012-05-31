@@ -35,7 +35,12 @@ object TypeFilters {
       // build all possible filters
       val it = for {
         group <- groups
+
+        // only use filters for "free" parts
         part <- group.title.parts
+        if (query.freeParts.contains(part.extractionPart))
+
+        // avoid user-submitted type categories
         typ <- part.types
         if typ.domain != "base" && typ.domain != "user"
       } yield (PositiveTypeFilter(typ))

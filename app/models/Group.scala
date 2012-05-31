@@ -7,7 +7,7 @@ import edu.washington.cs.knowitall.collection.immutable.Interval
 import edu.washington.cs.knowitall.common.enrich.Traversables.traversableOncePairIntTo
 
 @SerialVersionUID(42L)
-case class GroupTitlePart(lemma: String, synonyms: Seq[String], entity: Option[FreeBaseEntity], types: Set[FreeBaseType]) {
+case class GroupTitlePart(lemma: String, extractionPart: ExtractionPart, synonyms: Seq[String], entity: Option[FreeBaseEntity], types: Set[FreeBaseType]) {
   def text = entity match {
     case Some(entity) => entity.name
     case None => synonyms.headOption.getOrElse(lemma)
@@ -75,8 +75,10 @@ object Group {
             (synonyms.head, synonyms.size)
           }.sortBy(- _._2).map(_._1)
 
-        GroupTitlePart(headTitle.parts(i).lemma, sortedUniqueSynonyms, entities, types)
-      }
+          GroupTitlePart(headTitle.parts(i).lemma,
+              headTitle.parts(i).extractionPart,
+              sortedUniqueSynonyms, entities, types)
+        }
 
       val title = GroupTitle(headTitle.connector, parts)
       (title, list.map(_._2))
