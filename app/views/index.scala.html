@@ -18,13 +18,16 @@
       @helper.form(action = routes.Application.submit) {
       @helper.inputText(
           searchForm("arg1"),
-          '_label -> "Argument 1:")
+          '_label -> "Argument 1:",
+          'placeholder -> "what/who")
       @helper.inputText(
           searchForm("rel"),
-          '_label -> "Relation:")
+          '_label -> "Relation:",
+          'placeholder -> "verb phrase")
       @helper.inputText(
           searchForm("arg2"),
-          '_label -> "Argument 2:")
+          '_label -> "Argument 2:",
+          'placeholder -> "what/who")
       <button id="search-button" class="btn btn-large"><i id="search-icon" class="icon-search"></i> Search</button>
       }
       </div>
