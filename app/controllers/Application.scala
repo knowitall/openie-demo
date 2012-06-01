@@ -132,8 +132,8 @@ object Application extends Controller {
         case Left((answers, message)) =>
           val filters = filterString match {
             case "" | "all" => Set()
-            case "misc" => answers.filters.map(tab => NegativeTypeFilter(tab.filter.typ)).toSet
-            case s => Set(PositiveTypeFilter(FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string: " + s))))
+            case "misc" => answers.filters.map(tab => NegativeTypeFilter(tab.filter.typ, query.freeParts)).toSet
+            case s => Set(PositiveTypeFilter(FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string: " + s)), query.freeParts))
           }
 
           val filtered = answers filter filters

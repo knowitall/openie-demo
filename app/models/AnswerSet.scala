@@ -13,13 +13,13 @@ case class AnswerSet(groups: Seq[Group], filters: immutable.SortedSet[TypeFilter
   def filter(filters: Iterable[TypeFilter]) = {
     if (filters.isEmpty) this
     else this.copy(groups = groups filter (group =>
-      group.title.parts.exists(part => filters.forall(_(part)))
+      filters.forall(filter => filter(group.title))
   ))}
 }
 
 object AnswerSet {
   def from(groups: Seq[Group], filters: Seq[TypeFilter]) = {
-    this(groups, immutable.SortedSet.empty[TypeFilterTab] ++ filters.map(filter => TypeFilterTab(filter, groups.count(group => group.title.parts.exists(part => filter(part))))))
+    this(groups, immutable.SortedSet.empty[TypeFilterTab] ++ filters.map(filter => TypeFilterTab(filter, groups.count(group => filter(group.title)))))
   }
 }
 

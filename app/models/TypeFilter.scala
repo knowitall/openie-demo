@@ -5,24 +5,29 @@ import edu.washington.cs.knowitall.common.enrich.Traversables.traversableOnceTo
 
 sealed abstract trait TypeFilter {
   def typ: FreeBaseType
-  def apply(answer: GroupTitlePart): Boolean
+  def parts: List[ExtractionPart]
+  def apply(answer: GroupTitle): Boolean
   def displayName: String
 }
 
-case class PositiveTypeFilter(override val typ: FreeBaseType) extends TypeFilter {
+case class PositiveTypeFilter(override val typ: FreeBaseType, override val parts: List[ExtractionPart]) extends TypeFilter {
   def displayName = typ.typ.replaceAll("_", " ")
 
-  def apply(answer: GroupTitlePart): Boolean =
-    answer.types.exists(typ =>
-      typ == this.typ)
+  def apply(answer: GroupTitle): Boolean =
+    answer.parts find (parts contains _.extractionPart) match {
+      case Some(part) => part.types.contains(this.typ)
+      case None => false
+    }
 }
 
-case class NegativeTypeFilter(override val typ: FreeBaseType) extends TypeFilter {
+case class NegativeTypeFilter(override val typ: FreeBaseType, override val parts: List[ExtractionPart]) extends TypeFilter {
   def displayName = typ.typ.replaceAll("_", " ")
 
-  def apply(answer: GroupTitlePart): Boolean =
-    answer.types.forall(typ =>
-      typ != this.typ)
+  def apply(answer: GroupTitle): Boolean =
+    answer.parts find (parts contains _.extractionPart) match {
+      case Some(part) => part.types.forall(_ != this.typ)
+      case None => false
+    }
 }
 
 object TypeFilters {
@@ -43,7 +48,7 @@ object TypeFilters {
         // avoid user-submitted type categories
         typ <- part.types
         if typ.domain != "base" && typ.domain != "user"
-      } yield (PositiveTypeFilter(typ))
+      } yield (PositiveTypeFilter(typ, query.freeParts))
 
       // order the filters and take the top few
       val ordered = it.histogram.filter {
@@ -55,7 +60,7 @@ object TypeFilters {
       else {
         val grouped = ordered.take(MAXIMUM_FILTER_COUNT).map(filter =>
           (filter, groups.toSet filter
-            (group => group.title.parts exists filter.apply)))
+            (group => filter(group.title))))
 
         // remove groups that are a proper subset of another
         val filtered = grouped filter { case (filter, groups) =>
