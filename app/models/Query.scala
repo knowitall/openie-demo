@@ -3,7 +3,7 @@ package models
 import java.io.{ObjectInputStream, FileInputStream, File}
 import java.util.regex.Pattern
 import scala.Option.option2Iterable
-import edu.washington.cs.knowitall.browser.extraction.{ReVerbExtraction, FreeBaseType, FreeBaseEntity, Instance, ExtractionGroup}
+import edu.washington.cs.knowitall.browser.extraction.{ReVerbExtraction, FreeBaseType, FreeBaseEntity, Instance, ExtractionGroup, ReVerbExtractionGroup}
 import edu.washington.cs.knowitall.browser.lucene
 import edu.washington.cs.knowitall.browser.lucene.{Timeout, Success, QuerySpec, LuceneFetcher, Limited}
 import edu.washington.cs.knowitall.common.Resource.using
@@ -91,7 +91,9 @@ case class Query(
       case lucene.Timeout(results, hitCount) => (results, hitCount)
     }
 
-    val deduped = results map InstanceDeduplicator.deduplicate
+    val regrouped = ReVerbExtractionGroup.indexGroupingToFrontendGrouping(results)
+
+    val deduped = regrouped map InstanceDeduplicator.deduplicate
     Logger.debug(spec.toString + " searched with " + deduped.size + " results (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(ns))
 
     val filtered = deduped.filter { result =>
