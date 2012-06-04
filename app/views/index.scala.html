@@ -1,4 +1,4 @@
-@(searchForm: Form[Query])
+@(searchForm: Form[Query], footer: String)
 
 
 @helper.main("Open Information Extraction", compact=false) {
@@ -67,16 +67,7 @@
   </div>
 
   <footer>
-      <p>Powered by <a href="http://reverb.cs.washington.edu">ReVerb, our Open Information Extractor</a> (available on GitHub).</p>
-      <p>Type selection is based on the <a href="http://schemas.freebaseapps.com/">FreeBase type schema</a>.</p>
-
-      <b>Publications:</b>
-      <ul>
-      <li><a href="http://turing.cs.washington.edu/papers/Nature_search_shake-up.pdf">Search Needs a Shake-up</a> (Nature 2011)</li>
-      <li><a href="http://turing.cs.washington.edu/papers/etzioni-ijcai2011.pdf">Open Information Extraction</a> (IJCAI 2011)</li>
-      <li><a href="http://reverb.cs.washington.edu">Reverb</a> (EMNLP 2011)</li>
-      <li><a href="http://turing.cs.washington.edu/papers/ijcai07.pdf">TextRunner</a> (IJCAI 2007)</li>
-      </ul>
+      @Html(footer)
   </footer>
 
   <script type="text/javascript">

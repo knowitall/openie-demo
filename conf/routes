@@ -3,7 +3,7 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.Application.index
+GET     /                           controllers.Application.index(reload: Boolean ?= false)
 GET     /search                     controllers.Application.submit
 GET     /search/                    controllers.Application.search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String ?= "all", page: Int ?= 0, debug: Boolean ?= false)
 GET     /results/                   controllers.Application.results(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String ?= "all", page: Int ?= 0, debug: Boolean ?= false)

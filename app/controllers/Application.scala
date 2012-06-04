@@ -2,7 +2,6 @@ package controllers
 
 import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
 import edu.washington.cs.knowitall.common.Timing
-
 import models.{ TypeFilters, Query, TypeFilter, PositiveTypeFilter, NegativeTypeFilter, LogEntry, AnswerSet }
 import play.api.Play.current
 import play.api.cache.Cache
@@ -11,6 +10,7 @@ import play.api.data.Form
 import play.api.mvc.{ Controller, Action }
 import play.api.Logger
 import play.api.libs.concurrent
+import scala.util.control.Exception
 
 object Application extends Controller {
   final val PAGE_SIZE = 25
@@ -35,13 +35,29 @@ object Application extends Controller {
     )
   }
 
-  def index = form
+  def footer(reload: Boolean = false): String = {
+    def loadFooter =
+      try {
+        val footer = scala.io.Source.fromFile(new java.io.File("/cse/www2/knowitall/footer.html")).mkString
+        Cache.set("footer", footer)
+        footer
+      } catch {
+        case e => Logger.error("Exception loading footer." + e); ""
+      }
+
+    if (reload) {
+      loadFooter
+    }
+    else {
+      Cache.getAs[String]("footer").getOrElse(loadFooter)
+    }
+  }
 
   /**
     * This is the index page that hold the search form.
     */
-  def form = Action {
-    Ok(views.html.index(searchForm))
+  def index(reloadFooter: Boolean) = Action {
+    Ok(views.html.index(searchForm, footer(reloadFooter)))
   }
 
   /**
@@ -49,7 +65,7 @@ object Application extends Controller {
     */
   def submit = Action { implicit request =>
     searchForm.bindFromRequest.fold(
-      errors => BadRequest(views.html.index(errors)),
+      errors => BadRequest(views.html.index(errors, footer())),
       query => doSearch(query, "all", 0))
   }
 

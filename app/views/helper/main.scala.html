@@ -33,7 +33,7 @@
             <div class="page-header">
                 <div class="hidden-phone">
                     <h1>
-                      <a href="@routes.Application.index"><img src="@if(compact) { @routes.Assets.at("images/textrunner-small.jpg") } else { @routes.Assets.at("images/textrunner.jpg") }"></a>
+                      <a href="@routes.Application.index()"><img src="@if(compact) { @routes.Assets.at("images/textrunner-small.jpg") } else { @routes.Assets.at("images/textrunner.jpg") }"></a>
                       Open Information Extraction
                       @if(!compact) {
                       <a href="http://turing.cs.washington.edu/" class="pull-right"><img src="@routes.Assets.at("images/turing.png")"></a>
@@ -41,7 +41,7 @@
                     </h1>
                 </div>
                 <div class="visible-phone">
-                    <h1><a href="@routes.Application.index"><img src="@routes.Assets.at("images/textrunner-small.jpg")"></a> UW OpenIE</h1>
+                    <h1><a href="@routes.Application.index()"><img src="@routes.Assets.at("images/textrunner-small.jpg")"></a> UW OpenIE</h1>
                 </div>
             </div>
 
