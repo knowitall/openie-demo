@@ -3,7 +3,7 @@ package controllers
 import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
 import edu.washington.cs.knowitall.common.Timing
 
-import models.{ TypeFilters, Query, PositiveTypeFilter, NegativeTypeFilter, LogEntry, AnswerSet }
+import models.{ TypeFilters, Query, TypeFilter, PositiveTypeFilter, NegativeTypeFilter, LogEntry, AnswerSet }
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Forms.{ text, optional, mapping }
@@ -98,7 +98,7 @@ object Application extends Controller {
           case Query.Limited(groups, count) => (groups, Some("results truncated"))
         }
 
-        val answers = AnswerSet.from(groups, TypeFilters.fromGroups(query, groups, debug))
+        val answers = AnswerSet.from(query, groups, TypeFilters.fromGroups(query, groups, debug))
 
         Logger.info(query.toString +
           " executed in " + Timing.Seconds.format(ns) +
@@ -130,9 +130,9 @@ object Application extends Controller {
       answers.orTimeout("Query timeout after " + maxQueryTime + " ms due to high server load.", maxQueryTime).map {
         case Right(timeout) => Logger.warn(query.toString + "timed out after " + maxQueryTime + " ms"); InternalServerError(timeout)
         case Left((answers, message)) =>
-          val filters = filterString match {
+          val filters: Set[TypeFilter] = filterString match {
             case "" | "all" => Set()
-            case "misc" => answers.filters.map(tab => NegativeTypeFilter(tab.filter.typ, query.freeParts)).toSet
+            case "misc" => answers.filters.map(_.filter).collect { case filter: PositiveTypeFilter => filter } .map(filter => NegativeTypeFilter(filter.typ, query.freeParts)).toSet
             case s => Set(PositiveTypeFilter(FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string: " + s)), query.freeParts))
           }
 

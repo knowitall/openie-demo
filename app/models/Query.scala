@@ -43,6 +43,21 @@ case class Query(
     }.map(_._2)(scala.collection.breakOut)
   }
 
+  def filters: Seq[TypeFilter] = {
+    var seq = Seq.empty[TypeFilter]
+
+    def filtersFor(part: ExtractionPart, constraint: Constraint) = constraint match {
+      case constraint: TypeConstraint => Some(PositiveStringTypeFilter(constraint.typ, List(part)))
+      case _ => None
+    }
+
+    seq ++= this.arg1.flatMap(constraint => filtersFor(Argument1, constraint))
+    seq ++= this.rel.flatMap(constraint => filtersFor(Relation, constraint))
+    seq ++= this.arg2.flatMap(constraint => filtersFor(Argument2, constraint))
+
+    seq
+  }
+
   def execute(): Query.Result = {
     def part(eg: REG, part: Symbol) = {part match {
       case 'rel => GroupTitlePart(eg.relNorm, Relation, eg.instances.iterator.map(_.extraction.relText).map(clean).toSeq, None, Set.empty)

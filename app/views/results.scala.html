@@ -9,7 +9,7 @@
     <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all types</a></li>
 @for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(4)) {
   @defining(filters.contains(filter)) { active =>
-    <li class="@{if(active) "active" else ""}"><a href="#@filter.typ.typ" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.typ.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+    <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
   }
 }
   </ul>
@@ -17,7 +17,7 @@
     <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all</a></li>
 @for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(5)) {
   @defining(filters.contains(filter)) { active =>
-    <li class="@{if(active) "active" else ""}"><a href="#@filter.typ.typ" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.typ.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+    <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
   }
 }
 @if(answers.filters.size > 5) {
@@ -26,7 +26,7 @@
     <ul class="dropdown-menu">
     @for(TypeFilterTab(filter, count)<-answers.filters.iterator.drop(5)) {
       @defining(filters.contains(filter)) { active =>
-        <li class="@{if(active) "active" else ""}"><a href="#@filter.typ.typ" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.typ.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+        <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
       }
     }
     </ul>

@@ -18,8 +18,13 @@ case class AnswerSet(groups: Seq[Group], filters: immutable.SortedSet[TypeFilter
 }
 
 object AnswerSet {
-  def from(groups: Seq[Group], filters: Seq[TypeFilter]) = {
-    this(groups, immutable.SortedSet.empty[TypeFilterTab] ++ filters.map(filter => TypeFilterTab(filter, groups.count(group => filter(group.title)))))
+  def from(query: Query, groups: Seq[Group], filters: Seq[TypeFilter]) = {
+    this(
+      // we need to re-apply the query filters because some entities may have been
+      // unlinked due to a low confidence.
+      groups filter (group => query.filters forall (filter => filter(group.title))),
+      immutable.SortedSet.empty[TypeFilterTab] ++
+        filters.map(filter => TypeFilterTab(filter, groups.count(group => filter(group.title)))))
   }
 }
 
@@ -28,6 +33,6 @@ extends Ordered[TypeFilterTab] {
   override def compare(that: TypeFilterTab): Int = {
     val compare = -this.count.compareTo(that.count)
     if (compare != 0) compare
-    else filter.typ.typ.compare(that.filter.typ.typ)
+    else filter.name.compare(that.filter.name)
   }
 }

@@ -4,13 +4,14 @@ import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
 import edu.washington.cs.knowitall.common.enrich.Traversables.traversableOnceTo
 
 sealed abstract trait TypeFilter {
-  def typ: FreeBaseType
+  def name: String
+  def displayName: String
   def parts: List[ExtractionPart]
   def apply(answer: GroupTitle): Boolean
-  def displayName: String
 }
 
-case class PositiveTypeFilter(override val typ: FreeBaseType, override val parts: List[ExtractionPart]) extends TypeFilter {
+case class PositiveTypeFilter(val typ: FreeBaseType, override val parts: List[ExtractionPart]) extends TypeFilter {
+  def name = typ.name
   def displayName = typ.typ.replaceAll("_", " ")
 
   def apply(answer: GroupTitle): Boolean =
@@ -20,7 +21,19 @@ case class PositiveTypeFilter(override val typ: FreeBaseType, override val parts
     }
 }
 
-case class NegativeTypeFilter(override val typ: FreeBaseType, override val parts: List[ExtractionPart]) extends TypeFilter {
+case class PositiveStringTypeFilter(val string: String, override val parts: List[ExtractionPart]) extends TypeFilter {
+  def name = string
+  def displayName = string.replaceAll("_", " ")
+
+  def apply(answer: GroupTitle): Boolean =
+    answer.parts find (parts contains _.extractionPart) match {
+      case Some(part) => part.types.exists(_.typ equalsIgnoreCase this.string)
+      case None => false
+    }
+}
+
+case class NegativeTypeFilter(val typ: FreeBaseType, override val parts: List[ExtractionPart]) extends TypeFilter {
+  def name = typ.name
   def displayName = typ.typ.replaceAll("_", " ")
 
   def apply(answer: GroupTitle): Boolean =
