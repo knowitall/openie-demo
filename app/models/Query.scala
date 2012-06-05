@@ -67,7 +67,8 @@ case class Query(
     }
 
     def group: REG=>GroupTitle = (this.arg1, this.rel, this.arg2) match {
-      case (Some(TermConstraint(arg1)), Some(TermConstraint(rel)), Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg2)))
+      case (Some(TermConstraint(arg1)), Some(TermConstraint(rel)), Some(TermConstraint(arg2))) => (eg: REG) =>
+        GroupTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
 
       case (Some(TermConstraint(arg1)), Some(TermConstraint(rel)), _) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg2)))
       case (_, Some(TermConstraint(rel)), Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg1)))
