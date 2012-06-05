@@ -15,10 +15,9 @@ case class PositiveTypeFilter(val typ: FreeBaseType, override val parts: List[Ex
   def displayName = typ.typ.replaceAll("_", " ")
 
   def apply(answer: GroupTitle): Boolean =
-    answer.parts find (parts contains _.extractionPart) match {
-      case Some(part) => part.types.contains(this.typ)
-      case None => false
-    }
+    answer.parts exists (part => (parts contains part.extractionPart) &&
+      part.types.contains(this.typ)
+    )
 }
 
 case class PositiveStringTypeFilter(val string: String, override val parts: List[ExtractionPart]) extends TypeFilter {
@@ -26,10 +25,9 @@ case class PositiveStringTypeFilter(val string: String, override val parts: List
   def displayName = string.replaceAll("_", " ")
 
   def apply(answer: GroupTitle): Boolean =
-    answer.parts find (parts contains _.extractionPart) match {
-      case Some(part) => part.types.exists(_.typ equalsIgnoreCase this.string)
-      case None => false
-    }
+    answer.parts exists (part => (parts contains part.extractionPart) &&
+      part.types.exists(_.typ equalsIgnoreCase this.string)
+    )
 }
 
 case class NegativeTypeFilter(val typ: FreeBaseType, override val parts: List[ExtractionPart]) extends TypeFilter {
@@ -37,10 +35,9 @@ case class NegativeTypeFilter(val typ: FreeBaseType, override val parts: List[Ex
   def displayName = typ.typ.replaceAll("_", " ")
 
   def apply(answer: GroupTitle): Boolean =
-    answer.parts find (parts contains _.extractionPart) match {
-      case Some(part) => part.types.forall(_ != this.typ)
-      case None => false
-    }
+    answer.parts forall (part => (parts contains part.extractionPart) &&
+      !part.types.contains(this.typ)
+    )
 }
 
 object TypeFilters {
