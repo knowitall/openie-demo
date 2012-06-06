@@ -35,8 +35,13 @@ object Group {
       group: ExtractionGroup[ReVerbExtraction]=>GroupTitle): Seq[Group] = {
 
     val groups = ((reg map (reg => ((group(reg), reg.instances.size), reg))).toList groupBy { case ((title, size), reg) =>
+        def partText(part: GroupTitlePart) = part.entity match {
+          case Some(entity) => entity.name
+          case None => part.lemma
+        }
+
         // hack: remove trailing 's'
-        val text = title.text.toLowerCase.trim
+        val text = title.parts.map(partText).mkString(title.connector).toLowerCase.trim
         if (text.endsWith("s")) text.dropRight(1)
         else if (text.endsWith("es")) text.dropRight(2)
         else text
