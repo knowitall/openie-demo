@@ -97,7 +97,7 @@ case class Query(
     }
 
     val spec = QuerySpec(query(this.arg1), query(this.rel), query(this.arg2), queryEntity(this.arg1), queryEntity(this.arg2), queryTypes(this.arg1), queryTypes(this.arg2))
-    val (ns, result) = Timing.time {
+    val (nsQuery, result) = Timing.time {
       Query.fetcher.fetch(spec)
     }
 
@@ -107,10 +107,19 @@ case class Query(
       case lucene.Timeout(results, hitCount) => (results, hitCount)
     }
 
-    val regrouped = ReVerbExtractionGroup.indexGroupingToFrontendGrouping(results)
+    Logger.debug(spec.toString + " searched with " + results.size + " results (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsQuery))
 
-    val deduped = regrouped map InstanceDeduplicator.deduplicate
-    Logger.debug(spec.toString + " searched with " + deduped.size + " results (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(ns))
+    val (nsRegroup, regrouped) = Timing.time {
+      ReVerbExtractionGroup.indexGroupingToFrontendGrouping(results)
+    }
+
+    Logger.debug(spec.toString + " regrouped with " + regrouped.size + " results (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsRegroup))
+
+    val (nsDeduped, deduped) = Timing.time {
+      regrouped map InstanceDeduplicator.deduplicate
+    }
+
+    Logger.debug(spec.toString + " deduped with " + deduped.size + " results (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsDeduped))
 
     val filtered = deduped.filter { result =>
       def filterPart(constraint: Option[Constraint], entity: Option[FreeBaseEntity], types: Iterable[FreeBaseType]) = {
