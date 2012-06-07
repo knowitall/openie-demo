@@ -170,13 +170,17 @@ object Query {
 
   object Constraint {
     def parse(string: String) = {
-      if (string.trim.isEmpty) {
+      val lcase = string.toLowerCase.trim
+      if (lcase.isEmpty) {
         None
       }
-      else if (string.toLowerCase.startsWith("type:")) {
+      else if (lcase == "who" || lcase == "who?" || lcase == "what" || lcase == "what?") {
+        None
+      }
+      else if (lcase.startsWith("type:")) {
         Some(new TypeConstraint(string.drop(5).replaceAll(" ", "_")))
       }
-      else if (string.toLowerCase.startsWith("entity:")) {
+      else if (lcase.startsWith("entity:")) {
         Some(new EntityConstraint(string.drop(7)))
       }
       else {
