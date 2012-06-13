@@ -141,11 +141,15 @@ case class Query(
     val converted = filtered.map { reg =>
       reg.copy(
           instances = reg.instances filter filterInstances,
-          arg1Norm = clean(reg.arg1Norm),
-          relNorm = clean(reg.relNorm),
-          arg2Norm = clean(reg.arg2Norm),
-          arg1Entity = reg.arg1Entity filter entityFilter,
-          arg2Entity = reg.arg2Entity filter entityFilter)
+          arg1 = reg.arg1.copy(
+            norm = clean(reg.arg1.norm),
+            entity = reg.arg1.entity filter entityFilter
+          ),
+          rel = reg.rel.copy(norm = clean(reg.rel.norm)),
+          arg2 = reg.arg2.copy(
+            norm = clean(reg.arg2.norm),
+            entity = reg.arg2.entity filter entityFilter
+          ))
     }.toList filter filterGroups filter (_.instances.size > 0)
 
     val groups = Group.fromExtractionGroups(converted.toList, group).filter(!_.title.text.trim.isEmpty)
