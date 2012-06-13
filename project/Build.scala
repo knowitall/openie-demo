@@ -8,7 +8,8 @@ object ApplicationBuild extends Build {
     val appVersion      = "1.0-SNAPSHOT"
 
     val appDependencies = Seq(
-      "edu.washington.cs.knowitall" % "openiedemo-backend" % "1.0.1-SNAPSHOT" exclude("org.slf4j", "slf4j-log4j12")
+      "edu.washington.cs.knowitall" % "openiedemo-backend" % "1.0.1-SNAPSHOT" exclude("org.slf4j", "slf4j-log4j12"),
+      "net.debasishg" % "sjson_2.9.1" % "0.17"
     )
 
     val main = PlayProject(appName, appVersion, appDependencies, mainLang = SCALA).settings(

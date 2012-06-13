@@ -59,28 +59,44 @@ case class Query(
   }
 
   def execute(): Query.Result = {
-    def part(eg: REG, part: Symbol) = {part match {
-      case 'rel => GroupTitlePart(eg.rel.norm, Relation, eg.instances.iterator.map(_.extraction.relText).map(clean).toSeq, None, Set.empty)
-      case 'arg1 => GroupTitlePart(eg.arg1.norm, Argument1, eg.instances.iterator.map(_.extraction.arg1Text).map(clean).toSeq, eg.arg1.entity, eg.arg1.types.toSet)
-      case 'arg2 => GroupTitlePart(eg.arg2.norm, Argument2, eg.instances.iterator.map(_.extraction.arg2Text).map(clean).toSeq, eg.arg2.entity, eg.arg2.types.toSet)
+    def group: REG => GroupTitle = {
+      def part(eg: REG, part: Symbol) = {
+        part match {
+          case 'rel => GroupTitlePart(eg.rel.norm, Relation, eg.instances.iterator.map(_.extraction.relText).map(clean).toSeq, None, Set.empty)
+          case 'arg1 => GroupTitlePart(eg.arg1.norm, Argument1, eg.instances.iterator.map(_.extraction.arg1Text).map(clean).toSeq, eg.arg1.entity, eg.arg1.types.toSet)
+          case 'arg2 => GroupTitlePart(eg.arg2.norm, Argument2, eg.instances.iterator.map(_.extraction.arg2Text).map(clean).toSeq, eg.arg2.entity, eg.arg2.types.toSet)
+        }
+      }
+      (this.arg1, this.rel, this.arg2) match {
+        case (Some(TermConstraint(arg1)), Some(TermConstraint(rel)), Some(TermConstraint(arg2))) => (eg: REG) =>
+          GroupTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
+
+        case (Some(TermConstraint(arg1)), Some(TermConstraint(rel)), _) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg2)))
+        case (_, Some(TermConstraint(rel)), Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg1)))
+        case (Some(TermConstraint(arg1)), _, Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle("", Seq(part(eg, 'rel)))
+
+        case (Some(TermConstraint(arg1)), _, _) => (eg: REG) => GroupTitle(" ", Seq(part(eg, 'rel), part(eg, 'arg2)))
+        case (_, Some(TermConstraint(rel)), _) => (eg: REG) => GroupTitle(", ", Seq(part(eg, 'arg1), part(eg, 'arg2)))
+        case (_, _, Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle(", ", Seq(part(eg, 'arg1), part(eg, 'rel)))
+
+        case _ => (eg: REG) => GroupTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
+      }
     }
+
+    val (result, converted) = executeHelper()
+
+    val groups = Group.fromExtractionGroups(converted.toList, group).filter(!_.title.text.trim.isEmpty)
+
+    result match {
+      case lucene.Success(results) => Query.Success(groups)
+      case lucene.Limited(results, hitCount) => Query.Limited(groups, hitCount)
+      case lucene.Timeout(results, hitCount) => Query.Timeout(groups, hitCount)
     }
+  }
 
-    def group: REG=>GroupTitle = (this.arg1, this.rel, this.arg2) match {
-      case (Some(TermConstraint(arg1)), Some(TermConstraint(rel)), Some(TermConstraint(arg2))) => (eg: REG) =>
-        GroupTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
+  def executeRaw(): List[ExtractionGroup[ReVerbExtraction]] = executeHelper()._2
 
-      case (Some(TermConstraint(arg1)), Some(TermConstraint(rel)), _) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg2)))
-      case (_, Some(TermConstraint(rel)), Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle("", Seq(part(eg, 'arg1)))
-      case (Some(TermConstraint(arg1)), _, Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle("", Seq(part(eg, 'rel)))
-
-      case (Some(TermConstraint(arg1)), _, _) => (eg: REG) => GroupTitle(" ", Seq(part(eg, 'rel), part(eg, 'arg2)))
-      case (_, Some(TermConstraint(rel)), _) => (eg: REG) => GroupTitle(", ", Seq(part(eg, 'arg1), part(eg, 'arg2)))
-      case (_, _, Some(TermConstraint(arg2))) => (eg: REG) => GroupTitle(", ", Seq(part(eg, 'arg1), part(eg, 'rel)))
-
-      case _ => (eg: REG) => GroupTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
-    }
-
+  private def executeHelper(): (lucene.ResultSet, List[ExtractionGroup[ReVerbExtraction]]) = {
     def query(constraint: Option[Query.Constraint]): Option[String] = constraint match {
       case Some(TermConstraint(term)) => Some(term)
       case _ => None
@@ -166,17 +182,7 @@ case class Query(
 
     Logger.debug(spec.toString + " converted with " + converted.size + " results in " + Timing.Seconds.format(nsConvert))
 
-    val (nsGroup, groups) = Timing.time {
-      Group.fromExtractionGroups(converted.toList, group).filter(!_.title.text.trim.isEmpty)
-    }
-
-    Logger.debug(spec.toString + " grouped with " + groups.size + " groups in " + Timing.Seconds.format(nsGroup))
-
-    result match {
-      case lucene.Success(results) => Query.Success(groups)
-      case lucene.Limited(results, totalGroupCount) => Query.Limited(groups, hitCount)
-      case lucene.Timeout(results, totalGroupCount) => Query.Timeout(groups, hitCount)
-    }
+    (result, converted)
   }
 }
 

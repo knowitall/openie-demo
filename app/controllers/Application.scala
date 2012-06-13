@@ -11,6 +11,8 @@ import play.api.mvc.{ Controller, Action }
 import play.api.Logger
 import play.api.libs.concurrent
 import scala.util.control.Exception
+import edu.washington.cs.knowitall.browser.extraction.ExtractionGroupProtocol
+import sjson.json.JsonSerialization.tojson
 
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormatter
@@ -75,6 +77,11 @@ object Application extends Controller {
 
   def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean) = Action {
     doSearch(Query.fromStrings(arg1, rel, arg2), filter, page, debug)
+  }
+
+  def json(arg1: Option[String], rel: Option[String], arg2: Option[String]) = Action {
+    import ExtractionGroupProtocol._
+    Ok(tojson(Query.fromStrings(arg1, rel, arg2).executeRaw()).toString)
   }
 
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean) = Action {
