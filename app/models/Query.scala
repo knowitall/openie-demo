@@ -60,9 +60,9 @@ case class Query(
 
   def execute(): Query.Result = {
     def part(eg: REG, part: Symbol) = {part match {
-      case 'rel => GroupTitlePart(eg.relNorm, Relation, eg.instances.iterator.map(_.extraction.relText).map(clean).toSeq, None, Set.empty)
-      case 'arg1 => GroupTitlePart(eg.arg1Norm, Argument1, eg.instances.iterator.map(_.extraction.arg1Text).map(clean).toSeq, eg.arg1Entity, eg.arg1Types.toSet)
-      case 'arg2 => GroupTitlePart(eg.arg2Norm, Argument2, eg.instances.iterator.map(_.extraction.arg2Text).map(clean).toSeq, eg.arg2Entity, eg.arg2Types.toSet)
+      case 'rel => GroupTitlePart(eg.rel.norm, Relation, eg.instances.iterator.map(_.extraction.relText).map(clean).toSeq, None, Set.empty)
+      case 'arg1 => GroupTitlePart(eg.arg1.norm, Argument1, eg.instances.iterator.map(_.extraction.arg1Text).map(clean).toSeq, eg.arg1.entity, eg.arg1.types.toSet)
+      case 'arg2 => GroupTitlePart(eg.arg2.norm, Argument2, eg.instances.iterator.map(_.extraction.arg2Text).map(clean).toSeq, eg.arg2.entity, eg.arg2.types.toSet)
     }
     }
 
@@ -132,7 +132,7 @@ case class Query(
         }.getOrElse(true)
       }
 
-      filterPart(this.arg1, result.arg1Entity, result.arg1Types) && filterPart(this.arg2, result.arg2Entity, result.arg2Types)
+      filterPart(this.arg1, result.arg1.entity, result.arg1.types) && filterPart(this.arg2, result.arg2.entity, result.arg2.types)
     }
 
     def entityFilter(entity: FreeBaseEntity) =
@@ -331,7 +331,7 @@ object Query {
   }
 
   private def filterGroups(group: ExtractionGroup[ReVerbExtraction]): Boolean = {
-    if (group.arg1Norm.trim.isEmpty || group.relNorm.trim.isEmpty || group.arg2Norm.trim.isEmpty) {
+    if (group.arg1.norm.trim.isEmpty || group.rel.norm.trim.isEmpty || group.arg2.norm.trim.isEmpty) {
       false
     }
     else {
@@ -344,13 +344,13 @@ object Query {
       entity.score > ENTITY_SCORE_THRESHOLD
 
     new ExtractionGroup[ReVerbExtraction](
-        group.arg1Norm,
-        group.relNorm,
-        group.arg2Norm,
-        group.arg1Entity filter entityFilter,
-        group.arg2Entity filter entityFilter,
-        group.arg1Types,
-        group.arg2Types,
+        group.arg1.norm,
+        group.rel.norm,
+        group.arg2.norm,
+        group.arg1.entity filter entityFilter,
+        group.arg2.entity filter entityFilter,
+        group.arg1.types,
+        group.arg2.types,
         group.instances)
   }
 }

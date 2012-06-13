@@ -90,7 +90,7 @@ object Group {
     }
 
     collapsed.map { case (title, contents) =>
-      val instances = (contents flatMap (c => c.instances.map((c.arg1Entity, _)))).toList sortBy (- _._2.confidence)
+      val instances = (contents flatMap (c => c.instances.map((c.arg1.entity, _)))).toList sortBy (- _._2.confidence)
       val list = instances.map { case (e, instance) =>
         val sentence = instance.extraction.sentenceTokens.map(_.string)
         val url = instance.extraction.sourceUrl
