@@ -1,4 +1,4 @@
-@(entries: Iterable[LogEntry], yestYear: Int, yestMon: Int, yestDay: Int, tomYear: Int, tomMon: Int, tomDay: Int)
+@(entries: Iterable[LogEntry], today: Object)
 
 @import helper.twitterBootstrap._
 
@@ -20,10 +20,10 @@
 
 <ul class="pager">
   <li class="previous">
-    <a href="@routes.Application.logs(yestYear, yestMon, yestDay)">&laquo; older</a>
   </li>
   <li class="next">
-    <a href="@routes.Application.logs(tomYear, tomMon, tomDay)">newer &raquo;</a>
   </li>
 </ul>
+
+@today
 }

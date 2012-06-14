@@ -11,6 +11,7 @@ import play.api.mvc.{ Controller, Action }
 import play.api.Logger
 import play.api.libs.concurrent
 import scala.util.control.Exception
+
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormatter
 import org.joda.time.format.DateTimeFormat
@@ -90,17 +91,7 @@ object Application extends Controller {
   def logs(year: Int, month: Int, day: Int) = Action {
     val today = new DateTime(year, month, day, 0, 0, 0, 0)
     
-    val yesterday = today.minusDays(1)
-    val yestYear = yesterday.getYear()
-    val yestMon = yesterday.getMonthOfYear()
-    val yestDay = yesterday.getDayOfMonth()
-
-    val tomorrow = today.minusDays(-1)
-    val tomYear = tomorrow.getYear()
-    val tomMon = tomorrow.getMonthOfYear()
-    val tomDay = tomorrow.getDayOfMonth()
-    
-    Ok(views.html.logs(LogEntry.logs(year, month, day), yestYear, yestMon, yestDay, tomYear, tomMon, tomDay))
+    Ok(views.html.logs(LogEntry.logs(year, month, day), today))
   }
 
   def searchGroups(query: Query, debug: Boolean) = {
