@@ -1,4 +1,4 @@
-@(entries: Iterable[LogEntry], today: Object)
+@(entries: Iterable[LogEntry], today: org.joda.time.DateTime)
 
 @import helper.twitterBootstrap._
 
@@ -20,10 +20,10 @@
 
 <ul class="pager">
   <li class="previous">
+    <a href="@routes.Application.logs(today.minusDays(1).getYear(), today.minusDays(1).getMonthOfYear(), today.minusDays(1).getDayOfMonth())">&laquo; previous</a>
   </li>
   <li class="next">
+    <a href="@routes.Application.logs(today.plusDays(1).getYear(), today.plusDays(1).getMonthOfYear(), today.plusDays(1).getDayOfMonth())">next &raquo;</a>
   </li>
 </ul>
-
-@today
 }
