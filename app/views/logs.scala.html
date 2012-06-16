@@ -3,6 +3,16 @@
 @import helper.twitterBootstrap._
 
 @helper.main("UW Open Information Extraction", compact=true) {
+
+<ul class="pager">
+  <li class="previous">
+    <a href="@routes.Application.logs(today.minusDays(1).getYear(), today.minusDays(1).getMonthOfYear(), today.minusDays(1).getDayOfMonth())">&laquo; previous</a>
+  </li>
+  <li class="next">
+    <a href="@routes.Application.logs(today.plusDays(1).getYear(), today.plusDays(1).getMonthOfYear(), today.plusDays(1).getDayOfMonth())">next &raquo;</a>
+  </li>
+</ul>
+
 <table class="table table-bordered table-striped">
   <tr><th></th><th>Argument 1</th><th>Relation</th><th>Argument 2</th><th>Answers</th><th>Sentences</th><th>Date</th></tr>
 @for(entry <- entries) {
