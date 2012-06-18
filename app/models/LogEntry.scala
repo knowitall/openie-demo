@@ -56,7 +56,7 @@ object LogEntry {
   def logs(year: Int, month: Int, day: Int): Seq[LogEntry] = {
     val file = logFile(year, month, day)
     val exists = file.exists()
-    Logger.info("Retrieving logs in " + file + (if (!exists) "(not found)" else ""));
+    Logger.info("Retrieving logs in " + file + (if (!exists) " (not found)" else ""));
     if (!exists) Seq()
     else {
       using (io.Source.fromFile(logFile(year, month, day))) { source =>
