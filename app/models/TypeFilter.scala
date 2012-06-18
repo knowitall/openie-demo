@@ -44,6 +44,20 @@ object TypeFilters {
   final val MINIMUM_OCCURRENCE = 2
   final val MAXIMUM_FILTER_COUNT = 25
 
+  val blacklist: Set[FreeBaseType] = Set(
+    FreeBaseType("tv", "tv_subject"),
+    FreeBaseType("book", "book_subject"),
+    FreeBaseType("film", "film_subject"))
+
+  class EnrichedFreeBaseType(fb: FreeBaseType) {
+    def valid = {
+      fb.domain != "base" && fb.domain != "user" &&
+      !fb.typ.isEmpty() && !blacklist.contains(fb)
+    }
+  }
+
+  implicit def enrichFreeBaseType(fb: FreeBaseType) = new EnrichedFreeBaseType(fb)
+
   def fromGroups(query: Query, groups: Iterable[Group], debug: Boolean): Seq[TypeFilter] = {
     if (query.full) Seq.empty
     else {
@@ -57,7 +71,7 @@ object TypeFilters {
 
         // avoid user-submitted type categories
         typ <- part.types
-        if typ.domain != "base" && typ.domain != "user"
+        if typ.valid
       } yield (PositiveTypeFilter(typ, query.freeParts))
 
       // order the filters and take the top few

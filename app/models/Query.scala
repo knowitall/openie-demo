@@ -142,24 +142,31 @@ case class Query(
     def entityFilter(entity: FreeBaseEntity) =
       entity.score > ENTITY_SCORE_THRESHOLD
 
+    def typeFilter(typ: FreeBaseType) = {
+      import TypeFilters._
+      typ.valid
+    }
+
     val (nsConvert, converted) = Timing.time { filtered.map { reg =>
         reg.copy(
             instances = reg.instances filter filterInstances,
             arg1 = reg.arg1.copy(
               norm = clean(reg.arg1.norm),
-              entity = reg.arg1.entity filter entityFilter
+              entity = reg.arg1.entity filter entityFilter,
+              types = reg.arg1.types filter typeFilter
             ),
             rel = reg.rel.copy(norm = clean(reg.rel.norm)),
             arg2 = reg.arg2.copy(
               norm = clean(reg.arg2.norm),
-              entity = reg.arg2.entity filter entityFilter
+              entity = reg.arg2.entity filter entityFilter,
+              types = reg.arg2.types filter typeFilter
             ))
       }.toList filter filterGroups filter (_.instances.size > 0)
     }
 
     Logger.debug(spec.toString + " converted with " + converted.size + " results in " + Timing.Seconds.format(nsConvert))
 
-    val (nsGroup, groups) = Timing.time { 
+    val (nsGroup, groups) = Timing.time {
       Group.fromExtractionGroups(converted.toList, group).filter(!_.title.text.trim.isEmpty)
     }
 
@@ -348,20 +355,5 @@ object Query {
     else {
       true
     }
-  }
-
-  private def mapGroup(group: ExtractionGroup[ReVerbExtraction]): ExtractionGroup[ReVerbExtraction] = {
-    def entityFilter(entity: FreeBaseEntity) =
-      entity.score > ENTITY_SCORE_THRESHOLD
-
-    new ExtractionGroup[ReVerbExtraction](
-        group.arg1.norm,
-        group.rel.norm,
-        group.arg2.norm,
-        group.arg1.entity filter entityFilter,
-        group.arg2.entity filter entityFilter,
-        group.arg1.types,
-        group.arg2.types,
-        group.instances)
   }
 }
