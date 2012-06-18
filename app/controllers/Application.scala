@@ -97,50 +97,55 @@ object Application extends Controller {
 
   def logs(year: Int, month: Int, day: Int) = Action {
     val today = new DateTime(year, month, day, 0, 0, 0, 0)
-    
+
     Ok(views.html.logs(LogEntry.logs(year, month, day), today))
   }
 
   def searchGroups(query: Query, debug: Boolean) = {
-    Logger.debug("incoming " + query)
-    Cache.getAs[AnswerSet](query.toString.toLowerCase) match {
-      case Some(answers) =>
-        Logger.debug("retrieving " + query + " from cache")
+    try {
+      Logger.debug("incoming " + query)
+      Cache.getAs[AnswerSet](query.toString.toLowerCase) match {
+        case Some(answers) =>
+          Logger.debug("retrieving " + query + " from cache")
 
-        val AnswerSet(groups, filters) = answers
+          val AnswerSet(groups, filters) = answers
 
-        // cache hit
-        Logger.info(query.toString +
-          " retrieved from cache" +
-          " with " + groups.size + " answers" +
-          " and " + groups.iterator.map(_.contents.size).sum + " results")
-        (answers, Some("cached"))
-      case None =>
-        Logger.debug("executing " + query + " in lucene")
+          // cache hit
+          Logger.info(query.toString +
+            " retrieved from cache" +
+            " with " + groups.size + " answers" +
+            " and " + groups.iterator.map(_.contents.size).sum + " results")
+          (answers, Some("cached"))
+        case None =>
+          Logger.debug("executing " + query + " in lucene")
 
-        // cache miss
-        val (ns, result) = Timing.time(query.execute())
+          // cache miss
+          val (ns, result) = Timing.time(query.execute())
 
-        val (groups, message) = result match {
-          case Query.Success(groups) => (groups, None)
-          case Query.Timeout(groups, count) => (groups, Some("timeout"))
-          case Query.Limited(groups, count) => (groups, Some("results truncated"))
-        }
+          val (groups, message) = result match {
+            case Query.Success(groups) => (groups, None)
+            case Query.Timeout(groups, count) => (groups, Some("timeout"))
+            case Query.Limited(groups, count) => (groups, Some("results truncated"))
+          }
 
-        val answers = AnswerSet.from(query, groups, TypeFilters.fromGroups(query, groups, debug))
+          val answers = AnswerSet.from(query, groups, TypeFilters.fromGroups(query, groups, debug))
 
-        Logger.info(query.toString +
-          " executed in " + Timing.Seconds.format(ns) +
-          " with " + groups.size + " answers" +
-          " and " + groups.iterator.map(_.contents.size).sum + " sentences" + message.map(" (" + _ + ")").getOrElse(""))
+          Logger.info(query.toString +
+            " executed in " + Timing.Seconds.format(ns) +
+            " with " + groups.size + " answers" +
+            " and " + groups.iterator.map(_.contents.size).sum + " sentences" + message.map(" (" + _ + ")").getOrElse(""))
 
-        // cache unless we had a timeout
-        if (!result.isInstanceOf[Query.Timeout]) {
-          Logger.debug("Saving " + query.toString + " to cache.")
-          Cache.set(query.toString.toLowerCase, answers)
-        }
+          // cache unless we had a timeout
+          if (!result.isInstanceOf[Query.Timeout]) {
+            Logger.debug("Saving " + query.toString + " to cache.")
+            Cache.set(query.toString.toLowerCase, answers)
+          }
 
-        (answers, message)
+          (answers, message)
+      }
+    } catch {
+      // bug in play requires this
+      case e => Logger.error("Error in query.", e); throw e
     }
   }
 

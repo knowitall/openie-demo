@@ -2,6 +2,8 @@ package models
 
 import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
 import edu.washington.cs.knowitall.common.enrich.Traversables.traversableOnceTo
+import edu.washington.cs.knowitall.common.Resource.using
+import scala.io.Source
 
 sealed abstract trait TypeFilter {
   def name: String
@@ -44,16 +46,26 @@ object TypeFilters {
   final val MINIMUM_OCCURRENCE = 2
   final val MAXIMUM_FILTER_COUNT = 25
 
-  val blacklist: Set[FreeBaseType] = Set(
-    FreeBaseType("tv", "tv_subject"),
-    FreeBaseType("book", "book_subject"),
-    FreeBaseType("film", "film_subject"))
+  val blacklist: Set[FreeBaseType] =
+    using (this.getClass.getResource("/type_blacklist.txt").openStream()) { stream =>
+      (Source.fromInputStream(stream).getLines flatMap FreeBaseType.parse).toSet
+    }
+
+  val weights: Map[FreeBaseType, Int] =
+    using (this.getClass.getResource("/type_weights.txt").openStream()) { stream =>
+      Source.fromInputStream(stream).getLines.map { line =>
+        val Array(fb, weight) = line.split("\t")
+        (FreeBaseType.parse(fb).get, weight.toInt)
+      }.toMap
+    }
 
   class EnrichedFreeBaseType(fb: FreeBaseType) {
     def valid = {
       fb.domain != "base" && fb.domain != "user" &&
       !fb.typ.isEmpty() && !blacklist.contains(fb)
     }
+
+    def weight = weights.getOrElse(fb, 0)
   }
 
   implicit def enrichFreeBaseType(fb: FreeBaseType) = new EnrichedFreeBaseType(fb)
