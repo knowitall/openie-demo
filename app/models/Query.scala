@@ -121,38 +121,49 @@ case class Query(
 
     Logger.debug(spec.toString + " deduped with " + deduped.size + " results (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsDeduped))
 
-    val filtered = deduped.filter { result =>
-      def filterPart(constraint: Option[Constraint], entity: Option[FreeBaseEntity], types: Iterable[FreeBaseType]) = {
-        constraint.map {
-          _ match {
-            case TypeConstraint(typ) => types.exists(_.typ equalsIgnoreCase typ)
-            case EntityConstraint(ent) => entity.exists(_.name equalsIgnoreCase ent)
-            case _ => true
-          }
-        }.getOrElse(true)
-      }
+    val(nsFiltered, filtered) = Timing.time {
+      deduped.filter { result =>
+        def filterPart(constraint: Option[Constraint], entity: Option[FreeBaseEntity], types: Iterable[FreeBaseType]) = {
+          constraint.map {
+            _ match {
+              case TypeConstraint(typ) => types.exists(_.typ equalsIgnoreCase typ)
+              case EntityConstraint(ent) => entity.exists(_.name equalsIgnoreCase ent)
+              case _ => true
+            }
+          }.getOrElse(true)
+        }
 
-      filterPart(this.arg1, result.arg1.entity, result.arg1.types) && filterPart(this.arg2, result.arg2.entity, result.arg2.types)
+        filterPart(this.arg1, result.arg1.entity, result.arg1.types) && filterPart(this.arg2, result.arg2.entity, result.arg2.types)
+      }
     }
+
+    Logger.debug(spec.toString + " filtered with " + filtered.size + " results in " + Timing.Seconds.format(nsFiltered))
 
     def entityFilter(entity: FreeBaseEntity) =
       entity.score > ENTITY_SCORE_THRESHOLD
 
-    val converted = filtered.map { reg =>
-      reg.copy(
-          instances = reg.instances filter filterInstances,
-          arg1 = reg.arg1.copy(
-            norm = clean(reg.arg1.norm),
-            entity = reg.arg1.entity filter entityFilter
-          ),
-          rel = reg.rel.copy(norm = clean(reg.rel.norm)),
-          arg2 = reg.arg2.copy(
-            norm = clean(reg.arg2.norm),
-            entity = reg.arg2.entity filter entityFilter
-          ))
-    }.toList filter filterGroups filter (_.instances.size > 0)
+    val (nsConvert, converted) = Timing.time { filtered.map { reg =>
+        reg.copy(
+            instances = reg.instances filter filterInstances,
+            arg1 = reg.arg1.copy(
+              norm = clean(reg.arg1.norm),
+              entity = reg.arg1.entity filter entityFilter
+            ),
+            rel = reg.rel.copy(norm = clean(reg.rel.norm)),
+            arg2 = reg.arg2.copy(
+              norm = clean(reg.arg2.norm),
+              entity = reg.arg2.entity filter entityFilter
+            ))
+      }.toList filter filterGroups filter (_.instances.size > 0)
+    }
 
-    val groups = Group.fromExtractionGroups(converted.toList, group).filter(!_.title.text.trim.isEmpty)
+    Logger.debug(spec.toString + " converted with " + converted.size + " results in " + Timing.Seconds.format(nsConvert))
+
+    val (nsGroup, groups) = Timing.time { 
+      Group.fromExtractionGroups(converted.toList, group).filter(!_.title.text.trim.isEmpty)
+    }
+
+    Logger.debug(spec.toString + " grouped with " + groups.size + " groups in " + Timing.Seconds.format(nsGroup))
 
     result match {
       case lucene.Success(results) => Query.Success(groups)
