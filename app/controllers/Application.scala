@@ -79,9 +79,9 @@ object Application extends Controller {
     doSearch(Query.fromStrings(arg1, rel, arg2), filter, page, debug)
   }
 
-  def json(arg1: Option[String], rel: Option[String], arg2: Option[String]) = Action {
+  def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int) = Action {
     import ExtractionGroupProtocol._
-    Ok(tojson(Query.fromStrings(arg1, rel, arg2).executeRaw()).toString)
+    Ok(tojson(Query.fromStrings(arg1, rel, arg2).executeRaw().take(count)).toString)
   }
 
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean) = Action {
