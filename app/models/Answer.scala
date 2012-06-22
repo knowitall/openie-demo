@@ -7,7 +7,7 @@ import edu.washington.cs.knowitall.collection.immutable.Interval
 import edu.washington.cs.knowitall.common.enrich.Traversables.traversableOncePairIntTo
 
 @SerialVersionUID(42L)
-case class GroupTitlePart(lemma: String, extractionPart: ExtractionPart, synonyms: Seq[String], entity: Option[FreeBaseEntity], types: Set[FreeBaseType]) {
+case class AnswerTitlePart(lemma: String, extractionPart: ExtractionPart, synonyms: Seq[String], entity: Option[FreeBaseEntity], types: Set[FreeBaseType]) {
   def text = entity match {
     case Some(entity) => entity.name
     case None => synonyms.headOption.getOrElse(lemma)
@@ -18,24 +18,24 @@ case class GroupTitlePart(lemma: String, extractionPart: ExtractionPart, synonym
 }
 
 @SerialVersionUID(43L)
-case class GroupTitle(connector: String, parts: Seq[GroupTitlePart]) {
+case class AnswerTitle(connector: String, parts: Seq[AnswerTitlePart]) {
   def text: String = parts.iterator.map(_.text).mkString(connector)
 }
 
 @SerialVersionUID(44L)
-case class Group(title: GroupTitle, contents: List[Content])
+case class Answer(title: AnswerTitle, contents: List[Content])
 
 @SerialVersionUID(45L)
 case class Content(strings: List[String], url: String, intervals: List[Interval], confidence: Double) {
   def sentence = strings.mkString(" ")
 }
 
-object Group {
+object Answer {
   def fromExtractionGroups(reg: Iterable[ExtractionGroup[ReVerbExtraction]],
-      group: ExtractionGroup[ReVerbExtraction]=>GroupTitle): Seq[Group] = {
+      group: ExtractionGroup[ReVerbExtraction]=>AnswerTitle): Seq[Answer] = {
 
     val groups = ((reg map (reg => ((group(reg), reg.instances.size), reg))).toList groupBy { case ((title, size), reg) =>
-        def partText(part: GroupTitlePart) = part.entity match {
+        def partText(part: AnswerTitlePart) = part.entity match {
           case Some(entity) => entity.name
           case None => part.lemma
         }
@@ -51,7 +51,7 @@ object Group {
         }.sum
       }
 
-    val collapsed: Seq[(GroupTitle, Iterable[ExtractionGroup[ReVerbExtraction]])] = groups.map { case (text, list) =>
+    val collapsed: Seq[(AnswerTitle, Iterable[ExtractionGroup[ReVerbExtraction]])] = groups.map { case (text, list) =>
       val ((headTitle, headTitleSize), _) = list.head
 
       // safe because of our groupBy
@@ -80,12 +80,12 @@ object Group {
             (synonyms.head, synonyms.size)
           }.sortBy(- _._2).map(_._1)
 
-          GroupTitlePart(headTitle.parts(i).lemma,
+          AnswerTitlePart(headTitle.parts(i).lemma,
               headTitle.parts(i).extractionPart,
               sortedUniqueSynonyms, entities, types)
         }
 
-      val title = GroupTitle(headTitle.connector, parts)
+      val title = AnswerTitle(headTitle.connector, parts)
       (title, list.map(_._2))
     }
 
@@ -101,7 +101,7 @@ object Group {
         Content(sentence.toList.map(Query.clean), url, intervals, instance.confidence)
       }.toList
 
-      Group(title, list)
+      Answer(title, list)
     }.filter(_.contents.size > 0).sortBy(-_.contents.size)
   }
 }

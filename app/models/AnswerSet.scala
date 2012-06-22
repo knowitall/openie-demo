@@ -3,7 +3,7 @@ package models
 import scala.collection.immutable
 import org.apache.http.annotation.Immutable
 
-case class AnswerSet(groups: Seq[Group], filters: immutable.SortedSet[TypeFilterTab]) {
+case class AnswerSet(groups: Seq[Answer], filters: immutable.SortedSet[TypeFilterTab]) {
   def answerCount = groups.size
   def sentenceCount = groups.iterator.map(_.contents.size).sum
 
@@ -18,7 +18,7 @@ case class AnswerSet(groups: Seq[Group], filters: immutable.SortedSet[TypeFilter
 }
 
 object AnswerSet {
-  def from(query: Query, groups: Seq[Group], filters: Seq[TypeFilter]) = {
+  def from(query: Query, groups: Seq[Answer], filters: Seq[TypeFilter]) = {
     this(
       // we need to re-apply the query filters because some entities may have been
       // unlinked due to a low confidence.

@@ -1,7 +1,6 @@
 @(searchForm: Form[Query], query: Query, message: Option[String], answers: AnswerSet, totalAnswerCount: Int, totalSentenceCount: Int)(content: Html)
 
 @import helper.twitterBootstrap._
-@import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
 
 @helper.main("Open Information Extraction", compact=true) {
   <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">

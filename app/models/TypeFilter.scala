@@ -9,14 +9,14 @@ sealed abstract trait TypeFilter {
   def name: String
   def displayName: String
   def parts: List[ExtractionPart]
-  def apply(answer: GroupTitle): Boolean
+  def apply(answer: AnswerTitle): Boolean
 }
 
 case class PositiveTypeFilter(val typ: FreeBaseType, override val parts: List[ExtractionPart]) extends TypeFilter {
   def name = typ.name
   def displayName = typ.typ.replaceAll("_", " ")
 
-  def apply(answer: GroupTitle): Boolean =
+  def apply(answer: AnswerTitle): Boolean =
     answer.parts exists (part => (parts contains part.extractionPart) &&
       part.types.contains(this.typ)
     )
@@ -26,7 +26,7 @@ case class PositiveStringTypeFilter(val string: String, override val parts: List
   def name = string
   def displayName = string.replaceAll("_", " ")
 
-  def apply(answer: GroupTitle): Boolean =
+  def apply(answer: AnswerTitle): Boolean =
     answer.parts exists (part => (parts contains part.extractionPart) &&
       part.types.exists(_.typ equalsIgnoreCase this.string)
     )
@@ -36,7 +36,7 @@ case class NegativeTypeFilter(val typ: FreeBaseType, override val parts: List[Ex
   def name = typ.name
   def displayName = typ.typ.replaceAll("_", " ")
 
-  def apply(answer: GroupTitle): Boolean =
+  def apply(answer: AnswerTitle): Boolean =
     answer.parts forall (part => (parts contains part.extractionPart) &&
       !part.types.contains(this.typ)
     )
@@ -70,7 +70,7 @@ object TypeFilters {
 
   implicit def enrichFreeBaseType(fb: FreeBaseType) = new EnrichedFreeBaseType(fb)
 
-  def fromGroups(query: Query, groups: Iterable[Group], debug: Boolean): Seq[TypeFilter] = {
+  def fromGroups(query: Query, groups: Iterable[Answer], debug: Boolean): Seq[TypeFilter] = {
     if (query.full) Seq.empty
     else {
       // build all possible filters
