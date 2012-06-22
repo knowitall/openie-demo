@@ -307,7 +307,7 @@ object Query {
     }
 
     def tooShort(part: String) = {
-      part.size - nonQuestionableChars.matcher(part).replaceAll("").size <= 2
+      part.size - nonQuestionableChars.matcher(part).replaceAll("").size <= 1
     }
 
     val relTokens = inst.extraction.sentenceTokens.slice(inst.extraction.relInterval.start, inst.extraction.relInterval.end)
