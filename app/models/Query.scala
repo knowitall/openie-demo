@@ -8,7 +8,7 @@ import edu.washington.cs.knowitall.browser.lucene
 import edu.washington.cs.knowitall.browser.lucene.{Timeout, Success, QuerySpec, LuceneFetcher, Limited}
 import edu.washington.cs.knowitall.common.Resource.using
 import edu.washington.cs.knowitall.common.Timing
-import Query.{filterInstances, filterGroups, clean, TypeConstraint, TermConstraint, REG, EntityConstraint, ENTITY_SCORE_THRESHOLD, Constraint}
+import Query._
 import akka.actor.{TypedProps, TypedActor}
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
@@ -112,48 +112,31 @@ case class Query(
       case _ => None
     }
 
+    // execute the query
     val spec = QuerySpec(query(this.arg1), query(this.rel), query(this.arg2), queryEntity(this.arg1), queryEntity(this.arg2), queryTypes(this.arg1), queryTypes(this.arg2))
     val (nsQuery, result) = Timing.time {
       Query.fetcher.fetch(spec)
     }
 
+    // open up the retrieved case class
     val (results, hitCount) = result match {
       case lucene.Success(results) => (results, results.size)
       case lucene.Limited(results, hitCount) => (results, hitCount)
       case lucene.Timeout(results, hitCount) => (results, hitCount)
     }
-
     Logger.debug(spec.toString + " searched with " + results.size + " results (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsQuery))
 
     val (nsRegroup, regrouped) = Timing.time {
       ReVerbExtractionGroup.indexGroupingToFrontendGrouping(results)
     }
-
     Logger.debug(spec.toString + " regrouped with " + regrouped.size + " results (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsRegroup))
 
+    // apply backend deduplication
+    // TODO: merge into index itself
     val (nsDeduped, deduped) = Timing.time {
       regrouped map InstanceDeduplicator.deduplicate
     }
-
     Logger.debug(spec.toString + " deduped with " + deduped.size + " results (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsDeduped))
-
-    val(nsFiltered, filtered) = Timing.time {
-      deduped.filter { result =>
-        def filterPart(constraint: Option[Constraint], entity: Option[FreeBaseEntity], types: Iterable[FreeBaseType]) = {
-          constraint.map {
-            _ match {
-              case TypeConstraint(typ) => types.exists(_.typ equalsIgnoreCase typ)
-              case EntityConstraint(ent) => entity.exists(_.name equalsIgnoreCase ent)
-              case _ => true
-            }
-          }.getOrElse(true)
-        }
-
-        filterPart(this.arg1, result.arg1.entity, result.arg1.types) && filterPart(this.arg2, result.arg2.entity, result.arg2.types)
-      }
-    }
-
-    Logger.debug(spec.toString + " filtered with " + filtered.size + " results in " + Timing.Seconds.format(nsFiltered))
 
     def entityFilter(entity: FreeBaseEntity) =
       entity.score > ENTITY_SCORE_THRESHOLD
@@ -163,7 +146,9 @@ case class Query(
       typ.valid
     }
 
-    val (nsConvert, converted) = Timing.time { filtered.map { reg =>
+    val (nsFiltered, filtered: List[ExtractionGroup[ReVerbExtraction]]) =
+      Timing.time { deduped.iterator.map { reg =>
+        // normalize fields and remove filtered entities/types
         reg.copy(
             instances = reg.instances filter filterInstances,
             arg1 = reg.arg1.copy(
@@ -177,12 +162,32 @@ case class Query(
               entity = reg.arg2.entity filter entityFilter,
               types = reg.arg2.types filter typeFilter
             ))
-      }.toList filter filterGroups filter (_.instances.size > 0)
+      } filter filterGroups filter (_.instances.size > 0) toList
     }
 
-    Logger.debug(spec.toString + " converted with " + converted.size + " results in " + Timing.Seconds.format(nsConvert))
+    Logger.debug(spec.toString + " filtered with " + filtered.size + " results in " + Timing.Seconds.format(nsFiltered))
 
-    (result, converted)
+    (result, filtered)
+  }
+
+  private def filterGroups(group: ExtractionGroup[ReVerbExtraction]): Boolean = {
+    // if there are constraints,
+    // apply them to each part
+    def filterPart(constraint: Option[Constraint], entity: Option[FreeBaseEntity], types: Iterable[FreeBaseType]) = {
+      constraint.map {
+        _ match {
+          case TypeConstraint(typ) => types.exists(_.typ equalsIgnoreCase typ)
+          case EntityConstraint(ent) => entity.exists(_.name equalsIgnoreCase ent)
+          case _ => true
+        }
+      }.getOrElse(true)
+    }
+
+    if (group.arg1.norm.trim.isEmpty || group.rel.norm.trim.isEmpty || group.arg2.norm.trim.isEmpty) {
+      false
+    } else {
+      filterPart(this.arg1, group.arg1.entity, group.arg1.types) && filterPart(this.arg2, group.arg2.entity, group.arg2.types)
+    }
   }
 }
 
@@ -347,15 +352,6 @@ object Query {
       (nonQuestionableChars.matcher(extr).replaceAll("").size >= 5) ||
       (tooShort(arg1clean) || tooShort(relclean) || tooShort(arg2clean)) ||
       likelyError) {
-      false
-    }
-    else {
-      true
-    }
-  }
-
-  private def filterGroups(group: ExtractionGroup[ReVerbExtraction]): Boolean = {
-    if (group.arg1.norm.trim.isEmpty || group.rel.norm.trim.isEmpty || group.arg2.norm.trim.isEmpty) {
       false
     }
     else {
