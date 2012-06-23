@@ -75,8 +75,8 @@ object Application extends Controller {
       query => doSearch(query, "all", 0))
   }
 
-  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean) = Action {
-    doSearch(Query.fromStrings(arg1, rel, arg2), filter, page, debug)
+  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean) = Action {
+    doSearch(Query.fromStrings(arg1, rel, arg2), filter, page, debug=debug, log=log)
   }
 
   def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int) = Action {
@@ -150,10 +150,10 @@ object Application extends Controller {
   }
 
   def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, debug: Boolean = false) = Action {
-    doSearch(Query.fromStrings(arg1, rel, arg2), filterString, pageNumber, debug, true)
+    doSearch(Query.fromStrings(arg1, rel, arg2), filterString, pageNumber, debug=debug, log=true, justResults=true)
   }
 
-  def doSearch(query: Query, filterString: String, pageNumber: Int, debug: Boolean = false, justResults: Boolean = false) = {
+  def doSearch(query: Query, filterString: String, pageNumber: Int, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false) = {
     val maxQueryTime = 20 * 1000 /* ms */
 
     val answers = concurrent.Akka.future {
@@ -174,8 +174,10 @@ object Application extends Controller {
           Logger.info(query + " with " + filters + " has " + filtered.answerCount + " answers " + filtered.sentenceCount + " results")
           val page = filtered.page(pageNumber, PAGE_SIZE)
 
-          val entry = new LogEntry(query, answers.answerCount, answers.sentenceCount)
-          entry.log()
+          if (log) {
+            val entry = new LogEntry(query, answers.answerCount, answers.sentenceCount)
+            entry.log()
+          }
 
           if (justResults) {
             Ok(views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug))
