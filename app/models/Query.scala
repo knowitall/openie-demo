@@ -197,9 +197,9 @@ case class Query(
     
     if (group.arg1.norm.trim.isEmpty || group.rel.norm.trim.isEmpty || group.arg2.norm.trim.isEmpty) {
       false
-    } /*else if (!filterRelation) {
+    } else if (!filterRelation) {
       false
-    }*/ else {
+    } else {
       filterPart(this.arg1, group.arg1.entity, group.arg1.types) && filterPart(this.arg2, group.arg2.entity, group.arg2.types)
     }
   }
