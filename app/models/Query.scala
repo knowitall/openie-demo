@@ -14,6 +14,7 @@ import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import play.api.Logger
 import edu.washington.cs.knowitall.browser.extraction.InstanceDeduplicator
+import edu.washington.cs.knowitall.browser.extraction.ExtractionRelation
 
 
 case class Query(
@@ -156,13 +157,13 @@ case class Query(
               entity = reg.arg1.entity filter entityFilter,
               types = reg.arg1.types filter typeFilter
             ),
-            rel = reg.rel.copy(norm = clean(reg.rel.norm)),
+            rel = reg.rel.copy(norm = clean(reg.rel.norm)), // A method that you can call here that will filter out rel according to stephen's criteria
             arg2 = reg.arg2.copy(
               norm = clean(reg.arg2.norm),
               entity = reg.arg2.entity filter entityFilter,
               types = reg.arg2.types filter typeFilter
             ))
-      } filter filterGroups filter (_.instances.size > 0) toList
+      } filter filterGroups(spec) filter (_.instances.size > 0) toList
     }
 
     Logger.debug(spec.toString + " filtered with " + filtered.size + " results in " + Timing.Seconds.format(nsFiltered))
@@ -170,7 +171,7 @@ case class Query(
     (result, filtered)
   }
 
-  private def filterGroups(group: ExtractionGroup[ReVerbExtraction]): Boolean = {
+  private def filterGroups(spec: QuerySpec)(group: ExtractionGroup[ReVerbExtraction]): Boolean = {
     // if there are constraints,
     // apply them to each part
     def filterPart(constraint: Option[Constraint], entity: Option[FreeBaseEntity], types: Iterable[FreeBaseType]) = {
@@ -183,7 +184,20 @@ case class Query(
       }.getOrElse(true)
     }
 
+    def filterRelation = spec.relNorm match {
+      case Some(queryRelNorm) => {
+        val groupHead = group.instances.head.extraction
+        val groupRelNormTokens = groupHead.normTokens(groupHead.relInterval)
+        // see if first (NN || VB) from the right in groupRelTokens is in queryRelTokens somewhere.
+        val lastContentWord = groupRelNormTokens.last.string
+        queryRelNorm.contains(lastContentWord)
+      }
+      case None => true
+    }
+    
     if (group.arg1.norm.trim.isEmpty || group.rel.norm.trim.isEmpty || group.arg2.norm.trim.isEmpty) {
+      false
+    } else if (!filterRelation) {
       false
     } else {
       filterPart(this.arg1, group.arg1.entity, group.arg1.types) && filterPart(this.arg2, group.arg2.entity, group.arg2.types)
@@ -235,14 +249,14 @@ object Query {
   }
 
   val paths = Seq("/scratch/common/openie-demo/test-index-0.0.5",
-    "/scratch2/common/openie-demo/test-index-0.0.5",
-    "/scratch3/common/openie-demo/test-index-0.0.5",
-    "/scratch4/common/openie-demo/test-index-0.0.5")
+    "/scratch2/common/openie-demo/index-1.0.1",
+    "/scratch3/common/openie-demo/index-1.0.1",
+    "/scratch4/common/openie-demo/index-1.0.1")
 
-  val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
+  val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9052/user/fetcher"))
 
   /*
-  val fetcher = new ParallelExtractionGroupFetcher(
+  val fetcher = new lucene.ParallelExtractionGroupFetcher(
       paths,
       /* max search groups (20k) */
       20000,
@@ -301,7 +315,7 @@ object Query {
 
     clean
   }
-
+  
   private def filterInstances(inst: Instance[ReVerbExtraction]): Boolean = {
     def clean(arg: String) = {
       var clean = this.clean(arg.trim)
