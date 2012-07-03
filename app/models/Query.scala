@@ -258,7 +258,7 @@ object Query {
   /*
   val fetcher = new lucene.ParallelExtractionGroupFetcher(
       paths,
-      /* max search groups (20k) */
+      /* max search groups (20k)  */
       20000,
       /* max read instances (10k) */
       10000,
