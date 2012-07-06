@@ -252,7 +252,7 @@ object Query {
     override def toString = "entity:" + entity
   }
 
-  val paths = Seq("/scratch/common/openie-demo/test-index-0.0.5",
+  val paths = Seq("/scratch/common/openie-demo/index-1.0.1",
     "/scratch2/common/openie-demo/index-1.0.1",
     "/scratch3/common/openie-demo/index-1.0.1",
     "/scratch4/common/openie-demo/index-1.0.1")
