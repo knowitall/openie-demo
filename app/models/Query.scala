@@ -186,11 +186,15 @@ case class Query(
 
     def filterRelation = spec.relNorm match {
       case Some(queryRelNorm) => {
-        val groupHead = group.instances.head.extraction
-        val groupRelNormTokens = groupHead.normTokens(groupHead.relInterval)
-        // see if first (NN || VB) from the right in groupRelTokens is in queryRelTokens somewhere.
-        val lastContentWord = groupRelNormTokens.last.string
-        queryRelNorm.contains(lastContentWord)
+        group.instances.headOption match { 
+          case Some(group) => {
+            val extr = group.extraction
+            val groupRelNormTokens = extr.normTokens(extr.relInterval)
+            val lastContentWord = groupRelNormTokens.last.string
+            queryRelNorm.contains(lastContentWord)
+          }
+          case None => true
+        }
       }
       case None => true
     }
