@@ -11,3 +11,4 @@
 /book/periodical_subject
 /exhibitions/exhibition_subject
 /symbols/flag_referent
+/influence/influence_node
