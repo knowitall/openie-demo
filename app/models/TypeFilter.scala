@@ -71,7 +71,7 @@ object TypeFilters {
   implicit def enrichFreeBaseType(fb: FreeBaseType) = new EnrichedFreeBaseType(fb)
 
   def fromGroups(query: Query, groups: Iterable[Answer], debug: Boolean): Seq[TypeFilter] = {
-    if (query.full) Seq.empty
+    if (query.full) List.empty
     else {
       // build all possible filters
       val it = for {
@@ -90,7 +90,7 @@ object TypeFilters {
       val ordered = it.histogram.filter {
         case (filter, count) =>
           count > MINIMUM_OCCURRENCE
-      }.toSeq.sortBy(-_._2).map(_._1)
+      }.toList.sortBy(-_._2).map(_._1)
 
       if (debug) ordered
       else {
@@ -108,8 +108,21 @@ object TypeFilters {
           }
         }
 
-        grouped.map(_._1).toSeq
+        filterOverlappingTypeFilters(grouped).map(_._1)
       }
     }
+  }
+
+  def filterOverlappingTypeFilters(types: List[(TypeFilter, Set[Answer])]) = {
+    val THRESHOLD = 0.9
+    types.foldLeft(List.empty[(TypeFilter, Set[Answer])]) { case (acc, next@(tf, ans)) =>
+      def overlapped =
+        acc exists { case (tfx, ansx) =>
+          (ans intersect ansx).size > THRESHOLD * ansx.size
+        }
+
+      if (overlapped) acc
+      else next :: acc
+    }.reverse
   }
 }
