@@ -23,10 +23,12 @@ case class AnswerTitle(connector: String, parts: Seq[AnswerTitlePart]) {
 }
 
 @SerialVersionUID(44L)
-case class Answer(title: AnswerTitle, contents: List[Content])
+case class Answer(title: AnswerTitle, contents: List[Content]) {
+  def contentsByRelation = contents.groupBy(_.rel).toList.sortBy{ case (r, cs) => -cs.size }
+}
 
 @SerialVersionUID(45L)
-case class Content(strings: List[String], url: String, intervals: List[Interval], confidence: Double) {
+case class Content(strings: List[String], url: String, intervals: List[Interval], rel: String, confidence: Double) {
   def sentence = strings.mkString(" ")
 }
 
@@ -90,15 +92,15 @@ object Answer {
     }
 
     collapsed.map { case (title, contents) =>
-      val instances = (contents flatMap (c => c.instances.map((c.arg1.entity, _)))).toList sortBy (- _._2.confidence)
-      val list = instances.map { case (e, instance) =>
+      val instances = (contents flatMap (c => c.instances.map((c, _)))).toList sortBy (- _._2.confidence)
+      val list = instances.map { case (group, instance) =>
         val sentence = instance.extraction.sentenceTokens.map(_.string)
         val url = instance.extraction.sourceUrl
         val intervals = List(
             instance.extraction.arg1Interval,
-            instance.extraction.relInterval,
+            //instance.extraction.relInterval,
             instance.extraction.arg2Interval)
-        Content(sentence.toList.map(Query.clean), url, intervals, instance.confidence)
+        Content(sentence.toList.map(Query.clean), url, intervals, group.instances.head.extraction.relText, instance.confidence)
       }.toList
 
       Answer(title, list)
