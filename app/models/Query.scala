@@ -257,7 +257,7 @@ object Query {
     "/scratch3/common/openie-demo/index-1.0.1",
     "/scratch4/common/openie-demo/index-1.0.1")
 
-  val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9052/user/fetcher"))
+  val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
 
   /*
   val fetcher = new lucene.ParallelExtractionGroupFetcher(
