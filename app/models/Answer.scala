@@ -100,7 +100,7 @@ object Answer {
             instance.extraction.arg1Interval,
             //instance.extraction.relInterval,
             instance.extraction.arg2Interval)
-        Content(sentence.toList.map(Query.clean), url, intervals, group.instances.head.extraction.relText, instance.confidence)
+        Content(sentence.toList.map(Query.clean), url, intervals, instance.extraction.relText, instance.confidence)
       }.toList
 
       Answer(title, list)
