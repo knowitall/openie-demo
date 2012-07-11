@@ -16,13 +16,14 @@ import play.api.Logger
 import edu.washington.cs.knowitall.browser.extraction.InstanceDeduplicator
 import edu.washington.cs.knowitall.browser.extraction.ExtractionRelation
 
-
 case class Query(
   arg1: Option[Query.Constraint],
   rel: Option[Query.Constraint],
   arg2: Option[Query.Constraint]) {
 
   import Query._
+  import edu.washington.cs.knowitall.tool.postag.Postagger.prepositions
+  import edu.washington.cs.knowitall.tool.postag.PostaggedToken
 
   def arg1String = arg1.getOrElse("")
   def relString = rel.getOrElse("")
@@ -163,13 +164,36 @@ case class Query(
               entity = reg.arg2.entity filter entityFilter,
               types = reg.arg2.types filter typeFilter
             ))
-      } filter filterGroups(spec) filter (_.instances.size > 0) toList
+      } filter filterGroups(spec) filter filterRelation(spec) filter (_.instances.size > 0) toList
     }
 
     Logger.debug(spec.toString + " filtered with " + filtered.size + " results in " + Timing.Seconds.format(nsFiltered))
 
     (result, filtered)
   }
+  
+  private def filterRelation(spec: QuerySpec)(group: ExtractionGroup[ReVerbExtraction]) = spec.relNorm match {
+      // if the query does not constrain rel, we can ignore this filter 
+      case Some(queryRelNorm) => {
+        group.instances.headOption match { 
+          // it's possible that the group is empty already due to some other filter.
+          // If it is, ignore (a different filter checks for this)
+          case Some(group) => {
+            println("QueryRelNorm: %s".format(queryRelNorm))
+            val extr = group.extraction
+            println("Extr is: %s".format(extr))
+            def filterNonContent(tok: PostaggedToken): Boolean = !prepositions.contains(tok.string.toLowerCase)
+            val groupRelNormTokens = extr.normTokens(extr.relInterval) filter filterNonContent
+            println("GroupRelNormTokens: %s".format(groupRelNormTokens))
+            val lastContentWord = groupRelNormTokens.last.string
+            println("lastContentWord: %s".format(lastContentWord))
+            queryRelNorm.contains(lastContentWord)
+          }
+          case None => true
+        }
+      }
+      case None => true
+    }
 
   private def filterGroups(spec: QuerySpec)(group: ExtractionGroup[ReVerbExtraction]): Boolean = {
     // if there are constraints,
@@ -184,24 +208,7 @@ case class Query(
       }.getOrElse(true)
     }
 
-    def filterRelation = spec.relNorm match {
-      case Some(queryRelNorm) => {
-        group.instances.headOption match { 
-          case Some(group) => {
-            val extr = group.extraction
-            val groupRelNormTokens = extr.normTokens(extr.relInterval)
-            val lastContentWord = groupRelNormTokens.last.string
-            queryRelNorm.contains(lastContentWord)
-          }
-          case None => true
-        }
-      }
-      case None => true
-    }
-    
     if (group.arg1.norm.trim.isEmpty || group.rel.norm.trim.isEmpty || group.arg2.norm.trim.isEmpty) {
-      false
-    } else if (!filterRelation) {
       false
     } else {
       filterPart(this.arg1, group.arg1.entity, group.arg1.types) && filterPart(this.arg2, group.arg2.entity, group.arg2.types)
