@@ -22,7 +22,6 @@ case class Query(
   arg2: Option[Query.Constraint]) {
 
   import Query._
-  import edu.washington.cs.knowitall.tool.postag.Postagger.prepositions
   import edu.washington.cs.knowitall.tool.postag.PostaggedToken
 
   def arg1String = arg1.getOrElse("")
@@ -172,6 +171,8 @@ case class Query(
     (result, filtered)
   }
   
+  private val nonContentTag = "IN|TO|RB?".r
+  
   private def filterRelation(spec: QuerySpec)(group: ExtractionGroup[ReVerbExtraction]) = spec.relNorm match {
       // if the query does not constrain rel, we can ignore this filter 
       case Some(queryRelNorm) => {
@@ -179,14 +180,10 @@ case class Query(
           // it's possible that the group is empty already due to some other filter.
           // If it is, ignore (a different filter checks for this)
           case Some(group) => {
-            println("QueryRelNorm: %s".format(queryRelNorm))
             val extr = group.extraction
-            println("Extr is: %s".format(extr))
-            def filterNonContent(tok: PostaggedToken): Boolean = !prepositions.contains(tok.string.toLowerCase)
+            def filterNonContent(tok: PostaggedToken): Boolean = nonContentTag.findFirstIn(tok.postag).isEmpty
             val groupRelNormTokens = extr.normTokens(extr.relInterval) filter filterNonContent
-            println("GroupRelNormTokens: %s".format(groupRelNormTokens))
             val lastContentWord = groupRelNormTokens.last.string
-            println("lastContentWord: %s".format(lastContentWord))
             queryRelNorm.contains(lastContentWord)
           }
           case None => true
