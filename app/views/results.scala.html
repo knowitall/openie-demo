@@ -143,13 +143,18 @@ $(document).ready(function() {
     var datacontent = span.attr('data-content');
     
     // pull freebase entity information as JSON object
-    $.getJSON("https://www.googleapis.com/freebase/v1/text/m/"+span.attr("id")+'?format=plain&lang=en&callback=?', function(response) {
+    $.getJSON("https://www.googleapis.com/freebase/v1/text/m/"+span.attr("id")+'?format=plain&lang=en&maxlength=1000&callback=?', function(response) {
       if (response != undefined && response.result != undefined) {
         // set image src to freebase entity
         var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+span.attr("id")+'?maxheight=150&maxwidth=150'
         
         // populate entity data from freebase
-        datacontent = '<div class="entity-desc">' + '<img class="popover-image" src="'+src+'">' + response.result + '</div>' + datacontent;
+        datacontent = '<div class="entity-desc">'
+          + '<img class="popover-image" src="' + src + '">'
+          + $('<div/>').text(response.result).html()
+          + ' <a href="http://www.freebase.com/view/m/' + span.attr("id") + '">(read more)</a>'
+          + '</div>'
+          + datacontent;
         // freebase_data[id] = datacontent;
         span.attr('data-content', datacontent);
       } else {
@@ -167,14 +172,6 @@ $(document).ready(function() {
   // grab freebase id (if possible) on click
   $('.answer').click(function() {
     var id = $(this).attr("href");
-
-    // if (freebase_data[id]) {
-    //   // TODO: if we have the freebase info, display it
-    //   console.log(freebase_data[id]);
-    // } else {
-    //   // TODO: if we don't have the freebase info, download it
-    //   download_freebase(id);
-    // }
 
     // make sure there is actually something there to match
     if ($(this).children("span").attr("data-content")) {
