@@ -139,6 +139,7 @@ $(document).ready(function() {
 
   var download_freebase = function(target) {
     var span = $(target).children("span");
+    var title = $(target).children("span").attr("title");
     var id = $(target).attr("href");
     var datacontent = span.attr('data-content');
     
@@ -151,8 +152,8 @@ $(document).ready(function() {
         // populate entity data from freebase
         datacontent = '<div class="entity-desc">'
           + '<img class="popover-image" src="' + src + '">'
-          + $('<div/>').text(response.result).html()
-          + ' <a href="http://www.freebase.com/view/m/' + span.attr("id") + '">(read more)</a>'
+          +  '<p>' + $('<div/>').text(response.result).html()
+          + ' <a href="http://www.freebase.com/view/m/' + span.attr("id") + '">(read more)</a>' + '</p>'
           + '</div>'
           + datacontent;
         // freebase_data[id] = datacontent;
@@ -166,11 +167,13 @@ $(document).ready(function() {
     // clear the previous description from the tab pane
     // replace it with the new one
     $("<div class='data'>" + span.attr("data-content") + "</div>").insertAfter($(id + "> .close-tab"));
+    $("<h2>" + title + "</h2>").insertAfter($(id+"> .close-tab"));
     })
   }
 
   // grab freebase id (if possible) on click
   $('.answer').click(function() {
+    var title = $(this).children("span").attr("title");
     var id = $(this).attr("href");
 
     // make sure there is actually something there to match
@@ -179,14 +182,14 @@ $(document).ready(function() {
       if ($(this).children("span").attr("data-content").match("entity-desc")) {
         // only add info if it isn't already there
         if (!(id + "> .data")) {
-          $("div class='data'>" + $(this).children("span").attr("data-content") + "</div>").insertAfter($(id + "> .close-tab"));
+          $("<div class='data'>" + $(this).children("span").attr("data-content") + "</div>").insertAfter($(id + "> .close-tab"));
+          $("<h2>" + title + "</h2>").insertAfter($(id+"> .close-tab"));
         }
       } else {
         // grab freebase entity information
         download_freebase($(this));
       }
     } else {
-      // TODO: handle missing data-content attribute
     }
   });
 
