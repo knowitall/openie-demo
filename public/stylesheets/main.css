@@ -33,3 +33,19 @@
 #stats {
   font-size: larger
 }
+
+.popover-image {
+  margin: .5em 1em 0 0;
+}
+
+.entity-desc p {
+  margin: 0 3em 1em 0;
+}
+
+blockquote.uri-body, blockquote.types-body, blockquote.syns-body {
+  border: none;
+}
+
+.dl-horizontal dd:hover > a {
+  background: rgb(225,225,225);
+}
