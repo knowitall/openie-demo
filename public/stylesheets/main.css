@@ -49,3 +49,43 @@ blockquote.uri-body, blockquote.types-body, blockquote.syns-body {
 .dl-horizontal dd:hover > a {
   background: rgb(225,225,225);
 }
+
+.freebase-attribution {
+  float: right;
+  margin: 1em 0 2em 0;
+}
+
+.freebase-attribution > div {
+  display: inline-block;
+  font-size: 0.75em;
+}
+
+.freebase-attribution > div p {
+  margin: 1.2em 0 -1em 0;
+  padding: 0;
+  line-height: 1.2em;
+}
+
+.page-header a {
+  color: #333;
+}
+
+.page-header a:link {
+  color: #333;
+}
+
+.page-header a:visited {
+  color: #333;
+}
+
+.page-header a:hover {
+  color: #08c;
+}
+
+.page-header a:active {
+  color: #08c;
+}
+
+#stats {
+  margin: 1em 0;
+}

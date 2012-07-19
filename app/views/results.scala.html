@@ -3,7 +3,6 @@
 @import helper.twitterBootstrap._
 
 <!-- filters -->
-<br/>
 @if(answers.filters.size > 0) {
   <ul class="nav nav-tabs nav-stacked visible-phone">
     <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all types</a></li>
@@ -96,19 +95,13 @@
   </div>
 }
 
-  <div style="height: 60px"></div>
-
   <!-- freebase attr footer -->
   <div class="freebase-attribution">
     <img alt="Freebase CC-BY" height="23px" style="border: 0;" width="61px" src="http://www.freebase.com/policies/freebase-cc-by-61x23.png"/>
 
-    <div style="font-size: x-small; height: 30px; ">
-      Source:
-      <a href="http://www.freebase.com/">Freebase</a>, licensed under
-      <a href="http://creativecommons.org/licenses/by/2.5/">CC-BY</a><br/>
-      Other content from
-      <a href="http://en.wikipedia.org/">Wikipedia</a>,
-      licensed under <a href="http://creativecommons.org/licenses/by-sa/2.5/">CC BY-SA</a>
+    <div>
+      <p>Source: <a href="http://www.freebase.com/">Freebase</a>, licensed under <a href="http://creativecommons.org/licenses/by/2.5/">CC-BY</a></p>
+      <p>Other content from <a href="http://en.wikipedia.org/">Wikipedia</a>, licensed under <a href="http://creativecommons.org/licenses/by-sa/2.5/">CC BY-SA</a></p>
     </div>
   </div>
   <!-- /freebase attr footer -->
