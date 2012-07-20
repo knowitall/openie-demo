@@ -2,11 +2,15 @@ package models
 
 import java.io.{PrintWriter, FileOutputStream, File}
 import java.util.{Date, Calendar}
+import java.net.UnknownHostException
+import java.net.InetAddress
 
 import edu.washington.cs.knowitall.common.Resource.using
 
 import LogEntry.LOG_DIRECTORY_FILE
+import scala.util.control.Exception._
 import play.api.Logger
+import play.api.mvc.RequestHeader
 
 case class LogEntry (
   query: Query,
@@ -48,6 +52,18 @@ case class LogEntry (
 
 object LogEntry {
   final val LOG_DIRECTORY_FILE = new File(System.getProperty("user.home") + "/openiedemo/logs")
+
+  def fromRequest(query: Query, answerCount: Int, sentenceCount: Int, request: RequestHeader) = {
+    val remoteIp = request.remoteAddress
+    val remoteHost = catching(classOf[UnknownHostException]) opt (InetAddress.getByName(remoteIp).getHostName)
+
+    val address = remoteHost match {
+      case Some(host) if host != remoteIp => remoteIp + "/" + host
+      case None => remoteIp
+    }
+
+    LogEntry(query, answerCount, sentenceCount, address)
+  }
 
   def logFile(): File = {
     val cal = Calendar.getInstance
