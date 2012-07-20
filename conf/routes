@@ -9,6 +9,7 @@ GET     /search/                    controllers.Application.search(arg1: Option[
 GET     /json/                      controllers.Application.json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int ?= 25)
 GET     /results/                   controllers.Application.results(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String ?= "all", page: Int ?= 0, debug: Boolean ?= false)
 GET     /sentences/                 controllers.Application.sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean ?= false)
+GET     /logs                       controllers.Application.logsFromDate()
 GET     /logs/:year/:month/:day     controllers.Application.logs(year: Int, month: Int, day: Int)
 
 # Map static resources from the /public folder to the /assets URL path
