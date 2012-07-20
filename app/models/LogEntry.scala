@@ -4,6 +4,7 @@ import java.io.{PrintWriter, FileOutputStream, File}
 import java.util.{Date, Calendar}
 import java.net.UnknownHostException
 import java.net.InetAddress
+import java.text.SimpleDateFormat
 
 import edu.washington.cs.knowitall.common.Resource.using
 
@@ -20,6 +21,8 @@ case class LogEntry (
   address: String = "0.0.0.0",
   date: Date = new Date) {
   import LogEntry._
+
+  def dateString = LogEntry.dateFormatter.format(date)
 
   def toRow = {
     Iterable(
@@ -53,7 +56,8 @@ case class LogEntry (
 }
 
 object LogEntry {
-  final val LOG_DIRECTORY_FILE = new File(System.getProperty("user.home") + "/openiedemo/logs")
+  private final val LOG_DIRECTORY_FILE = new File(System.getProperty("user.home") + "/openiedemo/logs")
+  private final val dateFormatter = new SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss z")
 
   def fromRequest(query: Query, filter: String, answerCount: Int, sentenceCount: Int, request: RequestHeader) = {
     val remoteIp = request.remoteAddress
