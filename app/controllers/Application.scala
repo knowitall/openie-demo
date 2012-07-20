@@ -95,6 +95,10 @@ object Application extends Controller {
     Ok(views.html.sentences(group, debug))
   }
 
+  def logsFromDate(date: DateTime = DateTime.now) = Action {
+    logs(date.getYear, date.getMonthOfYear, date.getDayOfMonth)
+  }
+
   def logs(year: Int, month: Int, day: Int) = Action {
     val today = new DateTime(year, month, day, 0, 0, 0, 0)
 
