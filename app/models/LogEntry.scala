@@ -12,8 +12,8 @@ case class LogEntry (
   query: Query,
   answerCount: Int,
   sentenceCount: Int,
-  date: Date = new Date
-) {
+  address: String = "0.0.0.0",
+  date: Date = new Date) {
   import LogEntry._
 
   def toRow = {
@@ -23,7 +23,8 @@ case class LogEntry (
         query.arg2String,
         answerCount.toString,
         sentenceCount.toString,
-        date.getTime.toString).mkString("\t")
+        date.getTime.toString,
+        address).mkString("\t")
   }
 
   def log() {
@@ -38,6 +39,10 @@ case class LogEntry (
         writer.println(this.toRow)
       }
     }
+  }
+
+  def fromUW = {
+    address.startsWith("128.208.") || address.startsWith("128.95.")
   }
 }
 
@@ -67,7 +72,7 @@ object LogEntry {
 
   def fromRow(row: String) = {
     def noneIfEmpty(string: String) = if (string.isEmpty) None else Some(string)
-    val Array(arg1, rel, arg2, groupCount, resultCount, date) = row.split("\t")
-    LogEntry(Query.fromStrings(arg1, rel, arg2), groupCount.toInt, resultCount.toInt, new Date(date.toLong))
+    val Array(arg1, rel, arg2, groupCount, resultCount, date, ip) = row.split("\t")
+    LogEntry(Query.fromStrings(arg1, rel, arg2), groupCount.toInt, resultCount.toInt, ip, new Date(date.toLong))
   }
 }
