@@ -14,6 +14,7 @@ import play.api.mvc.RequestHeader
 
 case class LogEntry (
   query: Query,
+  filter: String,
   answerCount: Int,
   sentenceCount: Int,
   address: String = "0.0.0.0",
@@ -25,6 +26,7 @@ case class LogEntry (
         query.arg1String,
         query.relString,
         query.arg2String,
+        filter,
         answerCount.toString,
         sentenceCount.toString,
         date.getTime.toString,
@@ -53,7 +55,7 @@ case class LogEntry (
 object LogEntry {
   final val LOG_DIRECTORY_FILE = new File(System.getProperty("user.home") + "/openiedemo/logs")
 
-  def fromRequest(query: Query, answerCount: Int, sentenceCount: Int, request: RequestHeader) = {
+  def fromRequest(query: Query, filter: String, answerCount: Int, sentenceCount: Int, request: RequestHeader) = {
     val remoteIp = request.remoteAddress
     val remoteHost = catching(classOf[UnknownHostException]) opt (InetAddress.getByName(remoteIp).getHostName)
 
@@ -62,7 +64,7 @@ object LogEntry {
       case None => remoteIp
     }
 
-    LogEntry(query, answerCount, sentenceCount, address)
+    LogEntry(query, filter, answerCount, sentenceCount, address)
   }
 
   def logFile(): File = {
@@ -88,7 +90,7 @@ object LogEntry {
 
   def fromRow(row: String) = {
     def noneIfEmpty(string: String) = if (string.isEmpty) None else Some(string)
-    val Array(arg1, rel, arg2, groupCount, resultCount, date, ip) = row.split("\t")
-    LogEntry(Query.fromStrings(arg1, rel, arg2), groupCount.toInt, resultCount.toInt, ip, new Date(date.toLong))
+    val Array(arg1, rel, arg2, filter, groupCount, resultCount, date, ip) = row.split("\t")
+    LogEntry(Query.fromStrings(arg1, rel, arg2), filter, groupCount.toInt, resultCount.toInt, ip, new Date(date.toLong))
   }
 }

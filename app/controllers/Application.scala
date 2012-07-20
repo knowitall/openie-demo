@@ -179,7 +179,7 @@ object Application extends Controller {
           val page = filtered.page(pageNumber, PAGE_SIZE)
 
           if (log) {
-            val entry = LogEntry.fromRequest(query, answers.answerCount, answers.sentenceCount, request)
+            val entry = LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request)
             entry.log()
           }
 

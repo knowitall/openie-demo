@@ -14,13 +14,14 @@
 </ul>
 
 <table class="table table-bordered table-striped">
-  <tr><th></th><th>Argument 1</th><th>Relation</th><th>Argument 2</th><th>Answers</th><th>Sentences</th><th>IP Address</th><th>Date</th></tr>
+  <tr><th></th><th>Argument 1</th><th>Relation</th><th>Argument 2</th><th>Filter</th><th>Answers</th><th>Sentences</th><th>IP Address</th><th>Date</th></tr>
 @for(entry <- entries) {
   <tr>
     <td><a href="@routes.Application.search(entry.query.arg1.map(_.toString), entry.query.rel.map(_.toString), entry.query.arg2.map(_.toString), "", 0)"><i class="icon-search"></i></a></td>
     <td>@entry.query.arg1</td>
     <td>@entry.query.rel</td>
     <td>@entry.query.arg2</td>
+    <td>@entry.filter</td>
     <td>@entry.answerCount</td>
     <td>@entry.sentenceCount</td>
     <td style="@if(entry.fromUW) {color: purple}">@entry.address</td>
