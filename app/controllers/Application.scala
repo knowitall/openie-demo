@@ -13,10 +13,10 @@ import play.api.libs.concurrent
 import scala.util.control.Exception
 import edu.washington.cs.knowitall.browser.extraction.ExtractionGroupProtocol
 import sjson.json.JsonSerialization.tojson
-
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormatter
 import org.joda.time.format.DateTimeFormat
+import play.api.mvc.RequestHeader
 
 object Application extends Controller {
   final val PAGE_SIZE = 25
@@ -75,7 +75,7 @@ object Application extends Controller {
       query => doSearch(query, "all", 0))
   }
 
-  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean) = Action {
+  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean) = Action { implicit request =>
     doSearch(Query.fromStrings(arg1, rel, arg2), filter, page, debug=debug, log=log)
   }
 
@@ -149,11 +149,11 @@ object Application extends Controller {
     }
   }
 
-  def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, debug: Boolean = false) = Action {
+  def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, debug: Boolean = false) = Action { implicit request =>
     doSearch(Query.fromStrings(arg1, rel, arg2), filterString, pageNumber, debug=debug, log=true, justResults=true)
   }
 
-  def doSearch(query: Query, filterString: String, pageNumber: Int, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false) = {
+  def doSearch(query: Query, filterString: String, pageNumber: Int, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
     val maxQueryTime = 20 * 1000 /* ms */
 
     val answers = concurrent.Akka.future {
@@ -175,7 +175,7 @@ object Application extends Controller {
           val page = filtered.page(pageNumber, PAGE_SIZE)
 
           if (log) {
-            val entry = new LogEntry(query, answers.answerCount, answers.sentenceCount)
+            val entry = new LogEntry(query, answers.answerCount, answers.sentenceCount, request.remoteAddress)
             entry.log()
           }
 
