@@ -40,6 +40,10 @@ case class LogEntry (
       }
     }
   }
+
+  def fromUW = {
+    address.startsWith("128.208.") || address.startsWith("128.95.")
+  }
 }
 
 object LogEntry {
