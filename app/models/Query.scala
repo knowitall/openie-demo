@@ -125,19 +125,19 @@ case class Query(
       case lucene.Limited(results, hitCount) => (results, hitCount)
       case lucene.Timeout(results, hitCount) => (results, hitCount)
     }
-    Logger.debug(spec.toString + " searched with " + results.size + " results (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsQuery))
+    Logger.debug(spec.toString + " searched with " + results.size + " groups (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsQuery))
 
     val (nsRegroup, regrouped) = Timing.time {
       ReVerbExtractionGroup.indexGroupingToFrontendGrouping(results)
     }
-    Logger.debug(spec.toString + " regrouped with " + regrouped.size + " results (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsRegroup))
+    Logger.debug(spec.toString + " regrouped with " + regrouped.size + " answers (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsRegroup))
 
     // apply backend deduplication
     // TODO: merge into index itself
     val (nsDeduped, deduped) = Timing.time {
       regrouped map InstanceDeduplicator.deduplicate
     }
-    Logger.debug(spec.toString + " deduped with " + deduped.size + " results (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsDeduped))
+    Logger.debug(spec.toString + " deduped with " + deduped.size + " answers (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsDeduped))
 
     def entityFilter(entity: FreeBaseEntity) =
       entity.score > ENTITY_SCORE_THRESHOLD
@@ -166,7 +166,7 @@ case class Query(
       } filter filterGroups(spec) filter filterRelation(spec) filter (_.instances.size > 0) toList
     }
 
-    Logger.debug(spec.toString + " filtered with " + filtered.size + " results in " + Timing.Seconds.format(nsFiltered))
+    Logger.debug(spec.toString + " filtered with " + filtered.size + " answers in " + Timing.Seconds.format(nsFiltered))
 
     (result, filtered)
   }
