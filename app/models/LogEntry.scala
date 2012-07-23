@@ -2,25 +2,34 @@ package models
 
 import java.io.{PrintWriter, FileOutputStream, File}
 import java.util.{Date, Calendar}
+import java.net.UnknownHostException
+import java.net.InetAddress
+import java.text.SimpleDateFormat
 
 import edu.washington.cs.knowitall.common.Resource.using
 
 import LogEntry.LOG_DIRECTORY_FILE
+import scala.util.control.Exception._
 import play.api.Logger
+import play.api.mvc.RequestHeader
 
 case class LogEntry (
   query: Query,
+  filter: String,
   answerCount: Int,
   sentenceCount: Int,
   address: String = "0.0.0.0",
   date: Date = new Date) {
   import LogEntry._
 
+  def dateString = LogEntry.dateFormatter.format(date)
+
   def toRow = {
     Iterable(
         query.arg1String,
         query.relString,
         query.arg2String,
+        filter,
         answerCount.toString,
         sentenceCount.toString,
         date.getTime.toString,
@@ -47,7 +56,20 @@ case class LogEntry (
 }
 
 object LogEntry {
-  final val LOG_DIRECTORY_FILE = new File(System.getProperty("user.home") + "/openiedemo/logs")
+  private final val LOG_DIRECTORY_FILE = new File(System.getProperty("user.home") + "/openiedemo/logs")
+  private final val dateFormatter = new SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss z")
+
+  def fromRequest(query: Query, filter: String, answerCount: Int, sentenceCount: Int, request: RequestHeader) = {
+    val remoteIp = request.remoteAddress
+    val remoteHost = catching(classOf[UnknownHostException]) opt (InetAddress.getByName(remoteIp).getHostName)
+
+    val address = remoteHost match {
+      case Some(host) if host != remoteIp => remoteIp + "/" + host
+      case None => remoteIp
+    }
+
+    LogEntry(query, filter, answerCount, sentenceCount, address)
+  }
 
   def logFile(): File = {
     val cal = Calendar.getInstance
@@ -72,7 +94,7 @@ object LogEntry {
 
   def fromRow(row: String) = {
     def noneIfEmpty(string: String) = if (string.isEmpty) None else Some(string)
-    val Array(arg1, rel, arg2, groupCount, resultCount, date, ip) = row.split("\t")
-    LogEntry(Query.fromStrings(arg1, rel, arg2), groupCount.toInt, resultCount.toInt, ip, new Date(date.toLong))
+    val Array(arg1, rel, arg2, filter, groupCount, resultCount, date, ip) = row.split("\t")
+    LogEntry(Query.fromStrings(arg1, rel, arg2), filter, groupCount.toInt, resultCount.toInt, ip, new Date(date.toLong))
   }
 }
