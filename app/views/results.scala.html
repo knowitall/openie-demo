@@ -2,41 +2,48 @@
 
 @import helper.twitterBootstrap._
 
-<br/>
+<!-- filters -->
 @if(answers.filters.size > 0) {
   <ul class="nav nav-tabs nav-stacked visible-phone">
     <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all types</a></li>
-@for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(4)) {
-  @defining(filters.contains(filter)) { active =>
-    <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+
+  @for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(4)) {
+    @defining(filters.contains(filter)) { active =>
+      <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+    }
   }
-}
   </ul>
+
   <ul class="nav nav-tabs hidden-phone">
     <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all</a></li>
-@for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(5)) {
-  @defining(filters.contains(filter)) { active =>
-    <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
-  }
-}
-@if(answers.filters.size > 5) {
-  <li class="dropdown">
-    <a class="dropdown-toggle" data-toggle="dropdown" href="#">more types<b class="caret"></b></a>
-    <ul class="dropdown-menu">
-    @for(TypeFilterTab(filter, count)<-answers.filters.iterator.drop(5)) {
+
+    @for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(5)) {
       @defining(filters.contains(filter)) { active =>
         <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
       }
     }
-    </ul>
-  </li>
-}
+
     <li class="@{if(filterString == "misc") "active" else ""}"><a href="#misc" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "misc", 0, debug)}')">misc.</a></li>
+
+    @if(answers.filters.size > 5) {
+      <li class="dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown" href="#">more types<b class="caret"></b></a>
+        <ul class="dropdown-menu">
+        @for(TypeFilterTab(filter, count)<-answers.filters.iterator.drop(5)) {
+          @defining(filters.contains(filter)) { active =>
+            <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+          }
+        }
+        </ul>
+      </li>
+    }
   </ul>
 }
+<!-- /filters -->
 
-  <div style="height: 25px"></div>
 
+  <!-- tabbable -->
+  <!-- left tabs with entities -->
   <div class="tabbable tabs-left">
     <ul class="nav nav-tabs">
       @for((g, i) <- answers.groups.zipWithIndex) {
@@ -44,114 +51,148 @@
       <li class="visible-phone"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), g.title.text, debug)}" class="answer">@Html(g.title.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", ")) (@g.contents.size)</a></li>
       }
     </ul>
+
+    <!-- tab content -->
     <div class="tab-content hidden-phone">
       @for((g, i) <- answers.groups.zipWithIndex) {
-      <div class="tab-pane" id="L@{i}">
-        <span class="close-tab"><a href="#close@{i}" class="close-tab" title="close sentences"><i class="icon-remove"></i></a></span>
-        @helper.sentences(g.copy(contents=g.contents.take(maxSentenceCount)), debug)
-        @if(g.contents.size > maxSentenceCount) {
-          <p style="text-align: center"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), g.title.text, debug)}">Show all sentences (@{g.contents.size - maxSentenceCount} more)</a></p>
-        }
-      </div>
+        <div class="tab-pane" id="L@{i}">
+          <div class="close-tab"><a href="#close@{i}" class="close-tab" title="close sentences"><i class="icon-remove"></i></a></div>
+          
+          @helper.sentences(g.copy(contents=g.contents.take(maxSentenceCount)), debug)
+          
+          @if(g.contents.size > maxSentenceCount) {
+            <p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), g.title.text, debug)}">Show all sentences (@{g.contents.size - maxSentenceCount} more)</a></p>
+          }
+        </div>
       }
     </div>
-  </div> <!-- /tabbable -->
-    <!-- Pagination -->
+  </div>
+  <!-- /tabbable -->
+  
+  <!-- Pagination -->
 @if(pageCount > 1) {
-    <div class="pagination" align="center">
-        <ul>
-@if(pageno > 0) {
-            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno - 1, debug)}">Prev</a></li>
-}
-@for(i <- pageno-4 to pageno-1; if i >= 0) {
-            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i, debug)}">@i</a></li>
-}
-            <li class="active">
-            <a href="#">@pageno</a>
-            </li>
-@for(i <- pageno+1 to pageno+4; if i < pageCount) {
-            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i, debug)}">@i</a></li>
-}
-@if(pageno + 1 < pageCount) {
-            <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno + 1, debug)}">Next</a></li>
-}
-        </ul>
-    </div>
+  <div class="pagination" align="center">
+    <ul>
+    @if(pageno > 0) {
+      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno - 1, debug)}">Prev</a></li>
+    }
+
+    @for(i <- pageno-4 to pageno-1; if i >= 0) {
+      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i, debug)}">@i</a></li>
+    }
+
+      <li class="active"><a href="#">@pageno</a></li>
+
+    @for(i <- pageno+1 to pageno+4; if i < pageCount) {
+      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i, debug)}">@i</a></li>
+    }
+
+    @if(pageno + 1 < pageCount) {
+      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno + 1, debug)}">Next</a></li>
+    }
+    </ul>
+  </div>
 }
 
-    <div style="height: 60px"></div>
-    <div class="freebase-attribution">
-        <img alt="Freebase CC-BY" height="23px" style="border: 0;" width="61px" src="http://www.freebase.com/policies/freebase-cc-by-61x23.png"/>
-        <div style="font-size: x-small; height: 30px; ">
-            Source:
-            <a href="http://www.freebase.com/">Freebase</a>, licensed under
-            <a href="http://creativecommons.org/licenses/by/2.5/">CC-BY</a><br/>
-            Other content from
-            <a href="http://en.wikipedia.org/">Wikipedia</a>,
-            licensed under <a href="http://creativecommons.org/licenses/by-sa/2.5/">CC BY-SA</a>
-        </div>
-    </div>
+  <!-- freebase attr footer -->
+  <div class="freebase-attribution">
+    <img alt="Freebase CC-BY" height="23px" style="border: 0;" width="61px" src="http://www.freebase.com/policies/freebase-cc-by-61x23.png"/>
 
-    <script type="text/javascript">
-    $.extend({
+    <div>
+      <p>Source: <a href="http://www.freebase.com/">Freebase</a>, licensed under <a href="http://creativecommons.org/licenses/by/2.5/">CC-BY</a></p>
+      <p>Other content from <a href="http://en.wikipedia.org/">Wikipedia</a>, licensed under <a href="http://creativecommons.org/licenses/by-sa/2.5/">CC BY-SA</a></p>
+    </div>
+  </div>
+  <!-- /freebase attr footer -->
+
+<script type="text/javascript">
+$.extend({
   getUrlVars: function(){
     var vars = [], hash;
     var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-    for(var i = 0; i < hashes.length; i++)
-    {
+
+    for(var i = 0; i < hashes.length; i++) {
       hash = hashes[i].split('=');
       vars.push(hash[0]);
       vars[hash[0]] = hash[1];
     }
+
     return vars;
   },
+
   getUrlVar: function(name){
     return $.getUrlVars()[name];
   }
 });
 
-      var download_popover = function() {
-        // this refers to a different object in 
-        // a nested anonymous function
-        var span = this
+$(document).ready(function() {
+  // create a new associative array for our freebase info
+  var freebase_data = {};
 
-        // we don't want to run this particular action again,
-        // but we don't want to remove all hover actions
-        $(span).unbind('hover', download_popover)
-
-        $.getJSON("https://www.googleapis.com/freebase/v1/text/m/"+span.id+'?format=plain&lang=en&maxlength=200&callback=?', function(response) {
-          if (response !== undefined && response.result !== undefined) {
-            var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+span.id+'?maxheight=75&maxwidth=75'
-            $(span).attr('data-content', function(index, attr) { 
-              return '<img class="popover-image" src="'+src+'">' + '<span class="popover-desc">'+response.result+"</span>" + '<div style="height: 10px"></div>'+attr
-            })
-
-            try {
-              var image = new Image()
-              image.src = src
-            }
-            catch (e) {
-            }
-          }
-          else {
-            // maybe we can fix it next time
-           $(span).bind('hover', download_popover)
-          }
-        })
+  var download_freebase = function(target) {
+    var span = $(target).children("span");
+    var title = $(target).children("span").attr("title");
+    var id = $(target).attr("href");
+    var datacontent = span.attr('data-content');
+    
+    // pull freebase entity information as JSON object
+    $.getJSON("https://www.googleapis.com/freebase/v1/text/m/"+span.attr("id")+'?format=plain&lang=en&maxlength=1000&callback=?', function(response) {
+      if (response != undefined && response.result != undefined) {
+        // set image src to freebase entity
+        var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+span.attr("id")+'?maxheight=150&maxwidth=150'
+        
+        // populate entity data from freebase
+        datacontent = '<div class="entity-desc">'
+          + '<img class="popover-image" src="' + src + '">'
+          +  '<p>' + $('<div/>').text(response.result).html()
+          + ' <a href="http://www.freebase.com/view/m/' + span.attr("id") + '">(read more)</a>' + '</p>'
+          + '</div>'
+          + datacontent;
+        // freebase_data[id] = datacontent;
+        span.attr('data-content', datacontent);
+      } else {
+        // if there is no freebase information, create an empty entity-desc
+        datacontent = '<div class="entity-desc">' + '</div>' + datacontent;
+        span.attr('data-content', datacontent);
       }
+    
+    // clear the previous description from the tab pane
+    // replace it with the new one
+    $("<div class='data'>" + span.attr("data-content") + "</div>").insertAfter($(id + "> .close-tab"));
+    $("<h2>" + title + "</h2>").insertAfter($(id+"> .close-tab"));
+    })
+  }
 
-      $('.title-string').popover({ delay: { show: 1000, hide: 100 }, trigger: 'hover' })
+  // grab freebase id (if possible) on click
+  $('.answer').click(function() {
+    var title = $(this).children("span").attr("title");
+    var id = $(this).attr("href");
 
-      $('.title-entity').popover({ delay: { show: 1000, hide: 100 }, trigger: 'hover' })
-      $('.title-entity').hover(download_popover)
+    // make sure there is actually something there to match
+    if ($(this).children("span").attr("data-content")) {
+      // if we already have info about it, don't pull from freebase!
+      if ($(this).children("span").attr("data-content").match("entity-desc")) {
+        // only add info if it isn't already there
+        if (!(id + "> .data")) {
+          $("<div class='data'>" + $(this).children("span").attr("data-content") + "</div>").insertAfter($(id + "> .close-tab"));
+          $("<h2>" + title + "</h2>").insertAfter($(id+"> .close-tab"));
+        }
+      } else {
+        // grab freebase entity information
+        download_freebase($(this));
+      }
+    } else {
+    }
+  });
 
-      $('.close-tab').click(function() {
-        var $active = $('.tab-content').find('> .active')
-        $active.removeClass('active')
-      })
-      
-      $('#moreDropdown').click(function (e) {
-        e.preventDefault();
-        $(this).tab('show');
-      })
-    </script>
+  $('.close-tab').click(function() {
+    var $active = $('.tab-content').find('> .active')
+    $active.removeClass('active')
+  })
+    
+  $('#moreDropdown').click(function (e) {
+    e.preventDefault();
+    $(this).tab('show');
+  })
+})
+</script>

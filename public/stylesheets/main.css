@@ -11,25 +11,85 @@
 }
 
 .uri-title {
-  font-weight: bold
+  font-weight: bold;
 }
 .uri-body {
-  font-weight: normal
+  font-weight: normal;
 }
 
 .types-title {
-  font-weight: bold
+  font-weight: bold;
 }
 .types-body {
-  font-weight: normal
+  font-weight: normal;
 }
 
 .syns-title {
-  font-weight: bold
+  font-weight: bold;
 }
 .syns-body {
-  font-weight: normal
+  font-weight: normal;
 }
 #stats {
-  font-size: larger
+  font-size: larger;
+}
+
+.popover-image {
+  margin: .5em 1em 0 0;
+}
+
+.entity-desc p {
+  margin: 0 3em 1em 0;
+}
+
+blockquote.uri-body, blockquote.types-body, blockquote.syns-body {
+  border: none;
+}
+
+.dl-horizontal dd:hover > a {
+  background: rgb(225,225,225);
+}
+
+.freebase-attribution {
+  float: right;
+  margin: 1em 0 2em 0;
+}
+
+.freebase-attribution > div {
+  display: inline-block;
+  font-size: 0.75em;
+}
+
+.freebase-attribution > div p {
+  margin: 1.2em 0 -1em 0;
+  padding: 0;
+  line-height: 1.2em;
+}
+
+.page-header a {
+  color: #333;
+}
+
+.page-header a:link {
+  color: #333;
+}
+
+.page-header a:visited {
+  color: #333;
+}
+
+.page-header a:hover {
+  color: #08c;
+}
+
+.page-header a:active {
+  color: #08c;
+}
+
+#stats {
+  margin: 1em 0;
+}
+
+.tab-content blockquote {
+  margin: 0;
 }
