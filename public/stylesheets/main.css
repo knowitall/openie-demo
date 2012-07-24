@@ -11,27 +11,27 @@
 }
 
 .uri-title {
-  font-weight: bold
+  font-weight: bold;
 }
 .uri-body {
-  font-weight: normal
+  font-weight: normal;
 }
 
 .types-title {
-  font-weight: bold
+  font-weight: bold;
 }
 .types-body {
-  font-weight: normal
+  font-weight: normal;
 }
 
 .syns-title {
-  font-weight: bold
+  font-weight: bold;
 }
 .syns-body {
-  font-weight: normal
+  font-weight: normal;
 }
 #stats {
-  font-size: larger
+  font-size: larger;
 }
 
 .popover-image {
@@ -88,4 +88,8 @@ blockquote.uri-body, blockquote.types-body, blockquote.syns-body {
 
 #stats {
   margin: 1em 0;
+}
+
+.tab-content blockquote {
+  margin: 0;
 }
