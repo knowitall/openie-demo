@@ -65,7 +65,7 @@ object LogEntry {
 
     val address = remoteHost match {
       case Some(host) if host != remoteIp => remoteIp + "/" + host
-      case None => remoteIp
+      case _ => remoteIp
     }
 
     LogEntry(query, filter, answerCount, sentenceCount, address)
