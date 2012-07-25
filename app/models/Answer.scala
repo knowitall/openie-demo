@@ -88,14 +88,14 @@ object Answer {
           }.getOrElse(Set.empty)
 
         // for unlinkable type predictions, take types from the first group that wasn't linked but had types
-        val unlinkableTypes = list.find({ case((title, size), _) =>
+        def unlinkableTypes = list.find({ case((title, size), _) =>
             title.parts(i).entity.isEmpty && !title.parts(i).types.isEmpty
         }).map { case ((title, size), _) =>
             title.parts(i).types
         }.getOrElse(Set.empty)
         
         // combine and remove base and user types
-        val allTypes = (linkedTypes ++ unlinkableTypes).filter(typ => typ.domain != "base" && typ.domain != "user")
+        val types = if (!linkedTypes.isEmpty) linkedTypes else unlinkableTypes
         
         // group the synonyms and order them by size, descending
         val sortedUniqueSynonyms =
@@ -105,7 +105,7 @@ object Answer {
 
           AnswerTitlePart(headTitle.parts(i).lemma,
               headTitle.parts(i).extractionPart,
-              sortedUniqueSynonyms, entities, allTypes)
+              sortedUniqueSynonyms, entities, types)
         }
 
       val title = AnswerTitle(headTitle.connector, parts)
