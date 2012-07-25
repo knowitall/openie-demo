@@ -80,13 +80,23 @@ object Answer {
 
         // lookup the first group that is linked to the entity we found,
         // and use the types from that group.
-        val types: Set[FreeBaseType] =
+        val linkedTypes: Set[FreeBaseType] =
           entities.flatMap(entity => list.find { case((title, size), _) =>
             title.parts(i).entity == Some(entity)
           }).map { case ((title, size), _) =>
             title.parts(i).types
-          }.getOrElse(Set.empty).filter(typ => typ.domain != "base" && typ.domain != "user")
+          }.getOrElse(Set.empty)
 
+        // for unlinkable type predictions, take types from the first group that wasn't linked but had types
+        val unlinkableTypes = list.find({ case((title, size), _) =>
+            title.parts(i).entity.isEmpty && !title.parts(i).types.isEmpty
+        }).map { case ((title, size), _) =>
+            title.parts(i).types
+        }.getOrElse(Set.empty)
+        
+        // combine and remove base and user types
+        val allTypes = (linkedTypes ++ unlinkableTypes).filter(typ => typ.domain != "base" && typ.domain != "user")
+        
         // group the synonyms and order them by size, descending
         val sortedUniqueSynonyms =
           synonyms.groupBy(_.toLowerCase).toList.map { case (name, synonyms) =>
@@ -95,7 +105,7 @@ object Answer {
 
           AnswerTitlePart(headTitle.parts(i).lemma,
               headTitle.parts(i).extractionPart,
-              sortedUniqueSynonyms, entities, types)
+              sortedUniqueSynonyms, entities, allTypes)
         }
 
       val title = AnswerTitle(headTitle.connector, parts)

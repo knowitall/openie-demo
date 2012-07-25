@@ -86,8 +86,10 @@ case class Query(
 
     val (result, converted) = executeHelper()
 
-    val groups = Answer.fromExtractionGroups(converted.toList, group).filter(!_.title.text.trim.isEmpty)
+    val (nsGroups, groups) = Timing.time { Answer.fromExtractionGroups(converted.toList, group).filter(!_.title.text.trim.isEmpty) }
 
+    Logger.debug("Converted to %d answers in %s".format(groups.size, Timing.Seconds.format(nsGroups)))
+    
     result match {
       case lucene.Success(results) => Query.Success(groups)
       case lucene.Limited(results, hitCount) => Query.Limited(groups, hitCount)
