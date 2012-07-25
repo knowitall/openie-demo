@@ -105,7 +105,7 @@ object Answer {
 
           AnswerTitlePart(headTitle.parts(i).lemma,
               headTitle.parts(i).extractionPart,
-              sortedUniqueSynonyms, entities, types)
+              sortedUniqueSynonyms, entities, allTypes)
         }
 
       val title = AnswerTitle(headTitle.connector, parts)
