@@ -61,15 +61,25 @@ object Answer {
       var synonyms: Array[Seq[String]] = Array.fill(length)(Seq.empty)
       var entities: Array[Option[FreeBaseEntity]] = Array.fill(length)(None)
       var types: Array[Seq[FreeBaseType]] = Array.fill(length)(Seq.empty)
+
       val parts = for (i <- 0 until length) yield {
+        // get all synonyms for the groups in this answer
         val synonyms: Seq[String] =
           list.flatMap(_._1._1.parts(i).synonyms)(scala.collection.breakOut)
 
-        val entities: Option[FreeBaseEntity] = list.flatMap { case ((title, size), _) => title.parts(i).entity.map((_, size)) } match {
-          case Nil => None
-          case entities => Some(entities.mergeHistograms.maxBy(_._2)._1)
-        }
+        // find the largest entity from the groups in this answer
+        val entities: Option[FreeBaseEntity] = list.flatMap { case ((title, size), _) => 
+          // turn the entities into a tuple with the groups' size
+          title.parts(i).entity.map((_, size)) } match {
+            case Nil => None
+            // group like entities and add their sizes.  We might have multiple 
+            // groups that have the same entity and fit into the same answer.
+            // Take the entity that has the largest size.
+            case entities => Some(entities.mergeHistograms.maxBy(_._2)._1)
+          }
 
+        // lookup the first group that is linked to the entity we found,
+        // and use the types from that group.
         val types: Set[FreeBaseType] =
           entities.flatMap(entity => list.find { case((title, size), _) =>
             title.parts(i).entity == Some(entity)
@@ -77,6 +87,7 @@ object Answer {
             title.parts(i).types
           }.getOrElse(Set.empty).filter(typ => typ.domain != "base" && typ.domain != "user")
 
+        // group the synonyms and order them by size, descending
         val sortedUniqueSynonyms =
           synonyms.groupBy(_.toLowerCase).toList.map { case (name, synonyms) =>
             (synonyms.head, synonyms.size)
