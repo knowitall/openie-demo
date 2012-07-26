@@ -95,7 +95,7 @@ object Answer {
         }.getOrElse(Set.empty)
         
         // combine and remove base and user types
-        val types = if (!linkedTypes.isEmpty) linkedTypes else unlinkableTypes
+        val types = (if (!linkedTypes.isEmpty) linkedTypes else unlinkableTypes).filter(typ => typ.domain != "base" && typ.domain != "user")
         
         // group the synonyms and order them by size, descending
         val sortedUniqueSynonyms =
