@@ -161,13 +161,22 @@ $(document).ready(function() {
     // replace it with the new one
     $("<div class='data'>" + span.attr("data-content") + "</div>").insertAfter($(id + "> .close-tab"));
     $("<h2>" + title + "</h2>").insertAfter($(id+"> .close-tab"));
+
+    // show tab content again
+    $(".tab-content").show();
     })
   }
 
   // grab freebase id (if possible) on click
   $('.answer').click(function() {
+    // hide all the tab content, so that it will all appear at once
+    // otherwise it appears piecewise, which is jarring
+    $(".tab-content").hide();
+
     var title = $(this).children("span").attr("title");
     var id = $(this).attr("href");
+
+    // $(id).hide();
 
     // make sure there is actually something there to match
     if ($(this).children("span").attr("data-content")) {
@@ -178,11 +187,15 @@ $(document).ready(function() {
           $("<div class='data'>" + $(this).children("span").attr("data-content") + "</div>").insertAfter($(id + "> .close-tab"));
           $("<h2>" + title + "</h2>").insertAfter($(id+"> .close-tab"));
         }
+
+        // show tab content again
+        $(".tab-content").show();
       } else {
         // grab freebase entity information
         download_freebase($(this));
       }
     } else {
+      $(".tab-content").show();
     }
   });
 
