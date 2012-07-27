@@ -58,6 +58,7 @@
         <div class="tab-pane" id="L@{i}">
           <div class="close-tab"><a href="#close@{i}" class="close-tab" title="close sentences"><i class="icon-remove"></i></a></div>
           
+          <h3>Extracted from these sentences:</h3>
           @helper.sentences(g.copy(contents=g.contents.take(maxSentenceCount)), debug)
           
           @if(g.contents.size > maxSentenceCount) {

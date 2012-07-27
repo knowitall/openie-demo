@@ -14,7 +14,7 @@
   <dl class="dl-horizontal">
   <dt>@rel</dt>
   @for(c <- cs) {
-  <dd><a class="sent" title="@c.url" href="@c.url">
+  <dd><div class="sentence"><a class="sent" title="@c.url" href="@c.url">
     @if(!debug) {
       @for((string, i) <- c.strings.zipWithIndex) {
         @if(c.intervals.exists(_.start==i)) {<b>}
@@ -30,6 +30,12 @@
       @string 
       }
     }
+  </a>
+    <div class="hover-source">
+      Source: @c.url
+      <div class="arrow"></div>
+    </div>
+  </div>
   }
-  </a></dd>
+</dd>
 }
