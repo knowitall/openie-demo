@@ -138,3 +138,14 @@ blockquote.uri-body, blockquote.types-body, blockquote.syns-body {
 .tab-content h3 {
   margin-top: 0.5em;
 }
+
+#results-content {
+}
+
+#tab-spinner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 100px;
+  height: 100px;
+}
