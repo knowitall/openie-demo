@@ -173,10 +173,15 @@ $(document).ready(function() {
     // otherwise it appears piecewise, which is jarring
     $(".tab-content").hide();
 
-    var title = $(this).children("span").attr("title");
+    var title = ""; //attr("title");
     var id = $(this).attr("href");
 
-    // $(id).hide();
+    for (var i=0;i<$(this).children("span").length;i++) {
+      if (i>0) {
+        title += ", ";
+      }
+      title += $($(this).children("span")[i]).text().trim();
+    }
 
     // make sure there is actually something there to match
     if ($(this).children("span").attr("data-content")) {
@@ -195,6 +200,7 @@ $(document).ready(function() {
         download_freebase($(this));
       }
     } else {
+      $("<h2>" + title + "</h2>").insertAfter($(id+"> .close-tab"));
       $(".tab-content").show();
     }
   });
