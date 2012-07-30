@@ -132,7 +132,7 @@ $(document).ready(function() {
 
   var download_freebase = function(target) {
     var span = $(target).children("span");
-    var title = $(target).children("span").attr("title");
+    var title = "";
     var id = $(target).attr("href");
     var datacontent = span.attr('data-content');
     
@@ -151,10 +151,19 @@ $(document).ready(function() {
           + datacontent;
         // freebase_data[id] = datacontent;
         span.attr('data-content', datacontent);
+
+        title = $(target).children("span").attr("title");
       } else {
         // if there is no freebase information, create an empty entity-desc
         datacontent = '<div class="entity-desc">' + '</div>' + datacontent;
         span.attr('data-content', datacontent);
+
+        for (var i=0;i<target.children("span").length;i++) {
+          if (i>0) {
+            title += ", ";
+          }
+          title += $(target.children("span")[i]).text().trim();
+        }
       }
     
     // clear the previous description from the tab pane
@@ -200,7 +209,9 @@ $(document).ready(function() {
         download_freebase($(this));
       }
     } else {
-      $("<h2>" + title + "</h2>").insertAfter($(id+"> .close-tab"));
+      if ($(".tab-content > " + id).children("h2").length == 0) {
+        $("<h2>" + title + "</h2>").insertAfter($(id+"> .close-tab"));
+      }
       $(".tab-content").show();
     }
   });
