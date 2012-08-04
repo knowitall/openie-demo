@@ -21,7 +21,7 @@
           <input type="text" id="arg2" name="arg2" value="@query.arg2" >
           <span class="help-inline"></span>
       </span>
-      <button class="btn"><i class="icon-search"></i> Search</button>
+      <button class="btn"><i class="icon-search"></i> Search <div id="search-spinner"></div></button>
   }
 
   <div id="stats"><b>@totalAnswerCount answers</b> from <b>@totalSentenceCount sentences</b>@message.map(" ("+_+")").getOrElse("")</div>
