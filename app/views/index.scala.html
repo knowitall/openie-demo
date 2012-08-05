@@ -14,26 +14,10 @@
   </style>
   <p />
   <div class="row well">
-      <div class="span4 offset1">
-      @helper.form(action = routes.Application.submit) {
-      @helper.inputText(
-          searchForm("arg1"),
-          '_label -> "Argument 1:",
-          'placeholder -> "what/who")
-      @helper.inputText(
-          searchForm("rel"),
-          '_label -> "Relation:",
-          'placeholder -> "verb phrase")
-      @helper.inputText(
-          searchForm("arg2"),
-          '_label -> "Argument 2:",
-          'placeholder -> "what/who")
-      <button id="search-button" class="btn btn-large"><i id="search-icon" class="icon-search"></i> Search <div id="search-spinner" style="width: 35px;height: 35px;margin-left:10px;"></div></button>
-      }
-      </div>
-      <div class="span offset1">
-          <b>Example Queries: <a href="#" class="tooltiparea" rel="tooltip" title="Click an example question to see a sample relation search query."><i class="icon-question-sign"></i></a></b>
-          <table style="padding: 5 px">
+    <div class="row">
+      <div class="span4 offset2">
+          <b style="font-size:1.5em;">Example Queries: <a href="#" class="tooltiparea" rel="tooltip" title="Click an example question to see a sample relation search query."><i class="icon-question-sign"></i></a></b>
+          <table style="padding: 5 px;font-size:1em;">
               <tr>
                   <td><a href="#" class="example-link" onclick="javascript:fillForm('','kills','bacteria')">What kills bacteria?</a></td>
               </tr>
@@ -48,8 +32,10 @@
               </tr>
           </table>
           <br />
-          <b>Typed Example Queries: <a href="#" class="tooltiparea" rel="tooltip", title="Click an example question to see a sample relation search query.  These examples constrain one field to a FreeBase type."><i class="icon-question-sign"></i></a></b>
-          <table style="padding: 5 px">
+      </div>
+      <div class="span4">
+          <b style="font-size:1.5em;">Typed Example Queries: <a href="#" class="tooltiparea" rel="tooltip", title="Click an example question to see a sample relation search query.  These examples constrain one field to a FreeBase type."><i class="icon-question-sign"></i></a></b>
+          <table style="padding: 5 px;font-size:1em;">
               <tr>
                   <td><a href="#" class="example-link" onclick="javascript:fillForm('type:Country','is located in','Africa')">What countries are located in Africa?</a></td>
               </tr>
@@ -67,6 +53,32 @@
               </tr>
           </table>
       </div>
+    </div>
+    <div class="row" style="margin-top:2em;">  
+      <div class="span10 offset1">
+        @helper.form(action = routes.Application.submit) {
+        <div class="search-arg">
+        @helper.inputText(
+            searchForm("arg1"),
+            '_label -> "Argument 1:",
+            'placeholder -> "what/who")
+        </div>
+        <div class="search-arg">
+        @helper.inputText(
+            searchForm("rel"),
+            '_label -> "Relation:",
+            'placeholder -> "verb phrase")
+        </div>
+        <div class="search-arg">
+        @helper.inputText(
+            searchForm("arg2"),
+            '_label -> "Argument 2:",
+            'placeholder -> "what/who")
+        </div>
+        <button id="search-button" class="btn btn-large"><i id="search-icon" class="icon-search"></i> Search <div id="search-spinner" style="width: 35px;height: 35px;margin-left:10px;"></div></button>
+        }
+      </div>
+    </div> 
   </div>
 
   <footer>
