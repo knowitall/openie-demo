@@ -156,6 +156,14 @@ $(document).ready(function() {
     var title = "";
     var id = $(target).attr("href");
     var datacontent = span.attr('data-content');
+    // set image src to freebase entity
+    var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+span.attr("id")+'?maxheight=150&maxwidth=150'
+    
+    // attempt to preload images
+    try {
+      var image = new Image();
+      image.src = src;
+    } catch(e) {}
 
     // throw up a spinner while we're querying freebase
     $("#tab-spinner").spin(spinnerOpts);
@@ -163,9 +171,7 @@ $(document).ready(function() {
     // pull freebase entity information as JSON object
     $.getJSON("https://www.googleapis.com/freebase/v1/text/m/"+span.attr("id")+'?format=plain&lang=en&maxlength=1000&callback=?', function(response) {
       if (response != undefined && response.result != undefined) {
-        // set image src to freebase entity
-        var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+span.attr("id")+'?maxheight=150&maxwidth=150'
-        
+
         // populate entity data from freebase
         datacontent = '<div class="entity-desc">'
           + '<img class="popover-image" src="' + src + '">'
@@ -173,7 +179,7 @@ $(document).ready(function() {
           + ' <a href="http://www.freebase.com/view/m/' + span.attr("id") + '">(read more)</a>' + '</p>'
           + '</div>'
           + datacontent;
-        // freebase_data[id] = datacontent;
+
         span.attr('data-content', datacontent);
 
         title = $(target).children("span").attr("title");
