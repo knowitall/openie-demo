@@ -1,5 +1,6 @@
 .hid { display: none }
 .title-entity { font-weight: bold }
+.title-typed { font-style: italic }
 .answer { font-size: large }
 .popover-image {
   float: left;
