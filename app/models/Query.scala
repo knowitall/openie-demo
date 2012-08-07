@@ -259,10 +259,10 @@ object Query {
     override def toString = "entity:" + entity
   }
 
-  val paths = Seq("/scratch/common/openie-demo/index-1.0.2",
-    "/scratch2/common/openie-demo/index-1.0.2",
-    "/scratch3/common/openie-demo/index-1.0.2",
-    "/scratch4/common/openie-demo/index-1.0.2")
+  val paths = Seq("/scratch/common/openie-demo/index-1.0.3",
+    "/scratch2/common/openie-demo/index-1.0.3",
+    "/scratch3/common/openie-demo/index-1.0.3",
+    "/scratch4/common/openie-demo/index-1.0.3")
 
   val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
 
