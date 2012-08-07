@@ -3,7 +3,7 @@ package models
 import java.io.{ObjectInputStream, FileInputStream, File}
 import java.util.regex.Pattern
 import scala.Option.option2Iterable
-import edu.washington.cs.knowitall.browser.extraction.{ReVerbExtraction, FreeBaseType, FreeBaseEntity, Instance, ExtractionGroup, ReVerbExtractionGroup}
+import edu.washington.cs.knowitall.browser.extraction.{ReVerbExtraction, FreeBaseType, FreeBaseEntity, Instance, ExtractionGroup, ExtractionArgument, ReVerbExtractionGroup}
 import edu.washington.cs.knowitall.browser.lucene
 import edu.washington.cs.knowitall.browser.lucene.{Timeout, Success, QuerySpec, LuceneFetcher, Limited}
 import edu.washington.cs.knowitall.common.Resource.using
@@ -152,19 +152,20 @@ case class Query(
     val (nsFiltered, filtered: List[ExtractionGroup[ReVerbExtraction]]) =
       Timing.time { deduped.iterator.map { reg =>
         // normalize fields and remove filtered entities/types
+        val arg1Entity = reg.arg1.entity filter entityFilter
+        val arg1EntityRemoved = reg.arg1.entity.isDefined && arg1Entity.isEmpty
+        val arg1Types = if (!arg1EntityRemoved) reg.arg1.types filter typeFilter else Set.empty[FreeBaseType]
+        
+        val arg2Entity = reg.arg2.entity filter entityFilter
+        val arg2EntityRemoved = reg.arg2.entity.isDefined && arg2Entity.isEmpty
+        val arg2Types = if (!arg2EntityRemoved) reg.arg2.types filter typeFilter else Set.empty[FreeBaseType]
+        
         reg.copy(
             instances = reg.instances filter filterInstances,
-            arg1 = reg.arg1.copy(
-              norm = clean(reg.arg1.norm),
-              entity = reg.arg1.entity filter entityFilter,
-              types = reg.arg1.types filter typeFilter
-            ),
-            rel = reg.rel.copy(norm = clean(reg.rel.norm)), // A method that you can call here that will filter out rel according to stephen's criteria
-            arg2 = reg.arg2.copy(
-              norm = clean(reg.arg2.norm),
-              entity = reg.arg2.entity filter entityFilter,
-              types = reg.arg2.types filter typeFilter
-            ))
+            arg1 = ExtractionArgument(clean(reg.arg1.norm), arg1Entity, arg1Types),
+            rel  = reg.rel.copy(norm = clean(reg.rel.norm)), 
+            arg2 = ExtractionArgument(clean(reg.arg2.norm), arg2Entity, arg2Types)
+          )
       } filter filterGroups(spec) filter filterRelation(spec) filter (_.instances.size > 0) toList
     }
 
