@@ -2,6 +2,9 @@
 
 @import helper.twitterBootstrap._
 
+<!-- spinner for tabs -->
+<div id="tab-spinner"></div>
+
 <!-- filters -->
 @if(answers.filters.size > 0) {
   <ul class="nav nav-tabs nav-stacked visible-phone">
@@ -58,6 +61,7 @@
         <div class="tab-pane" id="L@{i}">
           <div class="close-tab"><a href="#close@{i}" class="close-tab" title="close sentences"><i class="icon-remove"></i></a></div>
           
+          <h3>Extracted from these sentences:</h3>
           @helper.sentences(g.copy(contents=g.contents.take(maxSentenceCount)), debug)
           
           @if(g.contents.size > maxSentenceCount) {
@@ -129,18 +133,45 @@ $(document).ready(function() {
   // create a new associative array for our freebase info
   var freebase_data = {};
 
+  var spinnerOpts = {
+      lines: 9, // The number of lines to draw
+      length: 0, // The length of each line
+      width: 15, // The line thickness
+      radius: 30, // The radius of the inner circle
+      rotate: 0, // The rotation offset
+      color: '#000', // #rgb or #rrggbb
+      speed: .95, // Rounds per second
+      trail: 60, // Afterglow percentage
+      shadow: false, // Whether to render a shadow
+      hwaccel: false, // Whether to use hardware acceleration
+      className: 'spinner', // The CSS class to assign to the spinner
+      zIndex: 2e9, // The z-index (defaults to 2000000000)
+      top: 'auto', // Top position relative to parent in px
+      left: 'auto' // Left position relative to parent in px
+    };
+
+
   var download_freebase = function(target) {
     var span = $(target).children("span");
-    var title = $(target).children("span").attr("title");
+    var title = "";
     var id = $(target).attr("href");
     var datacontent = span.attr('data-content');
+    // set image src to freebase entity
+    var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+span.attr("id")+'?maxheight=150&maxwidth=150'
+    
+    // attempt to preload images
+    try {
+      var image = new Image();
+      image.src = src;
+    } catch(e) {}
+
+    // throw up a spinner while we're querying freebase
+    $("#tab-spinner").spin(spinnerOpts);
     
     // pull freebase entity information as JSON object
     $.getJSON("https://www.googleapis.com/freebase/v1/text/m/"+span.attr("id")+'?format=plain&lang=en&maxlength=1000&callback=?', function(response) {
       if (response != undefined && response.result != undefined) {
-        // set image src to freebase entity
-        var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+span.attr("id")+'?maxheight=150&maxwidth=150'
-        
+
         // populate entity data from freebase
         datacontent = '<div class="entity-desc">'
           + '<img class="popover-image" src="' + src + '">'
@@ -148,25 +179,50 @@ $(document).ready(function() {
           + ' <a href="http://www.freebase.com/view/m/' + span.attr("id") + '">(read more)</a>' + '</p>'
           + '</div>'
           + datacontent;
-        // freebase_data[id] = datacontent;
+
         span.attr('data-content', datacontent);
+
+        title = $(target).children("span").attr("title");
       } else {
         // if there is no freebase information, create an empty entity-desc
         datacontent = '<div class="entity-desc">' + '</div>' + datacontent;
         span.attr('data-content', datacontent);
+
+        for (var i=0;i<target.children("span").length;i++) {
+          if (i>0) {
+            title += ", ";
+          }
+          title += $(target.children("span")[i]).text().trim();
+        }
       }
     
     // clear the previous description from the tab pane
     // replace it with the new one
     $("<div class='data'>" + span.attr("data-content") + "</div>").insertAfter($(id + "> .close-tab"));
     $("<h2>" + title + "</h2>").insertAfter($(id+"> .close-tab"));
+
+    // stop the spinner and
+    // show tab content again
+    $("#tab-spinner").data("spinner").stop();
+    $(".tab-content").show();
     })
   }
 
   // grab freebase id (if possible) on click
   $('.answer').click(function() {
-    var title = $(this).children("span").attr("title");
+    // hide all the tab content, so that it will all appear at once
+    // otherwise it appears piecewise, which is jarring
+    $(".tab-content").hide();
+
+    var title = ""; //attr("title");
     var id = $(this).attr("href");
+
+    for (var i=0;i<$(this).children("span").length;i++) {
+      if (i>0) {
+        title += ", ";
+      }
+      title += $($(this).children("span")[i]).text().trim();
+    }
 
     // make sure there is actually something there to match
     if ($(this).children("span").attr("data-content")) {
@@ -177,11 +233,18 @@ $(document).ready(function() {
           $("<div class='data'>" + $(this).children("span").attr("data-content") + "</div>").insertAfter($(id + "> .close-tab"));
           $("<h2>" + title + "</h2>").insertAfter($(id+"> .close-tab"));
         }
+
+        // show tab content again
+        $(".tab-content").show();
       } else {
         // grab freebase entity information
         download_freebase($(this));
       }
     } else {
+      if ($(".tab-content > " + id).children("h2").length == 0) {
+        $("<h2>" + title + "</h2>").insertAfter($(id+"> .close-tab"));
+      }
+      $(".tab-content").show();
     }
   });
 
@@ -189,6 +252,27 @@ $(document).ready(function() {
     var $active = $('.tab-content').find('> .active')
     $active.removeClass('active')
   })
+
+  $(".btn").click(function() {
+    var opts = {
+      lines: 9, // The number of lines to draw
+      length: 0, // The length of each line
+      width: 4, // The line thickness
+      radius: 6, // The radius of the inner circle
+      rotate: 0, // The rotation offset
+      color: '#000', // #rgb or #rrggbb
+      speed: .95, // Rounds per second
+      trail: 60, // Afterglow percentage
+      shadow: false, // Whether to render a shadow
+      hwaccel: false, // Whether to use hardware acceleration
+      className: 'spinner', // The CSS class to assign to the spinner
+      zIndex: 2e9, // The z-index (defaults to 2000000000)
+      top: 'auto', // Top position relative to parent in px
+      left: 'auto' // Left position relative to parent in px
+    };
+
+    $("#search-spinner").spin(opts);
+  });
     
   $('#moreDropdown').click(function (e) {
     e.preventDefault();
