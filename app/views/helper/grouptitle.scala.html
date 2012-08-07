@@ -26,7 +26,7 @@
         rel="popover"
         title={part.text + (if (debug) " / " + part.lemma else "")}
         data-content={
-            (if (if part.otherSynonyms.size > 0) "<h3 class='syns-title'>Extracted Synonyms:</h3><blockquote class='types-body'>" + part.otherSynonyms.mkString("<br/>") + "</blockquote>" else "") +
+            (if (part.otherSynonyms.size > 0) "<h3 class='syns-title'>Extracted Synonyms:</h3><blockquote class='types-body'>" + part.otherSynonyms.mkString("<br/>") + "</blockquote>" else "") +
             "<div><h3 class='types-title'>Types:</h3><blockquote class='types-body'>"+part.types.toSeq.sortBy(-_.weight).iterator.map(_.name).mkString("<br/>")+"</blockquote></div>"
         }
       >
