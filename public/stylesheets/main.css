@@ -47,8 +47,49 @@ blockquote.uri-body, blockquote.types-body, blockquote.syns-body {
   border: none;
 }
 
-.dl-horizontal dd:hover > a {
-  background: rgb(225,225,225);
+.dl-horizontal {
+  margin-top: 0;
+  padding-bottom: 3em;
+}
+
+.dl-horizontal .sentence {
+  display: inline-block;
+  position: relative;
+}
+
+.dl-horizontal .sentence:hover {
+  background: #ddd;
+}
+
+.dl-horizontal .sentence > .hover-source {
+  float: left;
+  position: absolute;
+  top: 100%;
+  margin-top: 5px;
+  padding: 0 5px;
+  background: white;
+  border: 1px solid #333;
+  display: none;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  z-index: 1;
+}
+
+.dl-horizontal .hover-source > .arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  bottom: 100%;
+  left: 15px;
+  border-bottom: 5px solid #333;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  z-index: 1;
+}
+
+.dl-horizontal .sentence:hover > .hover-source, .dl-horizontal .sentence:hover > .arrow {
+  display: block;
 }
 
 .freebase-attribution {
@@ -93,4 +134,41 @@ blockquote.uri-body, blockquote.types-body, blockquote.syns-body {
 
 .tab-content blockquote {
   margin: 0;
+}
+
+.tab-content h3 {
+  margin-top: 0.5em;
+}
+
+#results-content {
+}
+
+#tab-spinner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 100px;
+  height: 100px;
+}
+
+.btn {
+  position: relative;
+}
+
+.btn #search-spinner {
+  position: absolute;
+  height: 27px;
+  width: 27px;
+  top: 0;
+  left: 100%;
+  margin-left: 5px;
+}
+
+.search-arg {
+  display: inline-block;
+  margin: auto 1em;
+}
+
+#search-button {
+  margin-bottom: 0.5em;
 }
