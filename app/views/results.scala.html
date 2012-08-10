@@ -3,30 +3,52 @@
 @import helper.twitterBootstrap._
 
 <!-- spinner for tabs -->
-<div id="tab-spinner"></div>
+<div id="tab-spinner" stlye="{display:none}"></div>
+
+<script type="text/javascript">
+  var tabSpin = function(params) {
+    $("#tab-spinner").spin({
+      lines: 9, // The number of lines to draw
+      length: 0, // The length of each line
+      width: 15, // The line thickness
+      radius: 30, // The radius of the inner circle
+      rotate: 0, // The rotation offset
+      color: '#000', // #rgb or #rrggbb
+      speed: .95, // Rounds per second
+      trail: 60, // Afterglow percentage
+      shadow: false, // Whether to render a shadow
+      hwaccel: false, // Whether to use hardware acceleration
+      className: 'spinner', // The CSS class to assign to the spinner
+      zIndex: 2e9, // The z-index (defaults to 2000000000)
+      top: 'auto', // Top position relative to parent in px
+      left: 'auto' // Left position relative to parent in px
+    });
+    tabto(params);
+  }
+</script>
 
 <!-- filters -->
 @if(answers.filters.size > 0) {
   <ul class="nav nav-tabs nav-stacked visible-phone">
-    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all types</a></li>
+    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all types</a></li>
 
   @for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(4)) {
     @defining(filters.contains(filter)) { active =>
-      <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+      <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
     }
   }
   </ul>
 
   <ul class="nav nav-tabs hidden-phone">
-    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all</a></li>
+    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all</a></li>
 
     @for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(5)) {
       @defining(filters.contains(filter)) { active =>
-        <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+        <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
       }
     }
 
-    <li class="@{if(filterString == "misc") "active" else ""}"><a href="#misc" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "misc", 0, debug)}')">misc.</a></li>
+    <li class="@{if(filterString == "misc") "active" else ""}"><a href="#misc" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "misc", 0, debug)}')">misc.</a></li>
 
     @if(answers.filters.size > 5) {
       <li class="dropdown">
@@ -34,7 +56,7 @@
         <ul class="dropdown-menu">
         @for(TypeFilterTab(filter, count)<-answers.filters.iterator.drop(5)) {
           @defining(filters.contains(filter)) { active =>
-            <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+            <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
           }
         }
         </ul>
