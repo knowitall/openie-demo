@@ -1,8 +1,10 @@
 @(title: AnswerTitle, debug: Boolean)
 
 @import models.TypeFilters._
+@import edu.washington.cs.knowitall.browser.extraction.NellExtraction.fbToNellType
 
 @Html(title.parts.map(part=>
+
   part.entity match {
     // always display a card
     case Some(entity) => 
@@ -12,7 +14,13 @@
         rel="popover" title={part.text + (if (debug) " / " + part.lemma else "")}
         data-content={
           "<div><h3 class='uri-title'>URI:</h3> <blockquote class='uri-body'><a href='http://www.freebase.com/view/m/"+entity.fbid+"'>http://www.freebase.com/view/m/"+entity.fbid+"</a></blockquote></div>" +
-          (if (part.types.size > 0) "<div><h3 class='types-title'>Types:</h3><blockquote class='types-body'>"+part.types.toSeq.sortBy(-_.weight).iterator.map(_.name).mkString("<br/>")+"</blockquote></div>" else "") +
+          (if (part.types.size > 0) {
+            "<div><h3 class='types-title'>Types:</h3><blockquote class='types-body'>"+
+            part.types.toSeq.sortBy(-_.weight).map({ fbType => 
+              "FreeBase: <a href='http://www.freebase.com/view"+fbType.name+"'>"+fbType.name+"</a>"+ 
+              fbToNellType.get(fbType).map(nellType => ", NELL: <a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType+"'>"+nellType+"</a>").getOrElse("")
+            }).mkString("<br/>")+"</blockquote></div>"
+          } else "") +
           (if (part.otherSynonyms.size > 0) "<div><h3 class='syns-title'>Extracted Synonyms:</h3><blockquote class='syns-body'>"+part.otherSynonyms.mkString("<br/>")+"</blockquote></div>" else "") 
         }
       >
@@ -27,11 +35,7 @@
         title={part.text + (if (debug) " / " + part.lemma else "")}
         data-content={
             (if (part.otherSynonyms.size > 0) "<h3 class='syns-title'>Extracted Synonyms:</h3><blockquote class='types-body'>" + part.otherSynonyms.mkString("<br/>") + "</blockquote>" else "") +
-<<<<<<< HEAD
             "<div><h3 class='types-title'>Inferred Types:</h3><blockquote class='types-body'>"+part.types.toSeq.sortBy(-_.weight).iterator.map(_.name).mkString("<br/>")+"</blockquote></div>"
-=======
-            "<div><h3 class='types-title'>Types:</h3><blockquote class='types-body'>"+part.types.toSeq.sortBy(-_.weight).iterator.map(_.name).mkString("<br/>")+"</blockquote></div>"
->>>>>>> (amend last) adding a type info card and italics for predicted types
         }
       >
         {part.text}
