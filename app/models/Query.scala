@@ -19,7 +19,8 @@ import edu.washington.cs.knowitall.browser.extraction.ExtractionRelation
 case class Query(
   arg1: Option[Query.Constraint],
   rel: Option[Query.Constraint],
-  arg2: Option[Query.Constraint]) {
+  arg2: Option[Query.Constraint],
+  corpora: Option[Query.Constraint]) {
 
   import Query._
   import edu.washington.cs.knowitall.tool.postag.PostaggedToken
@@ -161,7 +162,7 @@ case class Query(
         val arg2Types = if (!arg2EntityRemoved) reg.arg2.types filter typeFilter else Set.empty[FreeBaseType]
         
         reg.copy(
-            instances = reg.instances filter filterInstances,
+            instances = reg.instances filter filterCorpora filter filterInstances,
             arg1 = ExtractionArgument(clean(reg.arg1.norm), arg1Entity, arg1Types),
             rel  = reg.rel.copy(norm = clean(reg.rel.norm)), 
             arg2 = ExtractionArgument(clean(reg.arg2.norm), arg2Entity, arg2Types)
@@ -175,6 +176,12 @@ case class Query(
   }
   
   private val nonContentTag = "IN|TO|RB?".r
+  
+  private def filterCorpora(instance: Instance[ReVerbExtraction]) = this.corpora match {
+    
+    case Some(CorporaConstraint(corporaString)) => corporaString.contains(instance.corpus)
+    case _ => true
+  }
   
   private def filterRelation(spec: QuerySpec)(group: ExtractionGroup[ReVerbExtraction]) = spec.relNorm match {
       // if the query does not constrain rel, we can ignore this filter 
@@ -258,6 +265,9 @@ object Query {
   case class EntityConstraint(entity: String) extends Constraint {
     override def toString = "entity:" + entity
   }
+  case class CorporaConstraint(corpora: String) extends Constraint {
+    override def toString = "corpora:" + corpora
+  }
 
   val paths = Seq("/scratch/common/openie-demo/index-1.0.3",
     "/scratch2/common/openie-demo/index-1.0.3",
@@ -290,20 +300,20 @@ object Query {
   private final val startCap = Pattern.compile(".*\\b[A-Z].*")
   private final val likelyErrorPattern = Pattern.compile(".*(http|\\(|\\)|\\\"|\\[|thing).*", Pattern.CASE_INSENSITIVE)
 
-  def apply(tuple: (Option[String], Option[String], Option[String])): Query = tuple match {
-    case (arg1, rel, arg2) =>
-      new Query(arg1 flatMap Constraint.parse, rel flatMap Constraint.parse, arg2 flatMap Constraint.parse)
+  def apply(tuple: (Option[String], Option[String], Option[String], Option[String])): Query = tuple match {
+    case (arg1, rel, arg2, corpora) =>
+      new Query(arg1 flatMap Constraint.parse, rel flatMap Constraint.parse, arg2 flatMap Constraint.parse, corpora map CorporaConstraint.apply)
   }
 
   def noneIfEmpty(string: String): Option[String] =
     if (string.isEmpty) None
     else Some(string)
 
-  def fromStrings(arg1: Option[String], rel: Option[String], arg2: Option[String]): Query =
-    this.apply(arg1 flatMap Constraint.parse, rel flatMap Constraint.parse, arg2 flatMap Constraint.parse)
+  def fromStrings(arg1: Option[String], rel: Option[String], arg2: Option[String], corpora: Option[String]): Query =
+    this.apply(arg1 flatMap Constraint.parse, rel flatMap Constraint.parse, arg2 flatMap Constraint.parse, corpora map CorporaConstraint.apply)
 
-  def fromStrings(arg1: String, rel: String, arg2: String): Query =
-    this.fromStrings(noneIfEmpty(arg1), noneIfEmpty(rel), noneIfEmpty(arg2))
+  def fromStrings(arg1: String, rel: String, arg2: String, corpora: String): Query =
+    this.fromStrings(noneIfEmpty(arg1), noneIfEmpty(rel), noneIfEmpty(arg2), noneIfEmpty(corpora))
 
   def fromFile(file: File) = {
     using (new FileInputStream(file)) { fis =>

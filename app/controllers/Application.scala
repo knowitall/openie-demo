@@ -26,15 +26,16 @@ object Application extends Controller {
     * The actual definition of the search form.
     */
   def searchForm: Form[Query] = {
-    def unapply(query: Query): Option[(Option[String], Option[String], Option[String])] = {
-      Some(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString))
+    def unapply(query: Query): Option[(Option[String], Option[String], Option[String], Option[String])] = {
+      Some(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), query.corpora.map(_.toString))
     }
     Form(
     // Defines a mapping that will handle Contact values
       (mapping (
         "arg1" -> optional(text),
         "rel" -> optional(text),
-        "arg2" -> optional(text)
+        "arg2" -> optional(text),
+        "corpora" -> optional(text)
       )(Query.fromStrings)(unapply)).verifying("All search fields cannot be empty", { query =>
         query.arg1.isDefined || query.rel.isDefined || query.arg2.isDefined
       })
@@ -75,17 +76,17 @@ object Application extends Controller {
       query => doSearch(query, "all", 0))
   }
 
-  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean) = Action { implicit request =>
-    doSearch(Query.fromStrings(arg1, rel, arg2), filter, page, debug=debug, log=log)
+  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean, corpora: Option[String]) = Action { implicit request =>
+    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filter, page, debug=debug, log=log)
   }
 
-  def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int) = Action {
+  def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int, corpora: Option[String]) = Action {
     import ExtractionGroupProtocol._
-    Ok(tojson(Query.fromStrings(arg1, rel, arg2).executeRaw().take(count)).toString)
+    Ok(tojson(Query.fromStrings(arg1, rel, arg2, corpora).executeRaw().take(count)).toString)
   }
 
-  def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean) = Action {
-    val query = Query.fromStrings(arg1, rel, arg2)
+  def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean, corpora: Option[String]) = Action {
+    val query = Query.fromStrings(arg1, rel, arg2, corpora)
     Logger.info("Showing sentences for title " + title + " in " + query)
     val group = searchGroups(query, debug)._1.groups.find(_.title.text == title) match {
       case None => throw new IllegalArgumentException("could not find group title: " + title)
@@ -153,8 +154,8 @@ object Application extends Controller {
     }
   }
 
-  def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, debug: Boolean = false) = Action { implicit request =>
-    doSearch(Query.fromStrings(arg1, rel, arg2), filterString, pageNumber, debug=debug, log=true, justResults=true)
+  def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, debug: Boolean = false, corpora: Option[String]) = Action { implicit request =>
+    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filterString, pageNumber, debug=debug, log=true, justResults=true)
   }
 
   def doSearch(query: Query, filterString: String, pageNumber: Int, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
