@@ -3,7 +3,7 @@ package models
 import java.io.{ObjectInputStream, FileInputStream, File}
 import java.util.regex.Pattern
 import scala.Option.option2Iterable
-import edu.washington.cs.knowitall.browser.extraction.{ReVerbExtraction, FreeBaseType, FreeBaseEntity, Instance, ExtractionGroup, ExtractionArgument, ReVerbExtractionGroup}
+import edu.washington.cs.knowitall.browser.extraction._
 import edu.washington.cs.knowitall.browser.lucene
 import edu.washington.cs.knowitall.browser.lucene.{Timeout, Success, QuerySpec, LuceneFetcher, Limited}
 import edu.washington.cs.knowitall.common.Resource.using
@@ -115,9 +115,13 @@ case class Query(
       case Some(EntityConstraint(entity)) => Some(entity)
       case _ => None
     }
+    def queryCorpora(constraint: Option[Query.Constraint]): Option[String] = constraint match {
+      case Some(CorporaConstraint(corpString)) => Some(corpString)
+      case _ => None
+    }
 
     // execute the query
-    val spec = QuerySpec(query(this.arg1), query(this.rel), query(this.arg2), queryEntity(this.arg1), queryEntity(this.arg2), queryTypes(this.arg1), queryTypes(this.arg2))
+    val spec = QuerySpec(query(this.arg1), query(this.rel), query(this.arg2), queryEntity(this.arg1), queryEntity(this.arg2), queryTypes(this.arg1), queryTypes(this.arg2), queryCorpora(this.corpora))
     val (nsQuery, result) = Timing.time {
       Query.fetcher.fetch(spec)
     }
@@ -177,7 +181,7 @@ case class Query(
   
   private val nonContentTag = "IN|TO|RB?".r
   
-  private def filterCorpora(instance: Instance[ReVerbExtraction]) = this.corpora match {
+  private def filterCorpora(instance: Instance[_ <: Extraction]) = this.corpora match {
     
     case Some(CorporaConstraint(corporaString)) => corporaString.contains(instance.corpus)
     case _ => true
@@ -202,7 +206,7 @@ case class Query(
       case None => true
     }
 
-  private def filterGroups(spec: QuerySpec)(group: ExtractionGroup[ReVerbExtraction]): Boolean = {
+  private def filterGroups(spec: QuerySpec)(group: ExtractionGroup[_ <: Extraction]): Boolean = {
     // if there are constraints,
     // apply them to each part
     def filterPart(constraint: Option[Constraint], entity: Option[FreeBaseEntity], types: Iterable[FreeBaseType]) = {
