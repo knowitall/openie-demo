@@ -273,14 +273,14 @@ object Query {
     override def toString = "corpora:" + corpora
   }
 
-  val paths = Seq("/scratch/common/openie-demo/index-1.0.3",
-    "/scratch2/common/openie-demo/index-1.0.3",
-    "/scratch3/common/openie-demo/index-1.0.3",
-    "/scratch4/common/openie-demo/index-1.0.3")
+  val paths = Seq("/scratch/common/openie-demo/index-1.0.4",
+    "/scratch2/common/openie-demo/index-1.0.4",
+    "/scratch3/common/openie-demo/index-1.0.4",
+    "/scratch4/common/openie-demo/index-1.0.4")
 
-  val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
+  //val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
 
-  /*
+  
   val fetcher = new lucene.ParallelExtractionGroupFetcher(
       paths,
       /* max search groups (20k)  */
@@ -289,7 +289,7 @@ object Query {
       10000,
       /* timout in millis (10s) */
       10000)
-      */
+      
 
   private final val CONFIDENCE_THRESHOLD: Double = 0.5
   private final val ENTITY_SCORE_THRESHOLD: Double = 5.0
