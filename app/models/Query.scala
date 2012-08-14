@@ -44,6 +44,15 @@ case class Query(
       }
     }.map(_._2)(scala.collection.breakOut)
   }
+  
+  def fullParts: List[ExtractionPart] = {
+    Iterable((arg1, Argument1), (rel, Relation), (arg2, Argument2)).filter { case (constraint, part) =>
+      constraint match {
+        case None => false
+        case Some(constraint) => !constraint.free
+      }
+    }.map(_._2)(scala.collection.breakOut)
+  }
 
   def filters: Seq[TypeFilter] = {
     var seq = Seq.empty[TypeFilter]
@@ -87,7 +96,7 @@ case class Query(
 
     val (result, converted) = executeHelper()
 
-    val (nsGroups, groups) = Timing.time { Answer.fromExtractionGroups(converted.toList, group).filter(!_.title.text.trim.isEmpty) }
+    val (nsGroups, groups) = Timing.time { Answer.fromExtractionGroups(converted.toList, group, this.fullParts).filter(!_.title.text.trim.isEmpty) }
 
     Logger.debug("Converted to %d answers in %s".format(groups.size, Timing.Seconds.format(nsGroups)))
     

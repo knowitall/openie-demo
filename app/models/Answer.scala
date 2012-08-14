@@ -1,11 +1,14 @@
 package models
 
+import scala.util.control.Exception
 import scala.Option.option2Iterable
 
 import edu.washington.cs.knowitall.browser.extraction.{ReVerbExtraction, FreeBaseType, FreeBaseEntity, ExtractionGroup}
 import edu.washington.cs.knowitall.collection.immutable.Interval
+import edu.washington.cs.knowitall.common.enrich.Traversables._
 import edu.washington.cs.knowitall.common.enrich.Traversables.traversableOncePairIntTo
 
+/** An Answer can have multiple parts, each being linked to a different entity. */
 @SerialVersionUID(42L)
 case class AnswerTitlePart(lemma: String, extractionPart: ExtractionPart, synonyms: Seq[String], entity: Option[FreeBaseEntity], types: Set[FreeBaseType]) {
   def text = entity match {
@@ -17,16 +20,24 @@ case class AnswerTitlePart(lemma: String, extractionPart: ExtractionPart, synony
   def otherSynonyms = synonyms filterNot (_ equalsIgnoreCase text)
 }
 
+/** The AnswerTitle class represents the title of an Answer. */
 @SerialVersionUID(43L)
 case class AnswerTitle(connector: String, parts: Seq[AnswerTitlePart]) {
   def text: String = parts.iterator.map(_.text).mkString(connector)
 }
 
+/** The Answer class represents a result in the Answer pane.
+  * 
+  * @param  title  the title of this answer
+  * @param  contents  the extractions and sources of this answer
+  * @param  queryEntity  the entity for these extractions in the singular full section of the query
+  */
 @SerialVersionUID(44L)
-case class Answer(title: AnswerTitle, contents: List[Content]) {
+case class Answer(title: AnswerTitle, contents: List[Content], queryEntity: Option[FreeBaseEntity]) {
   def contentsByRelation = contents.groupBy(_.rel).toList.sortBy{ case (r, cs) => -cs.size }
 }
 
+/** The Content class stores source information for a particular Answer. */
 @SerialVersionUID(45L)
 case class Content(strings: List[String], url: String, intervals: List[Interval], rel: String, confidence: Double) {
   def sentence = strings.mkString(" ")
@@ -34,7 +45,8 @@ case class Content(strings: List[String], url: String, intervals: List[Interval]
 
 object Answer {
   def fromExtractionGroups(reg: Iterable[ExtractionGroup[ReVerbExtraction]],
-      group: ExtractionGroup[ReVerbExtraction]=>AnswerTitle): Seq[Answer] = {
+      group: ExtractionGroup[ReVerbExtraction]=>AnswerTitle,
+      fullParts: List[ExtractionPart]): Seq[Answer] = {
 
     val groups = ((reg map (reg => ((group(reg), reg.instances.size), reg))).toList groupBy { case ((title, size), reg) =>
         def partText(part: AnswerTitlePart) = part.entity match {
@@ -123,8 +135,30 @@ object Answer {
             instance.extraction.arg2Interval)
         Content(sentence.toList.map(Query.clean), url, intervals, instance.extraction.relText, instance.confidence)
       }.toList
+      
+      // The answer discards information about the extractions from the
+      // full part of the query.  However, 
+      val queryEntity = fullParts match {
+        case part :: Nil => 
+          val entities = instances.flatMap { inst =>
+            part match {
+              case Argument1 => inst._1.arg1.entity
+              case Argument2 => inst._1.arg2.entity
+              case Relation => inst._1.rel.entity
+            }
+          }
 
-      Answer(title, list)
+          // collapse entities with different scores together
+          // use the score from the best-linked entity
+          val collapsedEntities = entities.groupBy(_.fbid).toList.sortBy(_._2.size)(Ordering[Int].reverse).map { group =>
+            group._2.maxBy(_.score)
+          }
+          
+          Exception.allCatch opt collapsedEntities.histogram.maxBy(_._2)._1
+        case _ => None
+      }
+
+      Answer(title, list, queryEntity)
     }.filter(_.contents.size > 0).sortBy(-_.contents.size)
   }
 }
