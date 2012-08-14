@@ -123,7 +123,7 @@ case class Query(
     // execute the query
     val spec = QuerySpec(query(this.arg1), query(this.rel), query(this.arg2), queryEntity(this.arg1), queryEntity(this.arg2), queryTypes(this.arg1), queryTypes(this.arg2), queryCorpora(this.corpora))
     val (nsQuery, result) = Timing.time {
-      Query.fetcher.getGroups(spec)
+      Query.fetcher.fetch(spec)
     }
 
     // open up the retrieved case class
@@ -278,9 +278,9 @@ object Query {
     "/scratch3/common/openie-demo/index-1.0.4",
     "/scratch4/common/openie-demo/index-1.0.4")
 
-  //val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
+  val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
 
-  
+  /*
   val fetcher = new lucene.ParallelExtractionGroupFetcher(
       paths,
       /* max search groups (20k)  */
@@ -289,6 +289,7 @@ object Query {
       10000,
       /* timout in millis (10s) */
       10000)
+      */
       
 
   private final val CONFIDENCE_THRESHOLD: Double = 0.5
