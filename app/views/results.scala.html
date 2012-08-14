@@ -2,6 +2,68 @@
 
 @import helper.twitterBootstrap._
 
+
+<div class="row">
+  <div class="offset1 span10" id="query-card" data-attr="@answers.queryEntities.headOption">
+    <div id="query-card-spinner"></div>
+  </div>
+</div>
+
+<script type="text/javascript">
+// only do this if there is actually a data attribute!
+if ( $("#query-card").attr("data-attr") != "" ) {
+  $("#query-card").show();
+
+  // start a spinner
+  $("#query-card-spinner").show();
+  $("#query-card-spinner").spin({
+      lines: 9, // The number of lines to draw
+      length: 0, // The length of each line
+      width: 15, // The line thickness
+      radius: 30, // The radius of the inner circle
+      rotate: 0, // The rotation offset
+      color: '#000', // #rgb or #rrggbb
+      speed: .95, // Rounds per second
+      trail: 60, // Afterglow percentage
+      shadow: false, // Whether to render a shadow
+      hwaccel: false, // Whether to use hardware acceleration
+      className: 'spinner', // The CSS class to assign to the spinner
+      zIndex: 2e9, // The z-index (defaults to 2000000000)
+      top: 'auto', // Top position relative to parent in px
+      left: 'auto' // Left position relative to parent in px
+    });
+
+  var fbInfo = $("#query-card").attr("data-attr").replace("FreeBaseEntity","").replace(new RegExp(/\(/gi), "").replace(new RegExp(/\)/gi), "").split(',');
+
+  var id = fbInfo[1].trim();
+  console.log(id)
+  var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+id+'?maxheight=150&maxwidth=150'
+  
+  console.log(fbInfo);
+
+  // attempt to preload images
+  try {
+    var image = new Image();
+    image.src = src;
+  } catch(e) {}
+
+  // pull freebase entity information as JSON object
+  $.getJSON("https://www.googleapis.com/freebase/v1/text/m/"+id+"?format=plain&lang=en&maxlength=1000&callback=?", function(response) {
+    if (response != undefined && response.result != undefined) {
+      console.log(response.result);
+
+      // stop spinner
+      $("#query-card-spinner").data("spinner").stop();
+      $("#query-card-spinner").hide();
+
+      $("#query-card").append("<h3>"+fbInfo[0]+"</h3>");
+      $("#query-card").append("<img src=\"https://usercontent.googleapis.com/freebase/v1/image/m/"+id+"?maxheight=150&maxwidth=150\">");
+      $("#query-card").append(response.result + "<a href=\"http://www.freebase.com/view/m/" +id+ "\">read more</a>");
+    }
+  })
+}
+</script>
+
 <!-- spinner for tabs -->
 <div id="tab-spinner" stlye="{display:none}"></div>
 

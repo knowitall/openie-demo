@@ -172,3 +172,23 @@ blockquote.uri-body, blockquote.types-body, blockquote.syns-body {
 #search-button {
   margin-bottom: 0.5em;
 }
+
+#query-card {
+  display: none;
+  margin-top: -1em;
+  margin-bottom: 1.5em;
+  overflow: hidden;
+}
+
+#query-card img {
+  float: left;
+  margin-right: 5px;
+}
+
+#query-card-spinner {
+  width: 100px;
+  height: 100px;
+  background: white;
+  margin: auto auto;
+  display: none;
+}
