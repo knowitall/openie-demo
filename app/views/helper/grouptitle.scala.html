@@ -34,8 +34,12 @@
         rel="popover"
         title={part.text + (if (debug) " / " + part.lemma else "")}
         data-content={
-            (if (part.otherSynonyms.size > 0) "<h3 class='syns-title'>Extracted Synonyms:</h3><blockquote class='types-body'>" + part.otherSynonyms.mkString("<br/>") + "</blockquote>" else "") +
-            "<div><h3 class='types-title'>Inferred Types:</h3><blockquote class='types-body'>"+part.types.toSeq.sortBy(-_.weight).iterator.map(_.name).mkString("<br/>")+"</blockquote></div>"
+          (if (part.otherSynonyms.size > 0) "<h3 class='syns-title'>Extracted Synonyms:</h3><blockquote class='types-body'>" + part.otherSynonyms.mkString("<br/>") + "</blockquote>" else "") +
+          "<div><h3 class='types-title'>Types:</h3><blockquote class='types-body'>"+
+          part.types.toSeq.sortBy(-_.weight).map({ fbType => 
+            "FreeBase: <a href='http://www.freebase.com/view"+fbType.name+"'>"+fbType.name+"</a>"+ 
+            fbToNellType.get(fbType).map(nellType => ", NELL: <a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType+"'>"+nellType+"</a>").getOrElse("")
+          }).mkString("<br/>")+"</blockquote></div>"
         }
       >
         {part.text}
