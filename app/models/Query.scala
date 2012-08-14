@@ -123,7 +123,7 @@ case class Query(
     // execute the query
     val spec = QuerySpec(query(this.arg1), query(this.rel), query(this.arg2), queryEntity(this.arg1), queryEntity(this.arg2), queryTypes(this.arg1), queryTypes(this.arg2), queryCorpora(this.corpora))
     val (nsQuery, result) = Timing.time {
-      Query.fetcher.fetch(spec)
+      Query.fetcher.getGroups(spec)
     }
 
     // open up the retrieved case class
