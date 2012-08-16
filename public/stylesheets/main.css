@@ -174,7 +174,6 @@ blockquote.uri-body, blockquote.types-body, blockquote.syns-body {
 }
 
 #query-card {
-  display: none;
   margin-top: -1em;
   margin-bottom: 1.5em;
   overflow: hidden;
