@@ -8,6 +8,10 @@ $(document).ready(function() {
   $("#arg2").on('keyup', attachSuggest);
 });
 
+/**
+ * This function attaches suggest to an argument
+ * box. Called via event handling. 
+ */
 function attachSuggest() {
   var box = $(this)
   var text = box.val().toLowerCase();
@@ -46,7 +50,12 @@ function attachSuggest() {
   }
 }
 
-// function defined in suggest.js from freebase suggest
+// function defined in suggest.js from freebase:
+// copied the method to have manual control of 
+// what queries were sent to freebase. instead
+// of searching for "type:food" we can intercept
+// the query, chop off "type:", and just query
+// freebase for "food".
 var queryFunction = function(val, cursor) {
   var self = this,
       o = this.options;
