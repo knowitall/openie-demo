@@ -3,6 +3,9 @@ Contains code for adding Freebase Suggest to the
 OpenIE demo. 
  */
 
+var arg1Suggest = false;
+var arg2Suggest = false;
+
 $(document).ready(function() {
   $("#arg1").on('keyup', attachSuggest);
   $("#arg2").on('keyup', attachSuggest);
@@ -14,10 +17,13 @@ $(document).ready(function() {
  */
 function attachSuggest() {
   var box = $(this)
+  var isArg1 = this.id == "arg1";
+  var isArg2 = this.id == "arg2";
   var text = box.val().toLowerCase();
 
   if (text == "type:" || text.indexOf("type:") == 0) {
-    if (!box.data("suggest")) {
+    if ((isArg1 && !arg1Suggest) || 
+        (isArg2 && !arg2Suggest)) {
       // attach suggest and appropriate handlers for type queries
       box.suggest({
         key:'AIzaSyDERIKha5FgaoJPlOIRQMeBz8F6Qbwmtxg',
@@ -28,9 +34,14 @@ function attachSuggest() {
 
       // attach appropriate query handling
       box.data("suggest").request = queryFunction;
+
+      // modify boolean vars accordingly
+      if (isArg1) arg1Suggest = true;
+      if (isArg2) arg2Suggest = true;
     }
   } else if (text == "entity:" || text.indexOf("entity:") == 0) {
-    if (!box.data("suggest")) {
+    if ((isArg1 && !arg1Suggest) || 
+        (isArg2 && !arg2Suggest)) {
       // attach suggest and apprioriate handlers for entity queries
       box.suggest({
         key:'AIzaSyDERIKha5FgaoJPlOIRQMeBz8F6Qbwmtxg',
@@ -41,11 +52,17 @@ function attachSuggest() {
 
       // attach appropriate query handling
       box.data("suggest").request = queryFunction;
+
+      // modify boolean vars accordingly
+      if (isArg1) arg1Suggest = true;
+      if (isArg2) arg2Suggest = true;
     }
   } else {
     // if suggest is attached, de-attach it.
     if (box.data("suggest")) {
       box.data("suggest")._destroy();
+      if (isArg1) arg1Suggest = false;
+      if (isArg2) arg2Suggest = false;
     }
   }
 }
