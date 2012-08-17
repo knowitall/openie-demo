@@ -299,8 +299,8 @@ $(document).ready(function() {
 	});
 
 	$('.close-tab').click(function() {
-		var $active = $('.tab-content').find('> .active')
-		$active.removeClass('active')
+		$('.tab-pane.active').removeClass('active');
+		$(".tabbable.tabs-left").find(".active").removeClass("active");
 	})
 
 	$(".btn").click(function() {
