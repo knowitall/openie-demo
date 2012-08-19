@@ -11,22 +11,7 @@
 			<span 
 				id={entity.fbid}
 				class="title-entity"
-				rel="popover" title={part.text + (if (debug) " / " + part.lemma else "")}
-				data-content={
-					"<div><h3 class='uri-title'>URI:</h3> <blockquote class='uri-body'><a href='http://www.freebase.com/view/m/"+entity.fbid+"'>http://www.freebase.com/view/m/"+entity.fbid+"</a></blockquote></div>" +
-					(if (part.types.size > 0) {
-						"<div><h3 class='types-title'>Types:</h3><blockquote class='types-body'>"+
-						"Nell Types:<br/>"+
-						part.types.toSeq.sortBy(-_.weight).map({ fbType => 
-							fbToNellType.get(fbType).map(nellType => "<a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType+"' title='Nell type: "+nellType+"'>"+nellType+"</a><br/>").getOrElse("")
-						}).mkString("")+
-						"<span style='display:inline-block;margin-top:0.5em;'>Freebase Types:</span><br/>"+
-						part.types.toSeq.sortBy(-_.weight).map({ fbType => 
-							"<a href='http://www.freebase.com/view"+fbType.name+"' title='FreeBase type: "+fbType.name+"'>"+fbType.name+"</a>"
-						}).mkString("<br/>")+"</blockquote></div>"
-					} else "") +
-					(if (part.otherSynonyms.size > 0) "<div><h3 class='syns-title'>Extracted Synonyms:</h3><blockquote class='syns-body'>"+part.otherSynonyms.mkString("<br/>")+"</blockquote></div>" else "") 
-				}
+				title={part.text + (if (debug) " / " + part.lemma else "")}
 			>
 				{if (debug) entity.toString else entity.name}
 			</span>
@@ -35,20 +20,7 @@
 		case None if part.types.size > 0 =>
 			 <span
 				class="title-typed"
-				rel="popover"
 				title={part.text + (if (debug) " / " + part.lemma else "")}
-				data-content={
-					(if (part.otherSynonyms.size > 0) "<h3 class='syns-title'>Extracted Synonyms:</h3><blockquote class='types-body'>" + part.otherSynonyms.mkString("<br/>") + "</blockquote>" else "") +
-					"<div><h3 class='types-title'>Types:</h3><blockquote class='types-body'>"+
-					"Nell Types:<br/>"+
-						part.types.toSeq.sortBy(-_.weight).map({ fbType => 
-							fbToNellType.get(fbType).map(nellType => "<a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType+"' title='Nell type: "+nellType+"'>"+nellType+"</a><br/>").getOrElse("")
-						}).mkString("")+
-						"<span style='display:inline-block;margin-top:0.5em;'>Freebase Types:</span><br/>"+
-						part.types.toSeq.sortBy(-_.weight).map({ fbType => 
-							"<a href='http://www.freebase.com/view"+fbType.name+"' title='FreeBase type: "+fbType.name+"'>"+fbType.name+"</a>"
-						}).mkString("<br/>")+"</blockquote></div>"
-				}
 			>
 				{part.text}
 			</span> 
@@ -57,9 +29,7 @@
 		case None if part.otherSynonyms.size > 0 =>
 			<span
 				class="title-string"
-				rel="popover"
 				title={part.text + (if (debug) " / " + part.lemma else "")}
-				data-content={"<h3 class='syns-title'>Extracted Synonyms:</h3><blockquote class='types-body'>" + part.otherSynonyms.mkString("<br/>") + "</blockquote>"}
 			>
 				{part.text}
 			</span>
@@ -67,9 +37,7 @@
 		case None if debug =>
 			<span
 				class="title-string"
-				rel="popover"
 				title={part.text + (if (debug) " / " + part.lemma else "")}
-				data-content={"<h3 class='syns-title'>Extracted Synonyms:</h3><blockquote class='types-body'>" + part.otherSynonyms.mkString("<br/>") + "</blockquote>"}
 			>
 				{part.text}
 			</span>

@@ -31,20 +31,18 @@
 .syns-body {
   font-weight: normal;
 }
+
 #stats {
   font-size: larger;
 }
 
-.popover-image {
+.entity-desc img {
+  float: left;
   margin: .5em 1em 0 0;
 }
 
 .entity-desc p {
   margin: 0 3em 1em 0;
-}
-
-blockquote.uri-body, blockquote.types-body, blockquote.syns-body {
-  border: none;
 }
 
 .dl-horizontal {
@@ -190,4 +188,8 @@ blockquote.uri-body, blockquote.types-body, blockquote.syns-body {
   background: white;
   margin: auto auto;
   display: none;
+}
+
+.tab-pane ul {
+  list-style-type: none;
 }

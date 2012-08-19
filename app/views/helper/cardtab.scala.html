@@ -1,0 +1,51 @@
+@(query: Query, answer: Answer, maxSentenceCount: Int, debug: Boolean)
+
+@import models.TypeFilters._
+@import edu.washington.cs.knowitall.browser.extraction.NellExtraction.fbToNellType
+
+<!-- title -->
+<h2>@answer.title.parts.map(_.text).mkString(", ")</h2>
+
+<!-- if there is an entity, display its FreeBase URI -->
+@{answer.title.parts.head.entity match{
+	case Some(entity) => 
+		Html("""
+			<!-- FreeBase URI -->
+			<h3 class='uri-title'>URI:</h3>
+			<ul class='uri-body'>
+				<li><a href='http://www.freebase.com/view/m/"""+entity.fbid+"""'>http://www.freebase.com/view/m/"""+entity.fbid+"""</a></li>
+			</ul>""")
+
+	case None =>
+}}
+
+
+<!-- if there are types, display them -->
+@if(answer.title.parts.head.types.size > 0) {
+	<h3 class='types-title'>Types:</h3>
+	<ul class='types-body'>
+		@answer.title.parts.head.types.toSeq.sortBy(-_.weight).map{ fbType =>
+		<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a></li>
+		}
+	</ul>
+}
+
+<!-- if there are synonyms, display them -->
+@if(answer.title.parts.head.otherSynonyms.size > 0) {
+	<h3 class='syns-title'>Extracted Synonyms:</h3>
+	<ul class='syns-body'>
+		@answer.title.parts.head.otherSynonyms.map { synonym =>
+		<li>@synonym</li>
+		}
+	</ul> 
+}
+
+<!-- display sentences -->
+<h3>Extracted from these sentences:</h3>
+@helper.sentences(answer.copy(contents=answer.contents.take(maxSentenceCount)), debug)
+
+@if(answer.contents.size > maxSentenceCount) {
+	<p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), answer.title.text, debug)}">Show all sentences (@{answer.contents.size - maxSentenceCount} more)</a></p>
+}
+
+
