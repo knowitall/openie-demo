@@ -1,7 +1,7 @@
 @(title: AnswerTitle, debug: Boolean)
 
 @import models.TypeFilters._
-@import edu.washington.cs.knowitall.browser.extraction.NellExtraction.fbToNellType
+@import edu.washington.cs.knowitall.browser.extraction.NellType.fbToNellType
 
 @Html(title.parts.map(part=>
 
@@ -18,7 +18,7 @@
             "<div><h3 class='types-title'>Types:</h3><blockquote class='types-body'>"+
             part.types.toSeq.sortBy(-_.weight).map({ fbType => 
               "FreeBase: <a href='http://www.freebase.com/view"+fbType.name+"'>"+fbType.name+"</a>"+ 
-              fbToNellType.get(fbType).map(nellType => ", NELL: <a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType+"'>"+nellType+"</a>").getOrElse("")
+              fbToNellType.get(fbType).map(nellType => ", NELL: <a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType.id+"'>"+nellType.name+"</a>").getOrElse("")
             }).mkString("<br/>")+"</blockquote></div>"
           } else "") +
           (if (part.otherSynonyms.size > 0) "<div><h3 class='syns-title'>Extracted Synonyms:</h3><blockquote class='syns-body'>"+part.otherSynonyms.mkString("<br/>")+"</blockquote></div>" else "") 
@@ -38,7 +38,7 @@
           "<div><h3 class='types-title'>Types:</h3><blockquote class='types-body'>"+
           part.types.toSeq.sortBy(-_.weight).map({ fbType => 
             "FreeBase: <a href='http://www.freebase.com/view"+fbType.name+"'>"+fbType.name+"</a>"+ 
-            fbToNellType.get(fbType).map(nellType => ", NELL: <a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType+"'>"+nellType+"</a>").getOrElse("")
+            fbToNellType.get(fbType).map(nellType => ", NELL: <a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType.id+"'>"+nellType.name+"</a>").getOrElse("")
           }).mkString("<br/>")+"</blockquote></div>"
         }
       >
