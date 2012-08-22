@@ -137,9 +137,13 @@ $.extend({
 
 // create a tab-pane knowledge card from FreeBase information
 var download_freebase = function(target) {
-	var id = $(target).attr("href");
-	var fbid = $(target).attr("data-fbid");
+	var id = $(target).attr("href"); // get the id of the target tab-pane
+	var fbid = $(target).attr("data-fbid"); // get the FreeBase id
 	var datacontent = "";
+
+	// hide all the tab content, so that it will all appear at once
+	// otherwise it appears piecewise, which is jarring
+	$(".tab-content").hide();
 
 	// set image src to freebase entity
 	var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+ fbid + '?maxheight=150&maxwidth=150';
@@ -153,7 +157,7 @@ var download_freebase = function(target) {
 	// throw up a spinner while we're querying freebase
 	$("#tab-spinner").spin(spinnerOpts);
 	
-	// pull freebase entity information as JSON object
+	// get freebase entity information as JSON object
 	$.getJSON("https://www.googleapis.com/freebase/v1/text/m/" + fbid + '?format=plain&lang=en&maxlength=1000&callback=?', function(response) {
 		if (response != undefined && response.result != undefined) {
 			// populate entity data from freebase
@@ -167,7 +171,7 @@ var download_freebase = function(target) {
 			datacontent = '<div class="entity-desc"></div>';
 			}
 	
-		// insert the entity description into the pane
+		// insert the entity description into the tab-pane
 		$(datacontent).insertAfter($(id + ">h2"));
 
 		// stop the spinner and
@@ -186,7 +190,7 @@ var tabSpin = function(params) {
 
 // populate knowledge card information for the query entity
 // only triggers if the query is for a known entity
-// run before $(document).ready to improve performance
+// run before $(document).ready to improve speed
 if ( $("#query-card") ) {
 	// start a spinner
 	$("#query-card-spinner").show();
@@ -224,10 +228,6 @@ $(document).ready(function() {
 		// make sure there is actually a FreeBase ID
 		// and that we don't already have the FB info
 		if ( fbid != "" &&  $(id+'>.entity-desc').length == 0 ) {
-			// hide all the tab content, so that it will all appear at once
-			// otherwise it appears piecewise, which is jarring
-			$(".tab-content").hide();
-
 			download_freebase(this);
 		}
 	});
