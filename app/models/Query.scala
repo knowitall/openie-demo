@@ -15,6 +15,7 @@ import play.api.libs.concurrent.Akka
 import play.api.Logger
 import edu.washington.cs.knowitall.browser.extraction.InstanceDeduplicator
 import edu.washington.cs.knowitall.browser.extraction.ExtractionRelation
+import edu.washington.cs.knowitall.tool.postag.Postagger.prepositions
 
 case class Query(
   arg1: Option[Query.Constraint],
@@ -195,25 +196,30 @@ case class Query(
     case Some(CorporaConstraint(corporaString)) => corporaString.contains(instance.corpus)
     case _ => true
   }
-  
+
   private def filterRelation(spec: QuerySpec)(group: ExtractionGroup[ReVerbExtraction]) = spec.relNorm match {
-      // if the query does not constrain rel, we can ignore this filter 
-      case Some(queryRelNorm) => {
-        group.instances.headOption match { 
-          // it's possible that the group is empty already due to some other filter.
-          // If it is, ignore (a different filter checks for this)
-          case Some(group) => {
-            val extr = group.extraction
-            def filterNonContent(tok: PostaggedToken): Boolean = nonContentTag.findFirstIn(tok.postag).isEmpty
-            val groupRelNormTokens = extr.normTokens(extr.relInterval) filter filterNonContent
-            val lastContentWord = groupRelNormTokens.last.string
-            queryRelNorm.contains(lastContentWord)
-          }
-          case None => true
-        }
-      }
-      case None => true
+    // if the query does not constrain rel, we can ignore this filter 
+    case Some(queryRelNorm) => {
+      val filteredRelNormTokens = queryRelNorm.toLowerCase.split(" ").filter { str => !prepositions.contains(str) } toSet;
+      if (!filteredRelNormTokens.isEmpty) filterRelationHelper(filteredRelNormTokens, group) else true
     }
+    case None => true
+  }
+  
+  private def filterRelationHelper(filteredRelNormTokens: Set[String], group: ExtractionGroup[ReVerbExtraction]): Boolean = {
+    group.instances.headOption match {
+        // it's possible that the group is empty already due to some other filter.
+        // If it is, ignore (a different filter checks for this)
+        case Some(group) => {
+          val extr = group.extraction
+          def filterNonContent(tok: PostaggedToken): Boolean = nonContentTag.findFirstIn(tok.postag).isEmpty
+          val groupRelNormTokens = extr.normTokens(extr.relInterval) filter filterNonContent
+          val lastContentWord = groupRelNormTokens.last.string
+          filteredRelNormTokens.contains(lastContentWord)
+        }
+        case None => true
+      }
+  }
 
   private def filterGroups(spec: QuerySpec)(group: ExtractionGroup[_ <: Extraction]): Boolean = {
     // if there are constraints,
