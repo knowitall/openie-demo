@@ -1,7 +1,7 @@
 @(query: Query, answer: Answer, maxSentenceCount: Int, debug: Boolean)
 
 @import models.TypeFilters._
-@import edu.washington.cs.knowitall.browser.extraction.NellExtraction.fbToNellType
+@import edu.washington.cs.knowitall.browser.extraction.NellType.fbToNellType
 
 @titleLink(part: models.AnswerTitlePart) = {
 	@if(part.extractionPart == Relation) {
