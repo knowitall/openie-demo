@@ -15,7 +15,7 @@
 
 	<!-- title -->
 	<h2>@{Html(answer.title.parts.map { part =>
-			{titleLink(part)}
+			titleLink(part)
 		}.mkString(answer.title.connector))}</h2>
 
 	<!-- if there is an entity, display its FreeBase URI -->
