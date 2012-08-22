@@ -14,9 +14,9 @@
 @defining(answer.title.parts.head) { partsHead =>
 
 	<!-- title -->
-	<h2>@answer.title.parts.map { part =>
-		@titleLink(part)
-	}</h2>
+	<h2>@{Html(answer.title.parts.map { part =>
+			{titleLink(part)}
+		}.mkString(answer.title.connector))}</h2>
 
 	<!-- if there is an entity, display its FreeBase URI -->
 	@defining(partsHead.entity) { entityOpt =>
