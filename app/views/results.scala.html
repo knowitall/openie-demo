@@ -232,6 +232,10 @@ $(document).ready(function() {
 		}
 	});
 
+	$(".entity-link").click(function() {
+		$("#tab-spinner").spin(spinnerOpts);
+	})
+
 	$('.close-tab').click(function() {
 		$('.tab-pane.active').removeClass('active');
 		$(".tabbable.tabs-left").find(".active").removeClass("active");

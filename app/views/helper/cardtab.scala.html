@@ -7,7 +7,7 @@
 	@if(part.extractionPart == Relation) {
 		@part.text
 	} else {
-		<a href='@routes.Application.search(Option(part.text),Option(""),Option(""),"all",0,debug)'>@part.text</a>
+		<a href='@routes.Application.search(Option(part.text),Option(""),Option(""),"all",0,debug)' class="entity-link">@part.text</a>
 	}
 }
 
