@@ -28,20 +28,28 @@
 				<ul class='uri-body'>
 					<li><a href='http://www.freebase.com/view/m/@entity.fbid'>http://www.freebase.com/view/m/@entity.fbid</a></li>
 				</ul>
+
+				<!-- Types -->
+				<h3 class='types-title'>Types:</h3>
+				<ul class='types-body'>
+					@partsHead.types.toSeq.sortBy(-_.weight).map{ fbType =>
+					<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a></li>
+					}
+				</ul>
 			}
 
-			case None => {}
+			case None => {
+				@if(partsHead.types.size > 0) {
+					<!-- Inferred Types (no linked entity) -->
+					<h3 class='types-title'>Inferred Types:</h3>
+					<ul class='types-body'>
+						@partsHead.types.toSeq.sortBy(-_.weight).map{ fbType =>
+						<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a></li>
+						}
+					</ul>
+				}
+			}
 		}
-	} 
-
-	<!-- if there are types, display them -->
-	@if(partsHead.types.size > 0) {
-		<h3 class='types-title'>Types:</h3>
-		<ul class='types-body'>
-			@partsHead.types.toSeq.sortBy(-_.weight).map{ fbType =>
-			<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a></li>
-			}
-		</ul>
 	}
 
 	<!-- if there are synonyms, display them -->
