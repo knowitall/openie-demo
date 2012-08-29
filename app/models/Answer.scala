@@ -39,7 +39,7 @@ case class Answer(title: AnswerTitle, contents: List[Content], queryEntity: Opti
 
 /** The Content class stores source information for a particular Answer. */
 @SerialVersionUID(45L)
-case class Content(strings: List[String], url: String, intervals: List[Interval], rel: String, confidence: Double) {
+case class Content(strings: List[String], url: String, intervals: List[Interval], rel: String, confidence: Double, corpus: String) {
   def sentence = strings.mkString(" ")
 }
 
@@ -133,7 +133,7 @@ object Answer {
             instance.extraction.arg1Interval,
             //instance.extraction.relInterval,
             instance.extraction.arg2Interval)
-        Content(sentence.toList.map(Query.clean), url, intervals, instance.extraction.relText, instance.confidence)
+        Content(sentence.toList.map(Query.clean), url, intervals, instance.extraction.relText, instance.confidence, instance.corpus)
       }.toList
       
       // The answer discards information about the extractions from the

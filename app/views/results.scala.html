@@ -3,7 +3,14 @@
 @import helper.twitterBootstrap._
 
 <!-- spinner for tabs -->
-<div id="tab-spinner"></div>
+<div id="tab-spinner" stlye="{display:none}"></div>
+
+<!-- if the query is a linked entity, insert a knowledge card about it -->
+@{answers.queryEntities.headOption match {
+		case Some((fbEntity,count)) => Html("<div class='row'><div id='query-card' class='offset1 span10' data-attr='"+fbEntity.fbid+"'><h3>"+fbEntity.name+"</h3><div id='query-card-spinner'></div></div></div>")
+		case None => ""
+	}
+}
 
 <!-- suggestions -->
 @if(answers.answerCount == 0) {
@@ -30,276 +37,240 @@
 
 <!-- filters -->
 @if(answers.filters.size > 0) {
-  <ul class="nav nav-tabs nav-stacked visible-phone">
-    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all types</a></li>
+	<ul class="nav nav-tabs nav-stacked visible-phone">
+		<li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all types</a></li>
 
-  @for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(4)) {
-    @defining(filters.contains(filter)) { active =>
-      <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
-    }
-  }
-  </ul>
+	@for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(4)) {
+		@defining(filters.contains(filter)) { active =>
+			<li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+		}
+	}
+	</ul>
 
-  <ul class="nav nav-tabs hidden-phone">
-    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all</a></li>
+	<ul class="nav nav-tabs hidden-phone">
+		<li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all</a></li>
 
-    @for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(5)) {
-      @defining(filters.contains(filter)) { active =>
-        <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
-      }
-    }
+		@for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(5)) {
+			@defining(filters.contains(filter)) { active =>
+				<li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+			}
+		}
 
-    <li class="@{if(filterString == "misc") "active" else ""}"><a href="#misc" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "misc", 0, debug)}')">misc.</a></li>
+		<li class="@{if(filterString == "misc") "active" else ""}"><a href="#misc" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "misc", 0, debug)}')">misc.</a></li>
 
-    @if(answers.filters.size > 5) {
-      <li class="dropdown">
-        <a class="dropdown-toggle" data-toggle="dropdown" href="#">more types<b class="caret"></b></a>
-        <ul class="dropdown-menu">
-        @for(TypeFilterTab(filter, count)<-answers.filters.iterator.drop(5)) {
-          @defining(filters.contains(filter)) { active =>
-            <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabto('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
-          }
-        }
-        </ul>
-      </li>
-    }
-  </ul>
+		@if(answers.filters.size > 5) {
+			<li class="dropdown">
+				<a class="dropdown-toggle" data-toggle="dropdown" href="#">more types<b class="caret"></b></a>
+				<ul class="dropdown-menu">
+				@for(TypeFilterTab(filter, count)<-answers.filters.iterator.drop(5)) {
+					@defining(filters.contains(filter)) { active =>
+						<li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+					}
+				}
+				</ul>
+			</li>
+		}
+	</ul>
 }
 <!-- /filters -->
 
 
-  <!-- tabbable -->
-  <!-- left tabs with entities -->
-  <div class="tabbable tabs-left">
-    <ul class="nav nav-tabs">
-      @for((g, i) <- answers.groups.zipWithIndex) {
-      <li class="hidden-phone"><a href="#L@{i}" class="answer" data-toggle="tab">@helper.grouptitle(g.title, debug) (@g.contents.size)</a></li>
-      <li class="visible-phone"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), g.title.text, debug)}" class="answer">@Html(g.title.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", ")) (@g.contents.size)</a></li>
-      }
-    </ul>
+	<!-- tabbable -->
+	<!-- left tabs with entities -->
+	<div class="tabbable tabs-left">
+		<ul class="nav nav-tabs">
+			@for((answer, i) <- answers.groups.zipWithIndex) {
+			<li class="hidden-phone"><a href="#L@{i}" class="answer" data-toggle="tab" data-fbid="@{answer.title.parts.head.entity match {case Some(entity) => {entity.fbid} case None => {""}}}">@helper.grouptitle(answer.title, debug) (@answer.contents.size)</a></li>
+			<li class="visible-phone"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), answer.title.text, debug)}" class="answer">@Html(answer.title.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", ")) (@answer.contents.size)</a></li>
+			}
+		</ul>
 
-    <!-- tab content -->
-    <div class="tab-content hidden-phone">
-      @for((g, i) <- answers.groups.zipWithIndex) {
-        <div class="tab-pane" id="L@{i}">
-          <div class="close-tab"><a href="#close@{i}" class="close-tab" title="close sentences"><i class="icon-remove"></i></a></div>
-          
-          <h3>Extracted from these sentences:</h3>
-          @helper.sentences(g.copy(contents=g.contents.take(maxSentenceCount)), debug)
-          
-          @if(g.contents.size > maxSentenceCount) {
-            <p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), g.title.text, debug)}">Show all sentences (@{g.contents.size - maxSentenceCount} more)</a></p>
-          }
-        </div>
-      }
-    </div>
-  </div>
-  <!-- /tabbable -->
-  
-  <!-- Pagination -->
+		<!-- tab content -->
+		<div class="tab-content hidden-phone">
+			@for((answer, i) <- answers.groups.zipWithIndex) {
+				<div class="tab-pane" id="L@{i}">
+					<div class="close-tab"><a href="#close@{i}" class="close-tab" title="close sentences"><i class="icon-remove"></i></a></div>
+					
+					@helper.cardtab(query, answer, maxSentenceCount, debug)
+				</div>
+			}
+		</div>
+	</div>
+	<!-- /tabbable -->
+	
+	<!-- Pagination -->
 @if(pageCount > 1) {
-  <div class="pagination" align="center">
-    <ul>
-    @if(pageno > 0) {
-      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno - 1, debug)}">Prev</a></li>
-    }
+	<div class="pagination" align="center">
+		<ul>
+		@if(pageno > 0) {
+			<li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno - 1, debug)}">Prev</a></li>
+		}
 
-    @for(i <- pageno-4 to pageno-1; if i >= 0) {
-      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i, debug)}">@i</a></li>
-    }
+		@for(i <- pageno-4 to pageno-1; if i >= 0) {
+			<li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i, debug)}">@i</a></li>
+		}
 
-      <li class="active"><a href="#">@pageno</a></li>
+			<li class="active"><a href="#">@pageno</a></li>
 
-    @for(i <- pageno+1 to pageno+4; if i < pageCount) {
-      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i, debug)}">@i</a></li>
-    }
+		@for(i <- pageno+1 to pageno+4; if i < pageCount) {
+			<li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i, debug)}">@i</a></li>
+		}
 
-    @if(pageno + 1 < pageCount) {
-      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno + 1, debug)}">Next</a></li>
-    }
-    </ul>
-  </div>
+		@if(pageno + 1 < pageCount) {
+			<li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno + 1, debug)}">Next</a></li>
+		}
+		</ul>
+	</div>
 }
 
-  <!-- freebase attr footer -->
-  <div class="freebase-attribution">
-    <img alt="Freebase CC-BY" height="23px" style="border: 0;" width="61px" src="http://www.freebase.com/policies/freebase-cc-by-61x23.png"/>
+	<!-- freebase attr footer -->
+	<div class="freebase-attribution">
+		<img alt="Freebase CC-BY" height="23px" style="border: 0;" width="61px" src="http://www.freebase.com/policies/freebase-cc-by-61x23.png"/>
 
-    <div>
-      <p>Source: <a href="http://www.freebase.com/">Freebase</a>, licensed under <a href="http://creativecommons.org/licenses/by/2.5/">CC-BY</a></p>
-      <p>Other content from <a href="http://en.wikipedia.org/">Wikipedia</a>, licensed under <a href="http://creativecommons.org/licenses/by-sa/2.5/">CC BY-SA</a></p>
-    </div>
-  </div>
-  <!-- /freebase attr footer -->
+		<div>
+			<p>Source: <a href="http://www.freebase.com/">Freebase</a>, licensed under <a href="http://creativecommons.org/licenses/by/2.5/">CC-BY</a></p>
+			<p>Other content from <a href="http://en.wikipedia.org/">Wikipedia</a>, licensed under <a href="http://creativecommons.org/licenses/by-sa/2.5/">CC BY-SA</a></p>
+		</div>
+	</div>
+	<!-- /freebase attr footer -->
 
 <script type="text/javascript">
+// spinner options presets
+var smallSpinnerOpts = {lines: 9, length: 0, width: 4, radius: 6, rotate: 0, color: '#000', speed: .95, trail: 60, shadow: false, hwaccel: false, className: 'spinner', zIndex: 2e9, top: 'auto', left: 'auto'};
+var spinnerOpts = {lines: 9, length: 0, width: 15, radius: 30, rotate: 0, color: '#000', speed: .95, trail: 60, shadow: false, hwaccel: false, className: 'spinner', zIndex: 2e9, top: 'auto', left: 'auto'};
+
 $.extend({
-  getUrlVars: function(){
-    var vars = [], hash;
-    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+	getUrlVars: function(){
+		var vars = [], hash;
+		var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
 
-    for(var i = 0; i < hashes.length; i++) {
-      hash = hashes[i].split('=');
-      vars.push(hash[0]);
-      vars[hash[0]] = hash[1];
-    }
+		for(var i = 0; i < hashes.length; i++) {
+			hash = hashes[i].split('=');
+			vars.push(hash[0]);
+			vars[hash[0]] = hash[1];
+		}
 
-    return vars;
-  },
+		return vars;
+	},
 
-  getUrlVar: function(name){
-    return $.getUrlVars()[name];
-  }
+	getUrlVar: function(name){
+		return $.getUrlVars()[name];
+	}
 });
 
+// create a tab-pane knowledge card from FreeBase information
+var download_freebase = function(target) {
+	var id = $(target).attr("href"); // get the id of the target tab-pane
+	var fbid = $(target).attr("data-fbid"); // get the FreeBase id
+	var datacontent = "";
+
+	// hide all the tab content, so that it will all appear at once
+	// otherwise it appears piecewise, which is jarring
+	$(".tab-content").hide();
+
+	// set image src to freebase entity
+	var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+ fbid + '?maxheight=150&maxwidth=150';
+	
+	// attempt to preload images
+	try {
+		var image = new Image();
+		image.src = src;
+	} catch(e) {}
+
+	// throw up a spinner while we're querying freebase
+	$("#tab-spinner").spin(spinnerOpts);
+	
+	// get freebase entity information as JSON object
+	$.getJSON("https://www.googleapis.com/freebase/v1/text/m/" + fbid + '?format=plain&lang=en&maxlength=1000&callback=?', function(response) {
+		if (response != undefined && response.result != undefined) {
+			// populate entity data from freebase
+			datacontent = '<div class="entity-desc">'
+				+ '<img src="' + src + '">'
+				+  '<p>' + $('<div/>').text(response.result).html()
+				+ ' <a href="http://www.freebase.com/view/m/' + fbid + '">(read more)</a>' + '</p>'
+				+ '</div>';
+		} else {
+			// if there is no freebase information, create an empty entity-desc
+			datacontent = '<div class="entity-desc"></div>';
+			}
+	
+		// insert the entity description into the tab-pane
+		$(datacontent).insertAfter($(id + ">h2"));
+
+		// stop the spinner and
+		// show tab content again
+		$("#tab-spinner").data("spinner").stop();
+		$(".tab-content").show();
+	})
+}
+
+// a spinner that triggers on tab switch
+// calls the bootstrap function that switches tabs
+var tabSpin = function(params) {
+	$("#tab-spinner").spin(spinnerOpts);
+	tabto(params);
+}
+
+// populate knowledge card information for the query entity
+// only triggers if the query is for a known entity
+// run before $(document).ready to improve speed
+if ( $("#query-card") ) {
+	// start a spinner
+	$("#query-card-spinner").show();
+	$("#query-card-spinner").spin(spinnerOpts);
+
+	var id = $("#query-card").attr("data-attr");
+
+	var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+id+'?maxheight=150&maxwidth=150'
+	
+	// attempt to preload images
+	try {
+		var image = new Image();
+		image.src = src;
+	} catch(e) {}
+
+	// pull freebase entity information as JSON object
+	$.getJSON("https://www.googleapis.com/freebase/v1/text/m/"+id+"?format=plain&lang=en&maxlength=1000&callback=?", function(response) {
+		if (response != undefined && response.result != undefined) {
+			// stop spinner
+			$("#query-card-spinner").data("spinner").stop();
+			$("#query-card-spinner").hide();
+
+			$("#query-card").append("<img src=\"https://usercontent.googleapis.com/freebase/v1/image/m/"+id+"?maxheight=150&maxwidth=150\">");
+			$("#query-card").append(response.result + "<a href=\"http://www.freebase.com/view/m/" +id+ "\">read more</a>");
+		}
+	})
+}
+
 $(document).ready(function() {
-  // create a new associative array for our freebase info
-  var freebase_data = {};
+	// grab freebase id (if possible) on click
+	$('.answer').click(function() {
+		var id = $(this).attr("href");
+		var fbid = $(this).attr("data-fbid");
 
-  var spinnerOpts = {
-      lines: 9, // The number of lines to draw
-      length: 0, // The length of each line
-      width: 15, // The line thickness
-      radius: 30, // The radius of the inner circle
-      rotate: 0, // The rotation offset
-      color: '#000', // #rgb or #rrggbb
-      speed: .95, // Rounds per second
-      trail: 60, // Afterglow percentage
-      shadow: false, // Whether to render a shadow
-      hwaccel: false, // Whether to use hardware acceleration
-      className: 'spinner', // The CSS class to assign to the spinner
-      zIndex: 2e9, // The z-index (defaults to 2000000000)
-      top: 'auto', // Top position relative to parent in px
-      left: 'auto' // Left position relative to parent in px
-    };
+		// make sure there is actually a FreeBase ID
+		// and that we don't already have the FB info
+		if ( fbid != "" &&  $(id+'>.entity-desc').length == 0 ) {
+			download_freebase(this);
+		}
+	});
 
+	$(".entity-link").click(function() {
+		$("#tab-spinner").spin(spinnerOpts);
+	})
 
-  var download_freebase = function(target) {
-    var span = $(target).children("span");
-    var title = "";
-    var id = $(target).attr("href");
-    var datacontent = span.attr('data-content');
-    // set image src to freebase entity
-    var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+span.attr("id")+'?maxheight=150&maxwidth=150'
-    
-    // attempt to preload images
-    try {
-      var image = new Image();
-      image.src = src;
-    } catch(e) {}
+	$('.close-tab').click(function() {
+		$('.tab-pane.active').removeClass('active');
+		$(".tabbable.tabs-left").find(".active").removeClass("active");
+	})
 
-    // throw up a spinner while we're querying freebase
-    $("#tab-spinner").spin(spinnerOpts);
-    
-    // pull freebase entity information as JSON object
-    $.getJSON("https://www.googleapis.com/freebase/v1/text/m/"+span.attr("id")+'?format=plain&lang=en&maxlength=1000&callback=?', function(response) {
-      if (response != undefined && response.result != undefined) {
-
-        // populate entity data from freebase
-        datacontent = '<div class="entity-desc">'
-          + '<img class="popover-image" src="' + src + '">'
-          +  '<p>' + $('<div/>').text(response.result).html()
-          + ' <a href="http://www.freebase.com/view/m/' + span.attr("id") + '">(read more)</a>' + '</p>'
-          + '</div>'
-          + datacontent;
-
-        span.attr('data-content', datacontent);
-
-        title = $(target).children("span").attr("title");
-      } else {
-        // if there is no freebase information, create an empty entity-desc
-        datacontent = '<div class="entity-desc">' + '</div>' + datacontent;
-        span.attr('data-content', datacontent);
-
-        for (var i=0;i<target.children("span").length;i++) {
-          if (i>0) {
-            title += ", ";
-          }
-          title += $(target.children("span")[i]).text().trim();
-        }
-      }
-    
-    // clear the previous description from the tab pane
-    // replace it with the new one
-    $("<div class='data'>" + span.attr("data-content") + "</div>").insertAfter($(id + "> .close-tab"));
-    $("<h2>" + title + "</h2>").insertAfter($(id+"> .close-tab"));
-
-    // stop the spinner and
-    // show tab content again
-    $("#tab-spinner").data("spinner").stop();
-    $(".tab-content").show();
-    })
-  }
-
-  // grab freebase id (if possible) on click
-  $('.answer').click(function() {
-    // hide all the tab content, so that it will all appear at once
-    // otherwise it appears piecewise, which is jarring
-    $(".tab-content").hide();
-
-    var title = ""; //attr("title");
-    var id = $(this).attr("href");
-
-    for (var i=0;i<$(this).children("span").length;i++) {
-      if (i>0) {
-        title += ", ";
-      }
-      title += $($(this).children("span")[i]).text().trim();
-    }
-
-    // make sure there is actually something there to match
-    if ($(this).children("span").attr("data-content")) {
-      // if we already have info about it, don't pull from freebase!
-      if ($(this).children("span").attr("data-content").match("entity-desc")) {
-        // only add info if it isn't already there
-        if (!(id + "> .data")) {
-          $("<div class='data'>" + $(this).children("span").attr("data-content") + "</div>").insertAfter($(id + "> .close-tab"));
-          $("<h2>" + title + "</h2>").insertAfter($(id+"> .close-tab"));
-        }
-
-        // show tab content again
-        $(".tab-content").show();
-      } else {
-        // grab freebase entity information
-        download_freebase($(this));
-      }
-    } else {
-      if ($(".tab-content > " + id).children("h2").length == 0) {
-        $("<h2>" + title + "</h2>").insertAfter($(id+"> .close-tab"));
-      }
-      $(".tab-content").show();
-    }
-  });
-
-  $('.close-tab').click(function() {
-    var $active = $('.tab-content').find('> .active')
-    $active.removeClass('active')
-  })
-
-  $(".btn").click(function() {
-    var opts = {
-      lines: 9, // The number of lines to draw
-      length: 0, // The length of each line
-      width: 4, // The line thickness
-      radius: 6, // The radius of the inner circle
-      rotate: 0, // The rotation offset
-      color: '#000', // #rgb or #rrggbb
-      speed: .95, // Rounds per second
-      trail: 60, // Afterglow percentage
-      shadow: false, // Whether to render a shadow
-      hwaccel: false, // Whether to use hardware acceleration
-      className: 'spinner', // The CSS class to assign to the spinner
-      zIndex: 2e9, // The z-index (defaults to 2000000000)
-      top: 'auto', // Top position relative to parent in px
-      left: 'auto' // Left position relative to parent in px
-    };
-
-    $("#search-spinner").spin(opts);
-  });
-    
-  $('#moreDropdown').click(function (e) {
-    e.preventDefault();
-    $(this).tab('show');
-  })
+	$(".btn").click(function() {
+		$("#search-spinner").spin(smallSpinnerOpts);
+	});
+		
+	$('#moreDropdown').click(function (e) {
+		e.preventDefault();
+		$(this).tab('show');
+	})
 })
 </script>

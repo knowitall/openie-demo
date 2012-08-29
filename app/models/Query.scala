@@ -33,7 +33,7 @@ case class Query(
   override def toString = "(" + arg1String + ", " + 
                                 relString + ", " + 
                                 arg2String + ")"
-  
+
   def humanString = "a query with " + Iterable(
       arg1.map("Argument 1 containing '" + _ + "'"),
       rel.map("Relation containing '" + _ + "'"),
@@ -244,7 +244,7 @@ case class Query(
       filterPart(this.arg1, group.arg1.entity, group.arg1.types) && filterPart(this.arg2, group.arg2.entity, group.arg2.types)
     }
   }
-  
+
   /** Checks if the query matches specific conditions and returns a list of 
    *  appropriate suggestion strings.
    *  
@@ -547,7 +547,7 @@ object Query {
       true
     }
   }
-  
+
   /** @return a list of general suggestion strings for improving queries. */
   def generalSuggestions: List[String] = {
     import scala.collection.mutable.ListBuffer
