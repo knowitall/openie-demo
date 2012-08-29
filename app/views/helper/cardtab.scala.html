@@ -33,7 +33,13 @@
 				<h3 class='types-title'>Types:</h3>
 				<ul class='types-body'>
 					@partsHead.types.toSeq.sortBy(-_.weight).map{ fbType =>
-					<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a></li>
+					<li>@{Html(fbToNellType.get(fbType).map( nellType =>
+						"<a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType.id+"' title='Nell type: "+nellType.name+"'>"+nellType.name+"</a> (Nell)"
+						).getOrElse(""))
+						}</li>
+					}
+					@partsHead.types.toSeq.sortBy(-_.weight).map{ fbType =>
+					<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a> (FreeBase)</li>
 					}
 				</ul>
 			}
