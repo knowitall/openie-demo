@@ -5,6 +5,29 @@
 <!-- spinner for tabs -->
 <div id="tab-spinner"></div>
 
+<!-- suggestions -->
+@if(answers.answerCount == 0) {
+  <div id="suggestions">
+    @if(query.betterQuery != query) {
+      <p>Try searching for: @query.betterQuery.toString</p>
+    }
+    @if(query.specificSuggestions.size > 0) {
+      <p>Specific suggestions:</p>
+      <ul id="specific-suggestions">
+      @for(suggestion <- query.specificSuggestions) {
+        <li>@suggestion</li>
+      }
+      </ul>
+    }
+    <p>General suggestions:</p>
+    <ul id="general-suggestions">
+    @for(suggestion <- Query.generalSuggestions) {
+      <li>@suggestion</li>
+    }
+    </ul>
+  </div>
+}
+
 <!-- filters -->
 @if(answers.filters.size > 0) {
   <ul class="nav nav-tabs nav-stacked visible-phone">
