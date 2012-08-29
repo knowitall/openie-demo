@@ -245,6 +245,18 @@ case class Query(
     }
   }
   
+  /** Checks if the query matches specific conditions and returns a list of 
+   *  appropriate suggestion strings.
+   *  
+   *  Cases:
+   *    Only a single box is filled with more than three tokens
+   *    All three boxes are filled and neither arg1/arg2 are type queries
+   *    Arg1 starts with "who"
+   *    Either arg1 or arg2 contain "what|which"
+   *    All three boxes are filled and one of arg1/arg2 are type queries
+   * 
+   *  @return a list of suggestion strings.
+   */
   def specificSuggestions: List[String] = {
     import scala.collection.mutable.ListBuffer
     val lb = ListBuffer[String]()
@@ -253,6 +265,8 @@ case class Query(
     val r = relString.toString.toLowerCase
     val a2 = arg2String.toString.toLowerCase
 
+    val hasRel = r != ""
+    
     // true if exactly one box b is filled and b has 3+ words
     val singleBoxFilled = (arg1.isDefined && !rel.isDefined && !arg2.isDefined && a1.split(" ").length >= 3) || 
                           (!arg1.isDefined && rel.isDefined && !arg2.isDefined && r.split(" ").length >= 3) || 
@@ -269,6 +283,9 @@ case class Query(
     
     // true if query is full and a1 or a2 are type queries
     val filledAndType = full && (a1.contains("type:") || a2.contains("type:"))
+    
+    if (hasRel)
+      lb += "Variations of the relation may yield better results: make it more general or try something synonymous."
     
     if (arg1StartsWho)
       lb += "Instead of searching for \"who\", try \"type:person\" or leave it out altogether."
@@ -530,6 +547,7 @@ object Query {
     }
   }
   
+  /** @return a list of general suggestion strings for improving queries. */
   def generalSuggestions: List[String] = {
     import scala.collection.mutable.ListBuffer
     val lb = ListBuffer[String]()
