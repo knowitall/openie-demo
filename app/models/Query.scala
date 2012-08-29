@@ -296,7 +296,8 @@ case class Query(
     
     else if (filledAndNoTypes)
       lb += "Filling out all three boxes is often unnecessary. " +
-          "Try replacing an argument with a type or leaving it out altogether."
+          "Try replacing an argument with a type or leaving it out altogether. +" +
+          "For example of this, click on the example queries on the home page."
 
     else if (argsContainW)
       lb += "Consider searching for types, i.e.: \"type:Swimmer\" instead of \"which swimmer\""
