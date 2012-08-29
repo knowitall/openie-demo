@@ -26,15 +26,16 @@ object Application extends Controller {
     * The actual definition of the search form.
     */
   def searchForm: Form[Query] = {
-    def unapply(query: Query): Option[(Option[String], Option[String], Option[String])] = {
-      Some(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString))
+    def unapply(query: Query): Option[(Option[String], Option[String], Option[String], Option[String])] = {
+      Some(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), query.corpora.map(_.toString))
     }
     Form(
     // Defines a mapping that will handle Contact values
       (mapping (
         "arg1" -> optional(text),
         "rel" -> optional(text),
-        "arg2" -> optional(text)
+        "arg2" -> optional(text),
+        "corpora" -> optional(text)
       )(Query.fromStrings)(unapply)).verifying("All search fields cannot be empty", { query =>
         query.arg1.isDefined || query.rel.isDefined || query.arg2.isDefined
       })
@@ -75,17 +76,17 @@ object Application extends Controller {
       query => doSearch(query, "all", 0))
   }
 
-  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean) = Action { implicit request =>
-    doSearch(Query.fromStrings(arg1, rel, arg2), filter, page, debug=debug, log=log)
+  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean, corpora: Option[String]) = Action { implicit request =>
+    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filter, page, debug=debug, log=log)
   }
 
-  def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int) = Action {
+  def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int, corpora: Option[String]) = Action {
     import ExtractionGroupProtocol._
-    Ok(tojson(Query.fromStrings(arg1, rel, arg2).executeRaw().take(count)).toString)
+    Ok(tojson(Query.fromStrings(arg1, rel, arg2, corpora).executeRaw().take(count)).toString)
   }
 
-  def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean) = Action {
-    val query = Query.fromStrings(arg1, rel, arg2)
+  def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean, corpora: Option[String]) = Action {
+    val query = Query.fromStrings(arg1, rel, arg2, corpora)
     Logger.info("Showing sentences for title " + title + " in " + query)
     val group = searchGroups(query, debug)._1.groups.find(_.title.text == title) match {
       case None => throw new IllegalArgumentException("could not find group title: " + title)
@@ -106,55 +107,50 @@ object Application extends Controller {
   }
 
   def searchGroups(query: Query, debug: Boolean) = {
-    try {
-      Logger.debug("incoming " + query)
-      Cache.getAs[AnswerSet](query.toString.toLowerCase) match {
-        case Some(answers) =>
-          Logger.debug("retrieving " + query + " from cache")
+    Logger.debug("incoming " + query)
+    Cache.getAs[AnswerSet](query.toString.toLowerCase) match {
+      case Some(answers) =>
+        Logger.debug("retrieving " + query + " from cache")
 
-          val AnswerSet(groups, filters) = answers
+        val AnswerSet(groups, filters, entities) = answers
 
-          // cache hit
-          Logger.info(query.toString +
-            " retrieved from cache" +
-            " with " + groups.size + " answers" +
-            " and " + groups.iterator.map(_.contents.size).sum + " results")
-          (answers, Some("cached"))
-        case None =>
-          Logger.debug("executing " + query + " in lucene")
+        // cache hit
+        Logger.info(query.toString +
+          " retrieved from cache" +
+          " with " + groups.size + " answers" +
+          " and " + groups.iterator.map(_.contents.size).sum + " results")
+        (answers, Some("cached"))
+      case None =>
+        Logger.debug("executing " + query + " in lucene")
 
-          // cache miss
-          val (ns, result) = Timing.time(query.execute())
+        // cache miss
+        val (ns, result) = Timing.time(query.execute())
 
-          val (groups, message) = result match {
-            case Query.Success(groups) => (groups, None)
-            case Query.Timeout(groups, count) => (groups, Some("timeout"))
-            case Query.Limited(groups, count) => (groups, Some("results truncated"))
-          }
+        val (groups, message) = result match {
+          case Query.Success(groups) => (groups, None)
+          case Query.Timeout(groups, count) => (groups, Some("timeout"))
+          case Query.Limited(groups, count) => (groups, Some("results truncated"))
+        }
 
-          val answers = AnswerSet.from(query, groups, TypeFilters.fromGroups(query, groups, debug))
+        val answers = AnswerSet.from(query, groups, TypeFilters.fromGroups(query, groups, debug))
 
-          Logger.info(query.toString +
-            " executed in " + Timing.Seconds.format(ns) +
-            " with " + groups.size + " answers" +
-            " and " + groups.iterator.map(_.contents.size).sum + " sentences" + message.map(" (" + _ + ")").getOrElse(""))
+        Logger.info(query.toString +
+          " executed in " + Timing.Seconds.format(ns) +
+          " with " + groups.size + " answers" +
+          " and " + groups.iterator.map(_.contents.size).sum + " sentences" + message.map(" (" + _ + ")").getOrElse(""))
 
-          // cache unless we had a timeout
-          if (!result.isInstanceOf[Query.Timeout]) {
-            Logger.debug("Saving " + query.toString + " to cache.")
-            Cache.set(query.toString.toLowerCase, answers)
-          }
+        // cache unless we had a timeout
+        if (!result.isInstanceOf[Query.Timeout]) {
+          Logger.debug("Saving " + query.toString + " to cache.")
+          Cache.set(query.toString.toLowerCase, answers)
+        }
 
-          (answers, message)
-      }
-    } catch {
-      // bug in play requires this
-      case e => Logger.error("Error in query.", e); throw e
+        (answers, message)
     }
   }
 
-  def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, debug: Boolean = false) = Action { implicit request =>
-    doSearch(Query.fromStrings(arg1, rel, arg2), filterString, pageNumber, debug=debug, log=true, justResults=true)
+  def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, debug: Boolean = false, corpora: Option[String]) = Action { implicit request =>
+    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filterString, pageNumber, debug=debug, log=true, justResults=true)
   }
 
   def doSearch(query: Query, filterString: String, pageNumber: Int, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
@@ -166,7 +162,7 @@ object Application extends Controller {
 
     Async {
       answers.orTimeout("Query timeout after " + maxQueryTime + " ms due to high server load.", maxQueryTime).map {
-        case Right(timeout) => Logger.warn(query.toString + "timed out after " + maxQueryTime + " ms"); InternalServerError(timeout)
+        case Right(timeout) => Logger.warn(query.toString + " timed out after " + maxQueryTime + " ms"); InternalServerError(timeout)
         case Left((answers, message)) =>
           val filters: Set[TypeFilter] = filterString match {
             case "" | "all" => Set()

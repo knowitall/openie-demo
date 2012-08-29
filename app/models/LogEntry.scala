@@ -95,6 +95,6 @@ object LogEntry {
   def fromRow(row: String) = {
     def noneIfEmpty(string: String) = if (string.isEmpty) None else Some(string)
     val Array(arg1, rel, arg2, filter, groupCount, resultCount, date, ip) = row.split("\t")
-    LogEntry(Query.fromStrings(arg1, rel, arg2), filter, groupCount.toInt, resultCount.toInt, ip, new Date(date.toLong))
+    LogEntry(Query.fromStrings(arg1, rel, arg2, "unknownCorpora"), filter, groupCount.toInt, resultCount.toInt, ip, new Date(date.toLong))
   }
 }

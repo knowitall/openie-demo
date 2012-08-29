@@ -61,7 +61,8 @@
         @helper.inputText(
             searchForm("arg1"),
             '_label -> "Argument 1:",
-            'placeholder -> "what/who")
+            'placeholder -> "what/who",
+            'autocomplete -> "off")
         </div>
         <div class="search-arg">
         @helper.inputText(
@@ -73,7 +74,8 @@
         @helper.inputText(
             searchForm("arg2"),
             '_label -> "Argument 2:",
-            'placeholder -> "what/who")
+            'placeholder -> "what/who",
+            'autocomplete -> "off")
         </div>
         <button id="search-button" class="btn btn-large"><i id="search-icon" class="icon-search"></i> Search <div id="search-spinner" style="width: 35px;height: 35px;margin-left:10px;"></div></button>
         }
@@ -87,7 +89,7 @@
 
   <script type="text/javascript">
     $(document).ready(function() {
-      $('.tooltiparea').tooltip()
+      // $('.tooltiparea').tooltip()
 
       $("#search-button").click(function() {
         var opts = {

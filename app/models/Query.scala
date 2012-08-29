@@ -3,7 +3,7 @@ package models
 import java.io.{ObjectInputStream, FileInputStream, File}
 import java.util.regex.Pattern
 import scala.Option.option2Iterable
-import edu.washington.cs.knowitall.browser.extraction.{ReVerbExtraction, FreeBaseType, FreeBaseEntity, Instance, ExtractionGroup, ExtractionArgument, ReVerbExtractionGroup}
+import edu.washington.cs.knowitall.browser.extraction._
 import edu.washington.cs.knowitall.browser.lucene
 import edu.washington.cs.knowitall.browser.lucene.{Timeout, Success, QuerySpec, LuceneFetcher, Limited}
 import edu.washington.cs.knowitall.common.Resource.using
@@ -15,11 +15,13 @@ import play.api.libs.concurrent.Akka
 import play.api.Logger
 import edu.washington.cs.knowitall.browser.extraction.InstanceDeduplicator
 import edu.washington.cs.knowitall.browser.extraction.ExtractionRelation
+import edu.washington.cs.knowitall.tool.postag.Postagger.prepositions
 
 case class Query(
   arg1: Option[Query.Constraint],
   rel: Option[Query.Constraint],
-  arg2: Option[Query.Constraint]) {
+  arg2: Option[Query.Constraint],
+  corpora: Option[Query.Constraint]) {
 
   import Query._
   import edu.washington.cs.knowitall.tool.postag.PostaggedToken
@@ -40,6 +42,15 @@ case class Query(
       constraint match {
         case None => true
         case Some(constraint) => constraint.free
+      }
+    }.map(_._2)(scala.collection.breakOut)
+  }
+  
+  def fullParts: List[ExtractionPart] = {
+    Iterable((arg1, Argument1), (rel, Relation), (arg2, Argument2)).filter { case (constraint, part) =>
+      constraint match {
+        case None => false
+        case Some(constraint) => !constraint.free
       }
     }.map(_._2)(scala.collection.breakOut)
   }
@@ -86,7 +97,7 @@ case class Query(
 
     val (result, converted) = executeHelper()
 
-    val (nsGroups, groups) = Timing.time { Answer.fromExtractionGroups(converted.toList, group).filter(!_.title.text.trim.isEmpty) }
+    val (nsGroups, groups) = Timing.time { Answer.fromExtractionGroups(converted.toList, group, this.fullParts).filter(!_.title.text.trim.isEmpty) }
 
     Logger.debug("Converted to %d answers in %s".format(groups.size, Timing.Seconds.format(nsGroups)))
     
@@ -114,9 +125,13 @@ case class Query(
       case Some(EntityConstraint(entity)) => Some(entity)
       case _ => None
     }
+    def queryCorpora(constraint: Option[Query.Constraint]): Option[String] = constraint match {
+      case Some(CorporaConstraint(corpString)) => Some(corpString)
+      case _ => None
+    }
 
     // execute the query
-    val spec = QuerySpec(query(this.arg1), query(this.rel), query(this.arg2), queryEntity(this.arg1), queryEntity(this.arg2), queryTypes(this.arg1), queryTypes(this.arg2))
+    val spec = QuerySpec(query(this.arg1), query(this.rel), query(this.arg2), queryEntity(this.arg1), queryEntity(this.arg2), queryTypes(this.arg1), queryTypes(this.arg2), queryCorpora(this.corpora))
     val (nsQuery, result) = Timing.time {
       Query.fetcher.fetch(spec)
     }
@@ -161,7 +176,7 @@ case class Query(
         val arg2Types = if (!arg2EntityRemoved) reg.arg2.types filter typeFilter else Set.empty[FreeBaseType]
         
         reg.copy(
-            instances = reg.instances filter filterInstances,
+            instances = reg.instances filter filterCorpora filter filterInstances,
             arg1 = ExtractionArgument(clean(reg.arg1.norm), arg1Entity, arg1Types),
             rel  = reg.rel.copy(norm = clean(reg.rel.norm)), 
             arg2 = ExtractionArgument(clean(reg.arg2.norm), arg2Entity, arg2Types)
@@ -176,26 +191,37 @@ case class Query(
   
   private val nonContentTag = "IN|TO|RB?".r
   
-  private def filterRelation(spec: QuerySpec)(group: ExtractionGroup[ReVerbExtraction]) = spec.relNorm match {
-      // if the query does not constrain rel, we can ignore this filter 
-      case Some(queryRelNorm) => {
-        group.instances.headOption match { 
-          // it's possible that the group is empty already due to some other filter.
-          // If it is, ignore (a different filter checks for this)
-          case Some(group) => {
-            val extr = group.extraction
-            def filterNonContent(tok: PostaggedToken): Boolean = nonContentTag.findFirstIn(tok.postag).isEmpty
-            val groupRelNormTokens = extr.normTokens(extr.relInterval) filter filterNonContent
-            val lastContentWord = groupRelNormTokens.last.string
-            queryRelNorm.contains(lastContentWord)
-          }
-          case None => true
-        }
-      }
-      case None => true
-    }
+  private def filterCorpora(instance: Instance[_ <: Extraction]) = this.corpora match {
+    
+    case Some(CorporaConstraint(corporaString)) => corporaString.contains(instance.corpus)
+    case _ => true
+  }
 
-  private def filterGroups(spec: QuerySpec)(group: ExtractionGroup[ReVerbExtraction]): Boolean = {
+  private def filterRelation(spec: QuerySpec)(group: ExtractionGroup[ReVerbExtraction]) = spec.relNorm match {
+    // if the query does not constrain rel, we can ignore this filter 
+    case Some(queryRelNorm) => {
+      val filteredRelNormTokens = queryRelNorm.toLowerCase.split(" ").filter { str => !prepositions.contains(str) } toSet;
+      if (!filteredRelNormTokens.isEmpty) filterRelationHelper(filteredRelNormTokens, group) else true
+    }
+    case None => true
+  }
+  
+  private def filterRelationHelper(filteredRelNormTokens: Set[String], group: ExtractionGroup[ReVerbExtraction]): Boolean = {
+    group.instances.headOption match {
+        // it's possible that the group is empty already due to some other filter.
+        // If it is, ignore (a different filter checks for this)
+        case Some(group) => {
+          val extr = group.extraction
+          def filterNonContent(tok: PostaggedToken): Boolean = nonContentTag.findFirstIn(tok.postag).isEmpty
+          val groupRelNormTokens = extr.normTokens(extr.relInterval) filter filterNonContent
+          val lastContentWord = groupRelNormTokens.last.string
+          filteredRelNormTokens.contains(lastContentWord)
+        }
+        case None => true
+      }
+  }
+
+  private def filterGroups(spec: QuerySpec)(group: ExtractionGroup[_ <: Extraction]): Boolean = {
     // if there are constraints,
     // apply them to each part
     def filterPart(constraint: Option[Constraint], entity: Option[FreeBaseEntity], types: Iterable[FreeBaseType]) = {
@@ -258,11 +284,14 @@ object Query {
   case class EntityConstraint(entity: String) extends Constraint {
     override def toString = "entity:" + entity
   }
+  case class CorporaConstraint(corpora: String) extends Constraint {
+    override def toString = "corpora:" + corpora
+  }
 
-  val paths = Seq("/scratch/common/openie-demo/index-1.0.3",
-    "/scratch2/common/openie-demo/index-1.0.3",
-    "/scratch3/common/openie-demo/index-1.0.3",
-    "/scratch4/common/openie-demo/index-1.0.3")
+  val paths = Seq("/scratch/common/openie-demo/index-1.0.4",
+    "/scratch2/common/openie-demo/index-1.0.4",
+    "/scratch3/common/openie-demo/index-1.0.4",
+    "/scratch4/common/openie-demo/index-1.0.4")
 
   val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
 
@@ -276,6 +305,7 @@ object Query {
       /* timout in millis (10s) */
       10000)
       */
+      
 
   private final val CONFIDENCE_THRESHOLD: Double = 0.5
   private final val ENTITY_SCORE_THRESHOLD: Double = 5.0
@@ -290,20 +320,20 @@ object Query {
   private final val startCap = Pattern.compile(".*\\b[A-Z].*")
   private final val likelyErrorPattern = Pattern.compile(".*(http|\\(|\\)|\\\"|\\[|thing).*", Pattern.CASE_INSENSITIVE)
 
-  def apply(tuple: (Option[String], Option[String], Option[String])): Query = tuple match {
-    case (arg1, rel, arg2) =>
-      new Query(arg1 flatMap Constraint.parse, rel flatMap Constraint.parse, arg2 flatMap Constraint.parse)
+  def apply(tuple: (Option[String], Option[String], Option[String], Option[String])): Query = tuple match {
+    case (arg1, rel, arg2, corpora) =>
+      new Query(arg1 flatMap Constraint.parse, rel flatMap Constraint.parse, arg2 flatMap Constraint.parse, corpora map CorporaConstraint.apply)
   }
 
   def noneIfEmpty(string: String): Option[String] =
     if (string.isEmpty) None
     else Some(string)
 
-  def fromStrings(arg1: Option[String], rel: Option[String], arg2: Option[String]): Query =
-    this.apply(arg1 flatMap Constraint.parse, rel flatMap Constraint.parse, arg2 flatMap Constraint.parse)
+  def fromStrings(arg1: Option[String], rel: Option[String], arg2: Option[String], corpora: Option[String]): Query =
+    this.apply(arg1 flatMap Constraint.parse, rel flatMap Constraint.parse, arg2 flatMap Constraint.parse, corpora map CorporaConstraint.apply)
 
-  def fromStrings(arg1: String, rel: String, arg2: String): Query =
-    this.fromStrings(noneIfEmpty(arg1), noneIfEmpty(rel), noneIfEmpty(arg2))
+  def fromStrings(arg1: String, rel: String, arg2: String, corpora: String): Query =
+    this.fromStrings(noneIfEmpty(arg1), noneIfEmpty(rel), noneIfEmpty(arg2), noneIfEmpty(corpora))
 
   def fromFile(file: File) = {
     using (new FileInputStream(file)) { fis =>
