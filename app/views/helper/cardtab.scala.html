@@ -34,12 +34,12 @@
 				<ul class='types-body'>
 					@partsHead.types.toSeq.sortBy(-_.weight).map{ fbType =>
 					<li>@{Html(fbToNellType.get(fbType).map( nellType =>
-						"<a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType.id+"' title='Nell type: "+nellType.name+"'>"+nellType.name+"</a> (Nell)"
+						"<a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType.id+"' title='Nell type: "+nellType.name+"'>"+nellType.name+"</a> <span style='color: #888'>(Nell)</span>"
 						).getOrElse(""))
 						}</li>
 					}
 					@partsHead.types.toSeq.sortBy(-_.weight).map{ fbType =>
-					<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a> (FreeBase)</li>
+					<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a> <span style='color: #888'>(FreeBase)</span></li>
 					}
 				</ul>
 			}
@@ -51,12 +51,12 @@
 					<ul class='types-body'>
 					@partsHead.types.toSeq.sortBy(-_.weight).map{ fbType =>
 						<li>@{Html(fbToNellType.get(fbType).map( nellType =>
-						"<a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType.id+"' title='Nell type: "+nellType.name+"'>"+nellType.name+"</a> (Nell)"
+						"<a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType.id+"' title='Nell type: "+nellType.name+"'>"+nellType.name+"</a> <span style='color: #888'>(Nell)</span>"
 						).getOrElse(""))
 						}</li>
 					}
 					@partsHead.types.toSeq.sortBy(-_.weight).map{ fbType =>
-						<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a> (FreeBase)</li>
+						<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a> <span style='color: #888'>(FreeBase)</span></li>
 					}
 					</ul>
 				}
