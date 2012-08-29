@@ -26,13 +26,13 @@ case class Query(
   import Query._
   import edu.washington.cs.knowitall.tool.postag.PostaggedToken
 
-  def arg1String = arg1.getOrElse("")
-  def relString = rel.getOrElse("")
-  def arg2String = arg2.getOrElse("")
+  def arg1String = arg1.getOrElse("").toString
+  def relString = rel.getOrElse("").toString
+  def arg2String = arg2.getOrElse("").toString
 
-  override def toString = "(" + arg1String.toString + ", " + 
-                                relString.toString + ", " + 
-                                arg2String.toString + ")"
+  override def toString = "(" + arg1String + ", " + 
+                                relString + ", " + 
+                                arg2String + ")"
   
   def humanString = "a query with " + Iterable(
       arg1.map("Argument 1 containing '" + _ + "'"),
@@ -261,9 +261,9 @@ case class Query(
     import scala.collection.mutable.ListBuffer
     val lb = ListBuffer[String]()
     
-    val a1 = arg1String.toString.toLowerCase
+    val a1 = arg1String.toLowerCase
     val r = relString.toString.toLowerCase
-    val a2 = arg2String.toString.toLowerCase
+    val a2 = arg2String.toLowerCase
 
     val hasRel = r != ""
     
@@ -363,13 +363,13 @@ case class Query(
    * 
    */
   def betterQuery: Query = {
-    if (arg1String.toString.toLowerCase == "where" && relString.toString.toLowerCase == "is" && arg2.isDefined) {
-      Query.fromStrings(arg2String.toString, "is located in", "", corpora.getOrElse("").toString).betterQuery
+    if (arg1String.toLowerCase == "where" && relString.toLowerCase == "is" && arg2.isDefined) {
+      Query.fromStrings(arg2String, "is located in", "", corpora.getOrElse("").toString).betterQuery
     }
     betterQuery(
-      arg1String.toString.toLowerCase,
-      relString.toString.toLowerCase,
-      arg2String.toString.toLowerCase,
+      arg1String.toLowerCase,
+      relString.toLowerCase,
+      arg2String.toLowerCase,
       corpora.getOrElse("").toString
     )
   }
