@@ -21,7 +21,7 @@ case class Query(
   arg1: Option[Query.Constraint],
   rel: Option[Query.Constraint],
   arg2: Option[Query.Constraint],
-  corpora: Option[Query.Constraint]) {
+  corpora: Option[Query.CorporaConstraint]) {
 
   import Query._
   import edu.washington.cs.knowitall.tool.postag.PostaggedToken
@@ -125,7 +125,8 @@ case class Query(
       case Some(EntityConstraint(entity)) => Some(entity)
       case _ => None
     }
-    def queryCorpora(constraint: Option[Query.Constraint]): Option[String] = constraint match {
+
+    def queryCorpora(constraint: Option[Query.CorporaConstraint]): Option[String] = constraint match {
       case Some(CorporaConstraint(corpString)) => Some(corpString)
       case _ => None
     }
@@ -284,7 +285,8 @@ object Query {
   case class EntityConstraint(entity: String) extends Constraint {
     override def toString = "entity:" + entity
   }
-  case class CorporaConstraint(corpora: String) extends Constraint {
+
+  case class CorporaConstraint(corpora: String) {
     override def toString = "corpora:" + corpora
   }
 
