@@ -80,16 +80,16 @@ case class Query(
         }
       }
       (this.arg1, this.rel, this.arg2) match {
-        case (Some(TermConstraint(arg1)), Some(TermConstraint(rel)), Some(TermConstraint(arg2))) => (eg: REG) =>
+        case (Some(_: Fixed), Some(_: Fixed), Some(_: Fixed)) => (eg: REG) =>
           AnswerTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
 
-        case (Some(TermConstraint(arg1)), Some(TermConstraint(rel)), _) => (eg: REG) => AnswerTitle("", Seq(part(eg, 'arg2)))
-        case (_, Some(TermConstraint(rel)), Some(TermConstraint(arg2))) => (eg: REG) => AnswerTitle("", Seq(part(eg, 'arg1)))
-        case (Some(TermConstraint(arg1)), _, Some(TermConstraint(arg2))) => (eg: REG) => AnswerTitle("", Seq(part(eg, 'rel)))
+        case (Some(_: Fixed), Some(_: Fixed), _) => (eg: REG) => AnswerTitle("", Seq(part(eg, 'arg2)))
+        case (_, Some(_: Fixed), Some(_: Fixed)) => (eg: REG) => AnswerTitle("", Seq(part(eg, 'arg1)))
+        case (Some(_: Fixed), _, Some(_: Fixed)) => (eg: REG) => AnswerTitle("", Seq(part(eg, 'rel)))
 
-        case (Some(TermConstraint(arg1)), _, _) => (eg: REG) => AnswerTitle(" ", Seq(part(eg, 'rel), part(eg, 'arg2)))
-        case (_, Some(TermConstraint(rel)), _) => (eg: REG) => AnswerTitle(", ", Seq(part(eg, 'arg1), part(eg, 'arg2)))
-        case (_, _, Some(TermConstraint(arg2))) => (eg: REG) => AnswerTitle(", ", Seq(part(eg, 'arg1), part(eg, 'rel)))
+        case (Some(_: Fixed), _, _) => (eg: REG) => AnswerTitle(" ", Seq(part(eg, 'rel), part(eg, 'arg2)))
+        case (_, Some(_: Fixed), _) => (eg: REG) => AnswerTitle(", ", Seq(part(eg, 'arg1), part(eg, 'arg2)))
+        case (_, _, Some(_: Fixed)) => (eg: REG) => AnswerTitle(", ", Seq(part(eg, 'arg1), part(eg, 'rel)))
 
         case _ => (eg: REG) => AnswerTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
       }
@@ -273,16 +273,23 @@ object Query {
       }
     }
   }
+
+  /** Represents whether this part is free to be further constrainted
+    * by type constraints with this constraint. */
   sealed abstract class Constraint {
     def free: Boolean = false
   }
-  case class TermConstraint(term: String) extends Constraint {
+  /** Represents whether this part of the answer will be shown in
+    * the answer title.  For example, a term constraint will prevent
+    * that part of the answer from being in the title. */
+  trait Fixed
+  case class TermConstraint(term: String) extends Constraint with Fixed {
     override def toString = term
   }
   case class TypeConstraint(typ: String) extends Constraint {
     override def toString = "type:" + typ
   }
-  case class EntityConstraint(entity: String) extends Constraint {
+  case class EntityConstraint(entity: String) extends Constraint with Fixed {
     override def toString = "entity:" + entity
   }
 
