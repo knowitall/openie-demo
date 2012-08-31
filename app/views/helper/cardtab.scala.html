@@ -11,7 +11,7 @@
 	}
 }
 
-@defining(answer.title.parts.head) { partsHead =>
+@defining(answer.title.parts.find(_.entity.isDefined).getOrElse(answer.title.parts.head)) { firstLinked =>
 
 	<!-- title -->
 	<h2>@{Html(answer.title.parts.map { part =>
@@ -19,7 +19,7 @@
 		}.mkString(answer.title.connector))}</h2>
 
 	<!-- if there is an entity, display its FreeBase URI -->
-	@defining(partsHead.entity) { entityOpt =>
+	@defining(firstLinked.entity) { entityOpt =>
 		@entityOpt match{
 			case Some(entity) => {
 
@@ -32,30 +32,30 @@
 				<!-- Types -->
 				<h3 class='types-title'>Types:</h3>
 				<ul class='types-body'>
-					@partsHead.types.toSeq.sortBy(-_.weight).map{ fbType =>
+					@firstLinked.types.toSeq.sortBy(-_.weight).map{ fbType =>
 					<li>@{Html(fbToNellType.get(fbType).map( nellType =>
 						"<a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType.id+"' title='Nell type: "+nellType.name+"'>"+nellType.name+"</a> <span style='color: #888'>(Nell)</span>"
 						).getOrElse(""))
 						}</li>
 					}
-					@partsHead.types.toSeq.sortBy(-_.weight).map{ fbType =>
+					@firstLinked.types.toSeq.sortBy(-_.weight).map{ fbType =>
 					<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a> <span style='color: #888'>(FreeBase)</span></li>
 					}
 				</ul>
 			}
 
 			case None => {
-				@if(partsHead.types.size > 0) {
+				@if(firstLinked.types.size > 0) {
 					<!-- Inferred Types (no linked entity) -->
 					<h3 class='types-title'>Inferred Types:</h3>
 					<ul class='types-body'>
-					@partsHead.types.toSeq.sortBy(-_.weight).map{ fbType =>
+					@firstLinked.types.toSeq.sortBy(-_.weight).map{ fbType =>
 						<li>@{Html(fbToNellType.get(fbType).map( nellType =>
 						"<a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType.id+"' title='Nell type: "+nellType.name+"'>"+nellType.name+"</a> <span style='color: #888'>(Nell)</span>"
 						).getOrElse(""))
 						}</li>
 					}
-					@partsHead.types.toSeq.sortBy(-_.weight).map{ fbType =>
+					@firstLinked.types.toSeq.sortBy(-_.weight).map{ fbType =>
 						<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a> <span style='color: #888'>(FreeBase)</span></li>
 					}
 					</ul>
@@ -65,10 +65,10 @@
 	}
 
 	<!-- if there are synonyms, display them -->
-	@if(partsHead.otherSynonyms.size > 0) {
+	@if(firstLinked.otherSynonyms.size > 0) {
 		<h3 class='syns-title'>Extracted Synonyms:</h3>
 		<ul class='syns-body'>
-			@partsHead.otherSynonyms.map { synonym =>
+			@firstLinked.otherSynonyms.map { synonym =>
 			<li>@synonym</li>
 			}
 		</ul>
