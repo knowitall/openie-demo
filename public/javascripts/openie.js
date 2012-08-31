@@ -21,10 +21,18 @@ function argHelper() {
 
   var box = $(this)
   var text = box.val().toLowerCase();
+  // to keep track of what's in the other box
+  var otherText = "";
+  if (box.attr("id") == "arg1") {
+    otherText = $("#arg2").val().toLowerCase();
+  } else {
+    otherText = $("#arg1").val().toLowerCase();
+  }
 
   if (alert) {
     // see if the alert is still necessary
-    if (text.indexOf("which ") != 0 && text.indexOf("who") != 0 && text.indexOf("what") != 0 && text.indexOf("where") != 0) {
+    if (text.indexOf("which ") != 0 && text.indexOf("who") != 0 && text.indexOf("what") != 0 && text.indexOf("where") != 0 &&
+        otherText.indexOf("which ") != 0 && otherText.indexOf("who") != 0 && otherText.indexOf("what") != 0 && otherText.indexOf("where") != 0) {
       $(".alert").alert('close');
     }
 
@@ -43,7 +51,7 @@ function argHelper() {
       $("#query-well").append(alertDiv);
       alert = true;
     } else if (text.indexOf("where") == 0 && box.attr("id") == "arg1") {
-      var alertDiv = getAlert("<strong>Warning: </strong>Instead of searching for \"where, is, x\", reform your query to the form \"x, is located in, (blank)\" for better results.");
+      var alertDiv = getAlert("<strong>Warning: </strong>If searching for \"where, is, x\", reform your query to the form \"x, is located in, (blank)\" for better results.");
       $("#query-well").append(alertDiv);
       alert = true;
     }
