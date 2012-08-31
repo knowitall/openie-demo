@@ -1,17 +1,6 @@
 @(searchForm: Form[Query], footer: String)
 
-
 @helper.main("Open Information Extraction", compact=false) {
-  <script type="text/javascript">
-    function fillForm(arg1, rel, arg2) {
-      document.getElementById('arg1').value=arg1;
-      document.getElementById('rel').value=rel;
-      document.getElementById('arg2').value=arg2;
-    }
-  </script>
-  <style>
-    label { font-weight: bold }
-  </style>
   <p />
   <div class="row well">
     <div class="row">
@@ -89,7 +78,7 @@
 
   <script type="text/javascript">
     $(document).ready(function() {
-      // $('.tooltiparea').tooltip()
+      $('.tooltiparea').tooltip()
 
       $("#search-button").click(function() {
         var opts = {
@@ -117,5 +106,11 @@
         $('#search-icon').addClass('icon-white');
       });
     });
+
+    function fillForm(arg1, rel, arg2) {
+      document.getElementById('arg1').value=arg1;
+      document.getElementById('rel').value=rel;
+      document.getElementById('arg2').value=arg2;
+    }
   </script>
 }

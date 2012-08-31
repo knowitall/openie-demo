@@ -193,3 +193,5 @@
 .tab-pane ul {
   list-style-type: none;
 }
+
+label { font-weight: bold }
