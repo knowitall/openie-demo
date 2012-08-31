@@ -39,7 +39,7 @@ function argHelper() {
   } else {
     // see if an alert is necessary 
     if (text.indexOf("which") == 0) {
-      var alertDiv = getAlert("<strong>Warning: </strong>Queries starting with \"which\" rarely return results. Try a type query instead, with \"type:\". for example, instead of \"which politician\", try \"type:politician\".");
+      var alertDiv = getAlert("<strong>Warning: </strong>Queries starting with \"which\" rarely return results. Try a type query instead, with \"type:\". For example, instead of \"which politician\", try \"type:politician\".");
       $("#query-well").append(alertDiv);
       alert = true;
     } else if (text.indexOf("who") == 0) {
@@ -248,4 +248,11 @@ var queryFunction = function(val, cursor) {
   this.request.timeout = setTimeout(function() {
     $.ajax(ajax_options);
   }, o.xhr_delay);
+}
+
+/** Fills the query form with given args. */
+function fillForm(arg1, rel, arg2) {
+  $("#arg1").val(arg1);
+  $("#rel").val(rel);
+  $("#arg2").val(arg2);
 }
