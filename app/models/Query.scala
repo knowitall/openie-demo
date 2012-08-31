@@ -16,6 +16,7 @@ import play.api.Logger
 import edu.washington.cs.knowitall.browser.extraction.InstanceDeduplicator
 import edu.washington.cs.knowitall.browser.extraction.ExtractionRelation
 import edu.washington.cs.knowitall.tool.postag.Postagger.prepositions
+import controllers.routes
 
 case class Query(
   arg1: Option[Query.Constraint],
@@ -26,9 +27,13 @@ case class Query(
   import Query._
   import edu.washington.cs.knowitall.tool.postag.PostaggedToken
 
-  def arg1String = arg1.getOrElse("")
-  def relString = rel.getOrElse("")
-  def arg2String = arg2.getOrElse("")
+  def arg1String = arg1.getOrElse("").toString
+  def relString = rel.getOrElse("").toString
+  def arg2String = arg2.getOrElse("").toString
+
+  override def toString = "(" + arg1String + ", " +
+                                relString + ", " +
+                                arg2String + ")"
 
   def humanString = "a query with " + Iterable(
       arg1.map("Argument 1 containing '" + _ + "'"),
@@ -193,7 +198,6 @@ case class Query(
   private val nonContentTag = "IN|TO|RB?".r
 
   private def filterCorpora(instance: Instance[_ <: Extraction]) = this.corpora match {
-
     case Some(CorporaConstraint(corporaString)) => corporaString.contains(instance.corpus)
     case _ => true
   }
@@ -240,6 +244,145 @@ case class Query(
     } else {
       filterPart(this.arg1, group.arg1.entity, group.arg1.types) && filterPart(this.arg2, group.arg2.entity, group.arg2.types)
     }
+  }
+
+  /** Checks if the query matches specific conditions and returns a list of
+   *  appropriate suggestion strings.
+   *
+   *  Cases:
+   *    Only a single box is filled with more than three tokens
+   *    All three boxes are filled and neither arg1/arg2 are type queries
+   *    Arg1 starts with "who"
+   *    Either arg1 or arg2 contain "what|which"
+   *    All three boxes are filled and one of arg1/arg2 are type queries
+   *
+   *  @return a list of suggestion strings.
+   */
+  def specificSuggestions: List[String] = {
+    import scala.collection.mutable.ListBuffer
+    val lb = ListBuffer[String]()
+
+    val a1 = arg1String.toLowerCase
+    val r = relString.toString.toLowerCase
+    val a2 = arg2String.toLowerCase
+
+    val hasRel = r != ""
+
+    // true if exactly one box b is filled and b has 3+ words
+    val singleBoxFilled = (arg1.isDefined && !rel.isDefined && !arg2.isDefined && a1.split(" ").length >= 3) ||
+                          (!arg1.isDefined && rel.isDefined && !arg2.isDefined && r.split(" ").length >= 3) ||
+                          (!arg1.isDefined && !rel.isDefined && arg2.isDefined && a2.split(" ").length >= 3)
+
+    // true if all boxes are filled and neither arg1 nor arg2 are type queries
+    val filledAndNoTypes = full && !a1.startsWith("type:") && !a2.startsWith("type:")
+
+    // true if at least one arg is an entity query
+    val argIsEntity = a1.startsWith("entity:") || a2.startsWith("entity:")
+
+    // true if arg1 starts with who (impossible for it to be exactly "who")
+    val arg1StartsWho = a1.startsWith("who")
+
+    // true if either a1 or a2 contains either "what" or "which"
+    val argsContainW = a1.contains("what") || a1.contains("which") || a2.contains("what") || a2.contains("which") || a2.contains("who")
+
+    // true if query is full and a1 or a2 are type queries
+    val filledAndType = full && (a1.startsWith("type:") || a2.startsWith("type:"))
+
+    if (argIsEntity)
+      lb += "Entity queries usually return fewer but higher-precision results than non-entity queries. " +
+      "Try removing \"entity:\" for more results."
+
+    if (hasRel)
+      lb += "Variations of the relation may yield better results. " +
+      "Try making the relation more general or express it differently. " +
+      "For example, instead of searching for actors who \"starred in\" Star Wars, you might try \"was in\" or \"did\"."
+
+    if (arg1StartsWho)
+      lb += "Instead of searching for \"who\", try \"type:person\" or leave it out altogether."
+
+    if (singleBoxFilled)
+      lb += "If you are putting an entire query in a single box, you will not get any results. " +
+        "See the sample queries on the <a href=\"" + routes.Application.index() + "\">home page</a> for examples of well-formed queries."
+
+    else if (filledAndNoTypes)
+      lb += "Filling out all three boxes is seldom necessary. " +
+          "Try replacing an argument with a type or leaving it out altogether. " +
+          "For examples of this, click on the example queries on the <a href=\"" + routes.Application.index() + "\">home page</a>."
+
+    else if (argsContainW)
+      lb += "Consider searching for types, i.e.: \"type:Swimmer\" instead of \"which swimmer\""
+
+    if (filledAndType)
+      lb += "It is possible that a type you are searching for is not defined in our database. " +
+          "Try making the type more general or removing it altogether."
+
+    lb.toList
+  }
+
+  private def betterQuery(arg1: String, rel: String, arg2: String, corp: String): Query = {
+
+    var newArg1 = arg1
+    var newRel = rel
+    var newArg2 = arg2
+
+    val arg1Split = arg1.split(" ")
+    val relSplit = rel.split(" ")
+    val arg2Split = arg2.split(" ")
+
+    // if (where, is, x) -> (x, is located in, _)
+    if (arg1 == "where" && rel == "is" && arg2 != "") {
+      return betterQuery(arg2, "is located in", "", corp)
+    }
+
+    // whether arg1 starts with who:
+    val arg1Who = arg1.startsWith("who")
+
+    // whether to make arg1/arg2 a typed parameter
+    val makeArg1Typed = arg1Split.length == 2 && (arg1Split(0) == "which" || arg1Split(0) == "what")
+    val makeArg2Typed = arg2Split.length == 2 && (arg2Split(0) == "which" || arg2Split(0) == "what")
+
+    // if "who ..." -> type:person
+    if (arg1Who) newArg1 = "type:person"
+
+    // if "which/what x" -> "type:x"
+    if (makeArg1Typed) newArg1 = "type:" + arg1Split(1)
+    if (makeArg2Typed) newArg2 = "type:" + arg2Split(1)
+
+    // removes periods, commas, bangs, and ?s from the end of strings
+    def stripEndingPunct(str: String): String = {
+      val badPattern = "[\\.,!?]+$".r
+      str.replace(badPattern.findAllIn(str).mkString, "")
+    }
+
+    Query.fromStrings(stripEndingPunct(newArg1),
+                      stripEndingPunct(newRel),
+                      stripEndingPunct(newArg2),
+                      corp)
+  }
+
+  /** Returns a string representation of a "better" query than this, if
+   *  available.
+   *
+   *  Cases covered:
+   *    arg1/arg2 are "which x" or "what x" -> "type:x"
+   *    arg1 contains "who"
+   *    any box ends with a punctuation mark -> remove punctuation
+   *    query is of form (where, is, x) -> (x, is located in, _)
+   *
+   *  @return a "better" query than this. if no better query is available, returns
+   *          a new query equivalent to this.
+   *
+   */
+  def betterQuery: Query = {
+    if (arg1String.toLowerCase == "where" && relString.toLowerCase == "is" && arg2.isDefined) {
+      Query.fromStrings(arg2String, "is located in", "", corpora.getOrElse("").toString).betterQuery
+    }
+    betterQuery(
+      arg1String.toLowerCase,
+      relString.toLowerCase,
+      arg2String.toLowerCase,
+      corpora.getOrElse("").toString
+    )
   }
 }
 
@@ -289,6 +432,7 @@ object Query {
   case class TypeConstraint(typ: String) extends Constraint {
     override def toString = "type:" + typ
   }
+
   case class EntityConstraint(entity: String) extends Constraint with Fixed {
     override def toString = "entity:" + entity
   }
@@ -314,7 +458,6 @@ object Query {
       /* timout in millis (10s) */
       10000)
       */
-
 
   private final val CONFIDENCE_THRESHOLD: Double = 0.5
   private final val ENTITY_SCORE_THRESHOLD: Double = 5.0
@@ -421,5 +564,17 @@ object Query {
     else {
       true
     }
+  }
+
+  /** @return a list of general suggestion strings for improving queries. */
+  def generalSuggestions: List[String] = {
+    import scala.collection.mutable.ListBuffer
+    val lb = ListBuffer[String]()
+
+    lb += "Make sure all words are spelled correctly."
+    lb += "Click on the example queries on the home page for proper usage."
+    lb += "Try making searches less specific."
+
+    lb.toList
   }
 }

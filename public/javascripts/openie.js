@@ -1,15 +1,91 @@
 /*
 Contains code for adding Freebase Suggest to the 
 OpenIE demo. 
- */
+*/
 
 var arg1Suggest = false;
 var arg2Suggest = false;
 
+var alert = false;
+
 $(document).ready(function() {
   $("#arg1").on('keyup', attachSuggest);
   $("#arg2").on('keyup', attachSuggest);
+
+  $("#arg1").on('keyup', argHelper);
+  $("#rel").on('keyup', relHelper);
+  $("#arg2").on('keyup', argHelper);
 });
+
+function argHelper() {
+
+  var box = $(this)
+  var text = box.val().toLowerCase();
+  // to keep track of what's in the other box
+  var otherText = "";
+  if (box.attr("id") == "arg1") {
+    otherText = $("#arg2").val().toLowerCase();
+  } else {
+    otherText = $("#arg1").val().toLowerCase();
+  }
+
+  if (alert) {
+    // see if the alert is still necessary
+    if (text.indexOf("which ") != 0 && text.indexOf("who") != 0 && text.indexOf("what") != 0 && text.indexOf("where") != 0 &&
+        otherText.indexOf("which ") != 0 && otherText.indexOf("who") != 0 && otherText.indexOf("what") != 0 && otherText.indexOf("where") != 0) {
+      $(".alert").alert('close');
+    }
+
+  } else {
+    // see if an alert is necessary 
+    if (text.indexOf("which") == 0) {
+      var alertDiv = getAlert("<strong>Warning: </strong>Queries starting with \"which\" rarely return results. Try a type query instead, with \"type:\". For example, instead of \"which politician\", try \"type:politician\".");
+      $("#query-well").append(alertDiv);
+      alert = true;
+    } else if (text.indexOf("who") == 0) {
+      var alertDiv = getAlert("<strong>Warning: </strong>Instead of searching for \"who\", try \"type:person\" or leave the box blank.");
+      $("#query-well").append(alertDiv);
+      alert = true;
+    } else if (text.indexOf("what") == 0) {
+      var alertDiv = getAlert("<strong>Warning: </strong>Queries starting with \"what\" rarely return results. Try a type query instead, with \"type:\". For example, instead of \"what animal\", try \"type:animal\".");
+      $("#query-well").append(alertDiv);
+      alert = true;
+    } else if (text.indexOf("where") == 0 && box.attr("id") == "arg1") {
+      var alertDiv = getAlert("<strong>Warning: </strong>If searching for \"where, is, x\", reform your query to the form \"x, is located in, (blank)\" for better results.");
+      $("#query-well").append(alertDiv);
+      alert = true;
+    }
+
+  }
+}
+
+function relHelper() {
+
+  if (alert) {
+    return;
+  }
+
+  var box = $(this)
+  var text = box.val().toLowerCase();
+
+}
+
+function getAlert(str) {
+  var div = $(document.createElement("div"));
+  div.addClass("alert fade in")
+  
+  var button = $(document.createElement("button"));
+  button.addClass("close")
+  .attr("type", "button")
+  .attr("data-dismiss", "alert")
+  .text("×");
+
+  div.html(str);
+  div.append(button);
+
+  div.bind('closed', function() { alert = false; });
+  return div;
+}
 
 /**
  * This function attaches suggest to an argument
@@ -172,4 +248,11 @@ var queryFunction = function(val, cursor) {
   this.request.timeout = setTimeout(function() {
     $.ajax(ajax_options);
   }, o.xhr_delay);
+}
+
+/** Fills the query form with given args. */
+function fillForm(arg1, rel, arg2) {
+  $("#arg1").val(arg1);
+  $("#rel").val(rel);
+  $("#arg2").val(arg2);
 }

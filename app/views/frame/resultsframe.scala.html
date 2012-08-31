@@ -5,23 +5,25 @@
 @helper.main("Open Information Extraction", compact=true) {
   <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
 
-  @helper.form(action = routes.Application.submit, 'class -> "well form-inline hidden-phone") {
-      <label for="arg1">Argument 1:</label>
-      <span class="input">
+  @helper.form(action = routes.Application.submit, 'class -> "well form-inline hidden-phone", 'id -> "query-well") {
+      <p>
+        <label for="arg1">Argument 1:</label>
+        <span class="input">
           <input type="text" id="arg1" name="arg1" value="@query.arg1" autocomplete="off" >
           <span class="help-inline"></span>
-      </span>
-      <label for="rel">Relation:</label>
-      <span class="input">
-          <input type="text" id="rel" name="rel" value="@query.rel" autocomplete="off" >
+        </span>
+        <label for="rel">Relation:</label>
+        <span class="input">
+          <input type="text" id="rel" name="rel" value="@query.rel" autocomplete="off">
           <span class="help-inline"></span>
-      </span>
-      <label for="arg2">Argument 2:</label>
-      <span class="input">
-          <input type="text" id="arg2" name="arg2" value="@query.arg2" autocomplete="off" >
+        </span>
+        <label for="arg2">Argument 2:</label>
+        <span class="input">
+          <input type="text" id="arg2" name="arg2" value="@query.arg2" autocomplete="off">
           <span class="help-inline"></span>
-      </span>
-      <button class="btn"><i class="icon-search"></i> Search <div id="search-spinner"></div></button>
+        </span>
+        <button class="btn"><i class="icon-search"></i> Search <div id="search-spinner"></div></button>
+      </p>
   }
 
   <div id="stats"><b>@totalAnswerCount answers</b> from <b>@totalSentenceCount sentences</b>@message.map(" ("+_+")").getOrElse("")</div>

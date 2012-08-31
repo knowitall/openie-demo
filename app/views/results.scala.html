@@ -12,6 +12,36 @@
 	}
 }
 
+<!-- suggestions -->
+@if(answers.answerCount == 0) {
+  <div id="suggestions">
+    @if(query.betterQuery.arg1String.toLowerCase != query.arg1String.toLowerCase) {
+      <p>Try replacing your Argument 1 with <a href="#" onclick="javascript:$('#arg1').val('@query.betterQuery.arg1String')">@if(query.betterQuery.arg1String == "") { nothing} else { @query.betterQuery.arg1String}</a>.</p>
+    } 
+    @if(query.betterQuery.relString.toLowerCase != query.relString.toLowerCase) {
+      <p>Try replacing your Relation with <a href="#" onclick="javascript:$('#rel').val('@query.betterQuery.relString')">@if(query.betterQuery.relString == "") { nothing} else { @query.betterQuery.relString}</a>.</p>
+    }
+    @if(query.betterQuery.arg2String.toLowerCase != query.arg2String.toLowerCase) {
+      <p>Try replacing your Argument 2 with <a href="#" onclick="javascript:$('#arg2').val('@query.betterQuery.arg2String')">@if(query.betterQuery.arg2String == "") { nothing} else { @query.betterQuery.arg2String}</a>.</p>
+    }
+    
+    @if(query.specificSuggestions.size > 0) {
+      <p>Specific suggestions:</p>
+      <ul id="specific-suggestions">
+      @for(suggestion <- query.specificSuggestions) {
+        <li>@Html(suggestion)</li>
+      }
+      </ul>
+    }
+    <p>General suggestions:</p>
+    <ul id="general-suggestions">
+    @for(suggestion <- Query.generalSuggestions) {
+      <li>@Html(suggestion)</li>
+    }
+    </ul>
+  </div>
+}
+
 <!-- filters -->
 @if(answers.filters.size > 0) {
 	<ul class="nav nav-tabs nav-stacked visible-phone">
