@@ -273,8 +273,11 @@ case class Query(
                           (!arg1.isDefined && !rel.isDefined && arg2.isDefined && a2.split(" ").length >= 3)
     
     // true if all boxes are filled and neither arg1 nor arg2 are type queries
-    val filledAndNoTypes = full && !a1.contains("type:") && !a2.contains("type:")
+    val filledAndNoTypes = full && !a1.startsWith("type:") && !a2.startsWith("type:")
 
+    // true if at least one arg is an entity query
+    val argIsEntity = a1.startsWith("entity:") || a2.startsWith("entity:")
+    
     // true if arg1 starts with who (impossible for it to be exactly "who")
     val arg1StartsWho = a1.startsWith("who")
     
@@ -282,10 +285,16 @@ case class Query(
     val argsContainW = a1.contains("what") || a1.contains("which") || a2.contains("what") || a2.contains("which") || a2.contains("who")
     
     // true if query is full and a1 or a2 are type queries
-    val filledAndType = full && (a1.contains("type:") || a2.contains("type:"))
+    val filledAndType = full && (a1.startsWith("type:") || a2.startsWith("type:"))
+    
+    if (argIsEntity)
+      lb += "Entity queries usually return less results than non-entity queries " +
+      "due to a higher level of precision. Try removing \"entity:\" for more results."
     
     if (hasRel)
-      lb += "Variations of the relation may yield better results: make it more general or try something synonymous."
+      lb += "Variations of the relation may yield better results. " +
+      "Try making it more general or express it differently. " +
+      "For example, instead of searching for actors who \"starred in\" Star Wars, you might try \"was in\" or \"did\"."
     
     if (arg1StartsWho)
       lb += "Instead of searching for \"who\", try \"type:person\" or leave it out altogether."
@@ -295,9 +304,9 @@ case class Query(
           "sample queries on the home page for examples of well-formed queries."
     
     else if (filledAndNoTypes)
-      lb += "Filling out all three boxes is often unnecessary. " +
-          "Try replacing an argument with a type or leaving it out altogether. +" +
-          "For example of this, click on the example queries on the home page."
+      lb += "Filling out all three boxes is seldom necessary. " +
+          "Try replacing an argument with a type or leaving it out altogether. " +
+          "For examples of this, click on the example queries on the <a href=\"/\">home page</a>."
 
     else if (argsContainW)
       lb += "Consider searching for types, i.e.: \"type:Swimmer\" instead of \"which swimmer\""
@@ -556,8 +565,7 @@ object Query {
     lb += "Make sure all words are spelled correctly."
     lb += "Click on the example queries on the home page for proper usage."
     lb += "Try making searches less specific."
-    lb += "Relation box should contain only a single verb, no nouns."
-      
+    
     lb.toList
   }
 }

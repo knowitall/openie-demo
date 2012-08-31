@@ -47,7 +47,7 @@ function argHelper() {
       $("#query-well").append(alertDiv);
       alert = true;
     } else if (text.indexOf("what") == 0) {
-      var alertDiv = getAlert("<strong>Warning: </strong>Queries starting with \"what\" rarely return results. Try a type query instead, with \"type:\". For example, instead of \"what animal\", try \"type:animal\".);
+      var alertDiv = getAlert("<strong>Warning: </strong>Queries starting with \"what\" rarely return results. Try a type query instead, with \"type:\". For example, instead of \"what animal\", try \"type:animal\".");
       $("#query-well").append(alertDiv);
       alert = true;
     } else if (text.indexOf("where") == 0 && box.attr("id") == "arg1") {
