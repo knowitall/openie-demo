@@ -38,8 +38,8 @@ function argHelper() {
 
   } else {
     // see if an alert is necessary 
-    if (text.indexOf("which ") == 0) {
-      var alertDiv = getAlert("<strong>Warning: </strong>Queries starting with \"which\" rarely return results. Try a type query instead, with \"type:\"");
+    if (text.indexOf("which") == 0) {
+      var alertDiv = getAlert("<strong>Warning: </strong>Queries starting with \"which\" rarely return results. Try a type query instead, with \"type:\". for example, instead of \"which politician\", try \"type:politician\".");
       $("#query-well").append(alertDiv);
       alert = true;
     } else if (text.indexOf("who") == 0) {
@@ -47,7 +47,7 @@ function argHelper() {
       $("#query-well").append(alertDiv);
       alert = true;
     } else if (text.indexOf("what") == 0) {
-      var alertDiv = getAlert("<strong>Warning: </strong>Searching for \"what\" is unnecessary. Try reforming your query if necessary.");
+      var alertDiv = getAlert("<strong>Warning: </strong>Queries starting with \"what\" rarely return results. Try a type query instead, with \"type:\". For example, instead of \"what animal\", try \"type:animal\".);
       $("#query-well").append(alertDiv);
       alert = true;
     } else if (text.indexOf("where") == 0 && box.attr("id") == "arg1") {
