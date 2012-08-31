@@ -45,7 +45,7 @@ case class Query(
       }
     }.map(_._2)(scala.collection.breakOut)
   }
-  
+
   def fullParts: List[ExtractionPart] = {
     Iterable((arg1, Argument1), (rel, Relation), (arg2, Argument2)).filter { case (constraint, part) =>
       constraint match {
@@ -100,7 +100,7 @@ case class Query(
     val (nsGroups, groups) = Timing.time { Answer.fromExtractionGroups(converted.toList, group, this.fullParts).filter(!_.title.text.trim.isEmpty) }
 
     Logger.debug("Converted to %d answers in %s".format(groups.size, Timing.Seconds.format(nsGroups)))
-    
+
     result match {
       case lucene.Success(results) => Query.Success(groups)
       case lucene.Limited(results, hitCount) => Query.Limited(groups, hitCount)
@@ -171,15 +171,15 @@ case class Query(
         val arg1Entity = reg.arg1.entity filter entityFilter
         val arg1EntityRemoved = reg.arg1.entity.isDefined && arg1Entity.isEmpty
         val arg1Types = if (!arg1EntityRemoved) reg.arg1.types filter typeFilter else Set.empty[FreeBaseType]
-        
+
         val arg2Entity = reg.arg2.entity filter entityFilter
         val arg2EntityRemoved = reg.arg2.entity.isDefined && arg2Entity.isEmpty
         val arg2Types = if (!arg2EntityRemoved) reg.arg2.types filter typeFilter else Set.empty[FreeBaseType]
-        
+
         reg.copy(
             instances = reg.instances filter filterCorpora filter filterInstances,
             arg1 = ExtractionArgument(clean(reg.arg1.norm), arg1Entity, arg1Types),
-            rel  = reg.rel.copy(norm = clean(reg.rel.norm)), 
+            rel  = reg.rel.copy(norm = clean(reg.rel.norm)),
             arg2 = ExtractionArgument(clean(reg.arg2.norm), arg2Entity, arg2Types)
           )
       } filter filterGroups(spec) filter filterRelation(spec) filter (_.instances.size > 0) toList
@@ -189,24 +189,24 @@ case class Query(
 
     (result, filtered)
   }
-  
+
   private val nonContentTag = "IN|TO|RB?".r
-  
+
   private def filterCorpora(instance: Instance[_ <: Extraction]) = this.corpora match {
-    
+
     case Some(CorporaConstraint(corporaString)) => corporaString.contains(instance.corpus)
     case _ => true
   }
 
   private def filterRelation(spec: QuerySpec)(group: ExtractionGroup[ReVerbExtraction]) = spec.relNorm match {
-    // if the query does not constrain rel, we can ignore this filter 
+    // if the query does not constrain rel, we can ignore this filter
     case Some(queryRelNorm) => {
       val filteredRelNormTokens = queryRelNorm.toLowerCase.split(" ").filter { str => !prepositions.contains(str) } toSet;
       if (!filteredRelNormTokens.isEmpty) filterRelationHelper(filteredRelNormTokens, group) else true
     }
     case None => true
   }
-  
+
   private def filterRelationHelper(filteredRelNormTokens: Set[String], group: ExtractionGroup[ReVerbExtraction]): Boolean = {
     group.instances.headOption match {
         // it's possible that the group is empty already due to some other filter.
@@ -314,7 +314,7 @@ object Query {
       /* timout in millis (10s) */
       10000)
       */
-      
+
 
   private final val CONFIDENCE_THRESHOLD: Double = 0.5
   private final val ENTITY_SCORE_THRESHOLD: Double = 5.0
@@ -365,7 +365,7 @@ object Query {
 
     clean
   }
-  
+
   private def filterInstances(inst: Instance[ReVerbExtraction]): Boolean = {
     def clean(arg: String) = {
       var clean = this.clean(arg.trim)
