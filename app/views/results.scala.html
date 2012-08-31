@@ -22,14 +22,14 @@
       <p>Specific suggestions:</p>
       <ul id="specific-suggestions">
       @for(suggestion <- query.specificSuggestions) {
-        <li>@suggestion</li>
+        <li>@Html(suggestion)</li>
       }
       </ul>
     }
     <p>General suggestions:</p>
     <ul id="general-suggestions">
     @for(suggestion <- Query.generalSuggestions) {
-      <li>@suggestion</li>
+      <li>@Html(suggestion)</li>
     }
     </ul>
   </div>

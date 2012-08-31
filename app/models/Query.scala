@@ -16,6 +16,7 @@ import play.api.Logger
 import edu.washington.cs.knowitall.browser.extraction.InstanceDeduplicator
 import edu.washington.cs.knowitall.browser.extraction.ExtractionRelation
 import edu.washington.cs.knowitall.tool.postag.Postagger.prepositions
+import controllers.routes
 
 case class Query(
   arg1: Option[Query.Constraint],
@@ -288,25 +289,25 @@ case class Query(
     val filledAndType = full && (a1.startsWith("type:") || a2.startsWith("type:"))
     
     if (argIsEntity)
-      lb += "Entity queries usually return less results than non-entity queries " +
-      "due to a higher level of precision. Try removing \"entity:\" for more results."
+      lb += "Entity queries usually return fewer but higher-precision results than non-entity queries. " +
+      "Try removing \"entity:\" for more results."
     
     if (hasRel)
       lb += "Variations of the relation may yield better results. " +
-      "Try making it more general or express it differently. " +
+      "Try making the relation more general or express it differently. " +
       "For example, instead of searching for actors who \"starred in\" Star Wars, you might try \"was in\" or \"did\"."
     
     if (arg1StartsWho)
       lb += "Instead of searching for \"who\", try \"type:person\" or leave it out altogether."
     
     if (singleBoxFilled)
-      lb += "If you are putting an entire query in a single box, see the " +
-          "sample queries on the home page for examples of well-formed queries."
+      lb += "If you are putting an entire query in a single box, you will not get any results. " +
+        "See the sample queries on the <a href=\"" + routes.Application.index() + "\">home page</a> for examples of well-formed queries."
     
     else if (filledAndNoTypes)
       lb += "Filling out all three boxes is seldom necessary. " +
           "Try replacing an argument with a type or leaving it out altogether. " +
-          "For examples of this, click on the example queries on the <a href=\"/\">home page</a>."
+          "For examples of this, click on the example queries on the <a href=\"" + routes.Application.index() + "\">home page</a>."
 
     else if (argsContainW)
       lb += "Consider searching for types, i.e.: \"type:Swimmer\" instead of \"which swimmer\""
