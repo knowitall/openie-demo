@@ -33,7 +33,8 @@ case class Query(
 
   override def toString = "(" + arg1String + ", " +
                                 relString + ", " +
-                                arg2String + ")"
+                                arg2String + 
+                                corpora.map(c => ", " + c.toString).getOrElse("") + ")"
 
   def humanString = "a query with " + Iterable(
       arg1.map("Argument 1 containing '" + _ + "'"),
