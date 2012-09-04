@@ -6,22 +6,31 @@
   <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
 
   @helper.form(action = routes.Application.submit, 'class -> "well form-inline hidden-phone") {
+    <div style="display:inline-block;">
       <label for="arg1">Argument 1:</label>
       <span class="input">
           <input type="text" id="arg1" name="arg1" value="@query.arg1" >
           <span class="help-inline"></span>
       </span>
+    </div>
+
+    <div style="display:inline-block;">
       <label for="rel">Relation:</label>
       <span class="input">
           <input type="text" id="rel" name="rel" value="@query.rel" >
           <span class="help-inline"></span>
       </span>
+    </div>
+
+    <div style="display:inline-block;">
       <label for="arg2">Argument 2:</label>
       <span class="input">
           <input type="text" id="arg2" name="arg2" value="@query.arg2" >
           <span class="help-inline"></span>
       </span>
-      <button class="btn"><i class="icon-search"></i> Search <div id="search-spinner"></div></button>
+    </div>
+
+    <button class="btn"><i class="icon-search"></i> Search <div id="search-spinner"></div></button>
   }
 
 
