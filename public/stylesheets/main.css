@@ -167,6 +167,10 @@
   margin: auto 1em;
 }
 
+#corpora {
+  width: 6em;
+}
+
 #search-button {
   margin-bottom: 0.5em;
 }
