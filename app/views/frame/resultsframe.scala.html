@@ -44,20 +44,21 @@
       </span>
     </div>
 
-    <button class="btn"><i class="icon-search"></i> Search <div id="search-spinner"></div></button>
+    <button class="btn"><i class="icon-search"></i> Search</button>
   }
 
-
-  <div id="results-content">
+  <div class="row">
     <!-- if the query is a linked entity, insert a knowledge card about it -->
     @{answers.queryEntities.headOption match {
-        case Some((fbEntity,count)) => Html("<div class='row'><div id='query-card' class='offset1 span10' data-attr='"+fbEntity.fbid+"'><h3>"+fbEntity.name+"</h3><div id='query-card-spinner'></div></div></div>")
+        case Some((fbEntity,count)) => Html("<div id='query-card' class='offset1 span10' data-attr='"+fbEntity.fbid+"'><h3>"+fbEntity.name+"</h3><div id='query-card-spinner'></div></div>")
         case None => ""
       }
     }
+  </div>
 
     <div id="stats"><b>@totalAnswerCount answers</b> from <b>@totalSentenceCount sentences</b>@message.map(" ("+_+")").getOrElse("")</div>
     
+  <div id="results-content">
     @content
   </div>
 

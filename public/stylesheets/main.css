@@ -153,15 +153,6 @@
   position: relative;
 }
 
-.btn #search-spinner {
-  position: absolute;
-  height: 27px;
-  width: 27px;
-  top: 0;
-  left: 100%;
-  margin-left: 5px;
-}
-
 .search-arg {
   display: inline-block;
   margin: auto 1em;
