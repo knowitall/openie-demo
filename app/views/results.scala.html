@@ -6,6 +6,36 @@
 <div id="tab-spinner" style="{display:none}"></div>
 
 
+<!-- suggestions -->
+@if(answers.answerCount == 0) {
+  <div id="suggestions">
+    @if(query.betterQuery.arg1String.toLowerCase != query.arg1String.toLowerCase) {
+      <p>Try replacing your Argument 1 with <a href="#" onclick="javascript:$('#arg1').val('@query.betterQuery.arg1String')">@if(query.betterQuery.arg1String == "") { nothing} else { @query.betterQuery.arg1String}</a>.</p>
+    } 
+    @if(query.betterQuery.relString.toLowerCase != query.relString.toLowerCase) {
+      <p>Try replacing your Relation with <a href="#" onclick="javascript:$('#rel').val('@query.betterQuery.relString')">@if(query.betterQuery.relString == "") { nothing} else { @query.betterQuery.relString}</a>.</p>
+    }
+    @if(query.betterQuery.arg2String.toLowerCase != query.arg2String.toLowerCase) {
+      <p>Try replacing your Argument 2 with <a href="#" onclick="javascript:$('#arg2').val('@query.betterQuery.arg2String')">@if(query.betterQuery.arg2String == "") { nothing} else { @query.betterQuery.arg2String}</a>.</p>
+    }
+    
+    @if(query.specificSuggestions.size > 0) {
+      <p>Specific suggestions:</p>
+      <ul id="specific-suggestions">
+      @for(suggestion <- query.specificSuggestions) {
+        <li>@Html(suggestion)</li>
+      }
+      </ul>
+    }
+    <p>General suggestions:</p>
+    <ul id="general-suggestions">
+    @for(suggestion <- Query.generalSuggestions) {
+      <li>@Html(suggestion)</li>
+    }
+    </ul>
+  </div>
+}
+
 <!-- filters -->
 @if(answers.filters.size > 0) {
 	<ul class="nav nav-tabs nav-stacked visible-phone">
@@ -51,7 +81,7 @@
 	<div class="tabbable tabs-left">
 		<ul class="nav nav-tabs">
 			@for((answer, i) <- answers.groups.zipWithIndex) {
-			<li class="hidden-phone"><a href="#L@{i}" class="answer" data-toggle="tab" data-fbid="@{answer.title.parts.head.entity match {case Some(entity) => {entity.fbid} case None => {""}}}">@helper.grouptitle(answer.title, debug) (@answer.contents.size)</a></li>
+			<li class="hidden-phone"><a href="#L@{i}" class="answer" data-toggle="tab" data-fbid="@{answer.title.parts.find(_.entity.isDefined).getOrElse(answer.title.parts.head).entity match {case Some(entity) => {entity.fbid} case None => {""}}}">@helper.grouptitle(answer.title, debug) (@answer.contents.size)</a></li>
 			<li class="visible-phone"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), answer.title.text, debug)}" class="answer">@Html(answer.title.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", ")) (@answer.contents.size)</a></li>
 			}
 		</ul>
