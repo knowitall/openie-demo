@@ -153,27 +153,28 @@
   position: relative;
 }
 
-.btn #search-spinner {
-  position: absolute;
-  height: 27px;
-  width: 27px;
-  top: 0;
-  left: 100%;
-  margin-left: 5px;
-}
-
 .search-arg {
   display: inline-block;
   margin: auto 1em;
+}
+
+#corpora {
+  width: 6em;
+}
+
+.results-form #corpora {
+  width: 4em;
 }
 
 #search-button {
   margin-bottom: 0.5em;
 }
 
+.results-form {
+  display: inline-block;
+}
+
 #query-card {
-  margin-top: -1em;
-  margin-bottom: 1.5em;
   overflow: hidden;
 }
 
