@@ -162,8 +162,16 @@
   width: 6em;
 }
 
+.results-form #corpora {
+  width: 4em;
+}
+
 #search-button {
   margin-bottom: 0.5em;
+}
+
+.results-form {
+  display: inline-block;
 }
 
 #query-card {
