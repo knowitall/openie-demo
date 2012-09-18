@@ -2,14 +2,6 @@
 
 @import helper.twitterBootstrap._
 
-<style>
-	.sent:link, .sent:hover, .sent:visited, .sent:active { 
-		cursor: pointer;
-		text-decoration: none;
-		color: black
-	}
-</style>
-
 @for((rel, cs) <- group.contentsByRelation) {
 	<dl class="dl-horizontal">
 	<dt>@rel</dt>

@@ -195,4 +195,10 @@
   list-style-type: none;
 }
 
+.sent:link, .sent:hover, .sent:visited, .sent:active { 
+    cursor: pointer;
+    text-decoration: none;
+    color: black
+}
+
 label { font-weight: bold }
