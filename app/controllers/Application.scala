@@ -19,8 +19,8 @@ import org.joda.time.format.DateTimeFormat
 import play.api.mvc.RequestHeader
 
 object Application extends Controller {
-  final val PAGE_SIZE = 25
-  final val MAX_SENTENCE_COUNT = 20
+  final val PAGE_SIZE = 20
+  final val MAX_SENTENCE_COUNT = 15
 
   /**
     * The actual definition of the search form.
