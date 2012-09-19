@@ -43,18 +43,20 @@
                 <div class="hidden-phone">
                     <h1>
                       @if(compact){
-                      <a href="@routes.Application.index()"><img src="@routes.Assets.at("images/textrunner-small.jpg")" width="45" height="50")"></a>
+                      <a href="@routes.Application.index()"><img src="@routes.Assets.at("images/textrunner.jpg")" width="45" height="50")"></a>
                       } else {
                       <a href="@routes.Application.index()"><img src="@routes.Assets.at("images/textrunner.jpg")" width="90" height="100"></a>
                       }
                       <a href="@routes.Application.index()">Open Information Extraction</a>
                       @if(!compact) {
                       <a href="http://turing.cs.washington.edu/" class="pull-right"><img src="@routes.Assets.at("images/turing.png")" width="136" height="100"></a>
+                      } else {
+                      <a href="http://turing.cs.washington.edu/" class="pull-right"><img src="@routes.Assets.at("images/turing.png")" width="68" height="50"></a>
                       }
                     </h1>
                 </div>
                 <div class="visible-phone">
-                    <h1><a href="@routes.Application.index()"><img src="@routes.Assets.at("images/textrunner-small.jpg")" width="45" height="50"></a> UW Open IE</h1>
+                    <h1><a href="@routes.Application.index()"><img src="@routes.Assets.at("images/textrunner.jpg")" width="45" height="50"></a> UW Open IE</h1>
                 </div>
             </div>
 
