@@ -1,28 +1,41 @@
-@(query: Query, answer: Answer, maxSentenceCount: Int, debug: Boolean)
+@(query: Query, answer: Answer, index: Int, maxSentenceCount: Int, debug: Boolean)
 
 @import models.TypeFilters._
 @import edu.washington.cs.knowitall.browser.extraction.NellType.fbToNellType
 
-@titleLink(part: models.AnswerTitlePart) = {
+@titleLink(part: models.AnswerTitlePart, large: Boolean) = {
 	@if(part.extractionPart == Relation) {
 		@part.text
 	} else {
-		<a href='@routes.Application.search(Option(part.text),Option(""),Option(""),"all",0,debug)' class="entity-link">@part.text</a>
+		<a href='@routes.Application.search(Some(part.text),None,None),"all",0,debug)' class="@if(large) {entity-link-focused} else {entity-link}">@part.text</a>
 	}
 }
 
-@defining(answer.title.parts.find(_.entity.isDefined).getOrElse(answer.title.parts.head)) { firstLinked =>
+@move(curPartIndex: Int, nextPartIndex: Int, forward: Boolean) = {
+	<a href="#@if(forward) { forward } else { back }" onclick="$('#L@index>#E@curPartIndex').hide(); $('#L@index>#E@nextPartIndex').show();"><i class="card-nav @if(forward) { icon-forward } else { icon-backward }"></i></a>
+}
+@next(i: Int) = {
+	@move(i, i + 1, true)
+}
+@prev(i: Int) = {
+	@move(i, i - 1, false)
+}
 
+@for((part, i) <- answer.title.parts.zipWithIndex) {
+<div id="E@i" style="@if(i > 0) { display: none }">
 	<!-- title -->
-	<h2>@{Html(answer.title.parts.map { part =>
-			titleLink(part)
-		}.mkString(answer.title.connector))}</h2>
-
+	<h2>
+		@if(i > 0) {@prev(i)}
+		@{Html(answer.title.parts.map { curPart =>
+			titleLink(curPart, curPart == part)
+		}.mkString(answer.title.connector))}
+		@if(answer.title.parts.size > i+1){@next(i)}
+	</h2>
+	
 	<!-- if there is an entity, display its FreeBase URI -->
-	@defining(firstLinked.entity) { entityOpt =>
+	@defining(part.entity) { entityOpt =>
 		@entityOpt match{
 			case Some(entity) => {
-
 				<!-- FreeBase URI -->
 				<h3 class='uri-title'>URI:</h3>
 				<ul class='uri-body'>
@@ -32,30 +45,30 @@
 				<!-- Types -->
 				<h3 class='types-title'>Types:</h3>
 				<ul class='types-body'>
-					@firstLinked.types.toSeq.sortBy(-_.weight).map{ fbType =>
+					@part.types.toSeq.sortBy(-_.weight).map{ fbType =>
 					<li>@{Html(fbToNellType.get(fbType).map( nellType =>
 						"<a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType.id+"' title='Nell type: "+nellType.name+"'>"+nellType.name+"</a> <span style='color: #888'>(Nell)</span>"
 						).getOrElse(""))
 						}</li>
 					}
-					@firstLinked.types.toSeq.sortBy(-_.weight).map{ fbType =>
+					@part.types.toSeq.sortBy(-_.weight).map{ fbType =>
 					<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a> <span style='color: #888'>(FreeBase)</span></li>
 					}
 				</ul>
 			}
 
 			case None => {
-				@if(firstLinked.types.size > 0) {
+				@if(part.types.size > 0) {
 					<!-- Inferred Types (no linked entity) -->
 					<h3 class='types-title'>Inferred Types:</h3>
 					<ul class='types-body'>
-					@firstLinked.types.toSeq.sortBy(-_.weight).map{ fbType =>
+					@part.types.toSeq.sortBy(-_.weight).map{ fbType =>
 						<li>@{Html(fbToNellType.get(fbType).map( nellType =>
 						"<a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType.id+"' title='Nell type: "+nellType.name+"'>"+nellType.name+"</a> <span style='color: #888'>(Nell)</span>"
 						).getOrElse(""))
 						}</li>
 					}
-					@firstLinked.types.toSeq.sortBy(-_.weight).map{ fbType =>
+					@part.types.toSeq.sortBy(-_.weight).map{ fbType =>
 						<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a> <span style='color: #888'>(FreeBase)</span></li>
 					}
 					</ul>
@@ -65,10 +78,10 @@
 	}
 
 	<!-- if there are synonyms, display them -->
-	@if(firstLinked.otherSynonyms.size > 0) {
+	@if(part.otherSynonyms.size > 0) {
 		<h3 class='syns-title'>Extracted Synonyms:</h3>
 		<ul class='syns-body'>
-			@firstLinked.otherSynonyms.map { synonym =>
+			@part.otherSynonyms.map { synonym =>
 			<li>@synonym</li>
 			}
 		</ul>
@@ -81,4 +94,5 @@
 	@if(answer.contents.size > maxSentenceCount) {
 		<p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), answer.title.text, debug)}">Show all sentences (@{answer.contents.size - maxSentenceCount} more)</a></p>
 	}
+</div>
 }

@@ -3,7 +3,7 @@
 @import helper.twitterBootstrap._
 
 <!-- spinner for tabs -->
-<div id="tab-spinner" style="{display:none}"></div>
+<div id="tab-spinner" style="display:none"></div>
 
 
 <!-- suggestions -->
@@ -81,7 +81,7 @@
 	<div class="tabbable tabs-left">
 		<ul class="nav nav-tabs">
 			@for((answer, i) <- answers.groups.zipWithIndex) {
-			<li class="hidden-phone"><a href="#L@{i}" class="answer" data-toggle="tab" data-fbid="@{answer.title.parts.find(_.entity.isDefined).getOrElse(answer.title.parts.head).entity match {case Some(entity) => {entity.fbid} case None => {""}}}">@helper.grouptitle(answer.title, debug) (@answer.contents.size)</a></li>
+			<li class="hidden-phone"><a href="#L@{i}" class="answer" data-toggle="tab" data-fbid="@{answer.title.parts.map(_.entity.map(_.fbid).getOrElse("")).mkString(";")}">@helper.grouptitle(answer.title, debug) (@answer.contents.size)</a></li>
 			<li class="visible-phone"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), answer.title.text, debug)}" class="answer">@Html(answer.title.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", ")) (@answer.contents.size)</a></li>
 			}
 		</ul>
@@ -91,8 +91,7 @@
 			@for((answer, i) <- answers.groups.zipWithIndex) {
 				<div class="tab-pane" id="L@{i}">
 					<div class="close-tab"><a href="#close@{i}" class="close-tab" title="close sentences"><i class="icon-remove"></i></a></div>
-					
-					@helper.cardtab(query, answer, maxSentenceCount, debug)
+					@helper.cardtab(query, answer, i, maxSentenceCount, debug)
 				</div>
 			}
 		</div>
@@ -160,11 +159,9 @@ $.extend({
 });
 
 // create a tab-pane knowledge card from FreeBase information
-var download_freebase = function(target) {
-	var id = $(target).attr("href"); // get the id of the target tab-pane
-	var fbid = $(target).attr("data-fbid"); // get the FreeBase id
+var download_freebase = function(id, fbid, partIndex, spin) {
 	var datacontent = "";
-
+	
 	// hide all the tab content, so that it will all appear at once
 	// otherwise it appears piecewise, which is jarring
 	$(".tab-content").hide();
@@ -179,11 +176,14 @@ var download_freebase = function(target) {
 	} catch(e) {}
 
 	// throw up a spinner while we're querying freebase
-	$("#tab-spinner").spin(spinnerOpts);
+	if (spin) {
+		$("#tab-spinner").show();
+		$("#tab-spinner").spin(spinnerOpts);
+	}
 	
 	// get freebase entity information as JSON object
 	$.getJSON("https://www.googleapis.com/freebase/v1/text/m/" + fbid + '?format=plain&lang=en&maxlength=1000&callback=?', function(response) {
-		if (response != undefined && response.result != undefined) {
+		if (response !== undefined && response.result !== undefined) {
 			// populate entity data from freebase
 			datacontent = '<div class="entity-desc">'
 				+ '<img src="' + src + '">'
@@ -193,15 +193,18 @@ var download_freebase = function(target) {
 		} else {
 			// if there is no freebase information, create an empty entity-desc
 			datacontent = '<div class="entity-desc"></div>';
-			}
+		}
 	
 		// insert the entity description into the tab-pane
-		$(datacontent).insertAfter($(id + ">h2"));
+		$(datacontent).insertAfter($(id + ">#E" + partIndex + ">h2"));
 
 		// stop the spinner and
 		// show tab content again
-		$("#tab-spinner").data("spinner").stop();
-		$(".tab-content").show();
+		if (spin) {
+			$("#tab-spinner").data("spinner").stop();
+			$(".tab-content").show();
+		    $("#tab-spinner").hide();
+	    }
 	})
 }
 
@@ -215,7 +218,7 @@ var tabSpin = function(params) {
 // populate knowledge card information for the query entity
 // only triggers if the query is for a known entity
 // run before $(document).ready to improve speed
-if ( $("#query-card") ) {
+if ( $("#query-card").length == 1 ) {
 	// make sure we only have one
 	if ( $("#query-card-content").length == 0 ) {	
 		// start a spinner
@@ -250,12 +253,16 @@ $(document).ready(function() {
 	// grab freebase id (if possible) on click
 	$('.answer').click(function() {
 		var id = $(this).attr("href");
-		var fbid = $(this).attr("data-fbid");
+		var fbids = $(this).attr("data-fbid");
 
 		// make sure there is actually a FreeBase ID
 		// and that we don't already have the FB info
-		if ( fbid != "" &&  $(id+'>.entity-desc').length == 0 ) {
-			download_freebase(this);
+		if (fbids != "" &&  fbids !== undefined) {
+			$.each(fbids.split(";"), function(index, fbid) {
+				if ($(id+'>#E' + index + '>.entity-desc').length == 0) {
+					download_freebase(id, fbid, index, index == 0);
+				}
+			});
 		}
 	});
 
