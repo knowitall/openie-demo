@@ -86,13 +86,13 @@
 			}
 		</ul>
 	}
-
-	<!-- display sentences -->
-	<h3>Extracted from these sentences:</h3>
-	@helper.sentences(answer.copy(contents=answer.contents.take(maxSentenceCount)), debug)
-
-	@if(answer.contents.size > maxSentenceCount) {
-		<p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), answer.title.text, debug)}">Show all sentences (@{answer.contents.size - maxSentenceCount} more)</a></p>
-	}
 </div>
+}
+
+<!-- display sentences -->
+<h3>Extracted from these sentences:</h3>
+@helper.sentences(answer.copy(contents=answer.contents.take(maxSentenceCount)), debug)
+
+@if(answer.contents.size > maxSentenceCount) {
+    <p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), answer.title.text, debug)}">Show all sentences (@{answer.contents.size - maxSentenceCount} more)</a></p>
 }
