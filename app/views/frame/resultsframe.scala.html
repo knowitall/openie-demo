@@ -31,12 +31,10 @@
     <div class="results-form">
       <span class="input">
           <select id="corpora" name="corpora">
-            <option value="">All</option>
-            <option value="g1b">Google</option>
-            <option value="cw">ClueWeb</option>
-            <option value="news">News</option>
-            <option value="nell">Nell</option>
-            <option value="wiki">Wikipedia</option>
+              <option value="">All</option>
+            @for(Corpus(displayName, indexName) <- Corpus.corpora) {
+              <option value="@indexName" @if(query.corpora.map(_.corpora) == Some(indexName)){SELECTED}>@displayName</option>
+            }
           </select>
           <span class="help-inline"></span>
       </span>
