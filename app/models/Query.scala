@@ -31,6 +31,12 @@ case class Query(
   def relString = rel.getOrElse("").toString
   def arg2String = arg2.getOrElse("").toString
 
+  def toLowerCase: Query = {
+    val lowerCasedQuery = Query(arg1.map(_.toLowerCase), rel.map(_.toLowerCase), arg2.map(_.toLowerCase), corpora)
+    Logger.debug("Lowercasing query to %s from %s".format(lowerCasedQuery.toString, this.toString))
+    lowerCasedQuery
+  }
+  
   override def toString = "(" + arg1String + ", " +
                                 relString + ", " +
                                 arg2String + 
@@ -422,6 +428,7 @@ object Query {
     * by type constraints with this constraint. */
   sealed abstract class Constraint {
     def free: Boolean = false
+    def toLowerCase: Constraint
   }
   /** Represents whether this part of the answer will be shown in
     * the answer title.  For example, a term constraint will prevent
@@ -429,13 +436,17 @@ object Query {
   trait Fixed
   case class TermConstraint(term: String) extends Constraint with Fixed {
     override def toString = term
+    override def toLowerCase = TermConstraint(term.toLowerCase)
   }
   case class TypeConstraint(typ: String) extends Constraint {
     override def toString = "type:" + typ
+    override def toLowerCase = TypeConstraint(typ.toLowerCase)
   }
 
   case class EntityConstraint(entity: String) extends Constraint with Fixed {
     override def toString = "entity:" + entity
+    // Leaving toLowerCase as a no-op for now due to the problem's we've had w/ case sensitivity here.
+    override def toLowerCase = this
   }
 
   case class CorporaConstraint(corpora: String) {

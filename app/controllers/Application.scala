@@ -82,7 +82,7 @@ object Application extends Controller {
 
   def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int, corpora: Option[String]) = Action {
     import ExtractionGroupProtocol._
-    Ok(tojson(Query.fromStrings(arg1, rel, arg2, corpora).executeRaw().take(count)).toString)
+    Ok(tojson(Query.fromStrings(arg1, rel, arg2, corpora).toLowerCase.executeRaw().take(count)).toString)
   }
 
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean, corpora: Option[String]) = Action {
@@ -124,7 +124,7 @@ object Application extends Controller {
         Logger.debug("executing " + query + " in lucene")
 
         // cache miss
-        val (ns, result) = Timing.time(query.execute())
+        val (ns, result) = Timing.time(query.toLowerCase.execute())
 
         val (groups, message) = result match {
           case Query.Success(groups) => (groups, None)
