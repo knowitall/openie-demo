@@ -120,7 +120,7 @@ case class Query(
     }
   }
 
-  def executeRaw(): List[ExtractionGroup[ReVerbExtraction]] = executeHelper()._2
+  def executeRaw(): List[ExtractionGroup[ReVerbExtraction]] = executeHelper()._2.sortBy(-_.instances.size)
 
   private def executeHelper(): (lucene.ResultSet, List[ExtractionGroup[ReVerbExtraction]]) = {
     def query(constraint: Option[Query.Constraint]): Option[String] = constraint match {
