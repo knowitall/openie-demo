@@ -82,7 +82,7 @@ object Application extends Controller {
 
   def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int, corpora: Option[String]) = Action {
     import ExtractionGroupProtocol._
-    Ok(tojson(Query.fromStrings(arg1, rel, arg2, corpora).toLowerCase.executeRaw().take(count)).toString.replaceAll("[\\p{C}]",""))
+    Ok(tojson(Executor.executeRaw(Query.fromStrings(arg1, rel, arg2, corpora).toLowerCase).take(count)).toString.replaceAll("[\\p{C}]",""))
   }
 
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean, corpora: Option[String]) = Action {
@@ -124,12 +124,12 @@ object Application extends Controller {
         Logger.debug("executing " + query + " in lucene")
 
         // cache miss
-        val (ns, result) = Timing.time(query.toLowerCase.execute())
+        val (ns, result) = Timing.time(Executor.execute(query.toLowerCase))
 
         val (groups, message) = result match {
-          case Query.Success(groups) => (groups, None)
-          case Query.Timeout(groups, count) => (groups, Some("timeout"))
-          case Query.Limited(groups, count) => (groups, Some("results truncated"))
+          case Executor.Success(groups) => (groups, None)
+          case Executor.Timeout(groups, count) => (groups, Some("timeout"))
+          case Executor.Limited(groups, count) => (groups, Some("results truncated"))
         }
 
         val answers = AnswerSet.from(query, groups, TypeFilters.fromGroups(query, groups, debug))
@@ -140,7 +140,7 @@ object Application extends Controller {
           " and " + groups.iterator.map(_.contents.size).sum + " sentences" + message.map(" (" + _ + ")").getOrElse(""))
 
         // cache unless we had a timeout
-        if (!result.isInstanceOf[Query.Timeout]) {
+        if (!result.isInstanceOf[Executor.Timeout]) {
           Logger.debug("Saving " + query.toString + " to cache.")
           Cache.set(query.toString.toLowerCase, answers)
         }
