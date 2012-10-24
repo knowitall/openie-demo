@@ -173,6 +173,8 @@ object Executor {
         true
       }
     }
+    
+    
 
     def filterCorpora(instance: Instance[_ <: Extraction]) = query.corpora match {
       case Some(CorporaConstraint(corporaString)) => corporaString.contains(instance.corpus)
@@ -203,6 +205,12 @@ object Executor {
       }
     }
 
+    
+    
+    def filterArg2DayOfWeek(group: ExtractionGroup[_ <: Extraction]): Boolean = {
+      !daysOfWeek.contains(group.arg2.norm)
+    }
+    
     def filterGroups(spec: QuerySpec)(group: ExtractionGroup[_ <: Extraction]): Boolean = {
       // if there are constraints, apply them to each part in case lucene messed up
       def filterPart(constraint: Option[Constraint], entity: Option[FreeBaseEntity], types: Iterable[FreeBaseType]) = {
@@ -295,7 +303,7 @@ object Executor {
             arg1 = ExtractionArgument(Query.clean(reg.arg1.norm), arg1Entity, arg1Types),
             rel = reg.rel.copy(norm = Query.clean(reg.rel.norm)),
             arg2 = ExtractionArgument(Query.clean(reg.arg2.norm), arg2Entity, arg2Types))
-        } filter filterGroups(spec) filter filterRelation(spec) filter (_.instances.size > 0) toList
+        } filter filterGroups(spec) filter filterRelation(spec) filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
       }
 
     Logger.debug(spec.toString + " filtered with " + filtered.size + " answers in " + Timing.Seconds.format(nsFiltered))
@@ -312,4 +320,6 @@ object Executor {
   private final val startCap = Pattern.compile(".*\\b[A-Z].*")
   private final val likelyErrorPattern = Pattern.compile(".*(http|\\(|\\)|\\\"|\\[|thing).*", Pattern.CASE_INSENSITIVE)
 
+  private final val daysOfWeek = Set("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "mon.", "tues.", "wed.", "thurs.", "fri.", "sat.", "sun.", "thurs", "tues", "mon", "last week")
+  
 }
