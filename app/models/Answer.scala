@@ -115,7 +115,7 @@ object Answer {
             (synonyms.head, synonyms.size)
           }.sortBy(- _._2).map(_._1)
 
-          AnswerTitlePart(headTitle.parts(i).lemma,
+          AnswerTitlePart(headTitle.parts(i).lemma.replaceAll("\t", " ").replaceAll("[\\p{C}]",""),
               headTitle.parts(i).extractionPart,
               sortedUniqueSynonyms, entities, types)
         }
