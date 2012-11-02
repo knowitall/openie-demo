@@ -45,7 +45,7 @@
 
   <div class="row">
     <!-- if the query is a linked entity, insert a knowledge card about it -->
-    @{answers.queryEntities.headOption match {
+    @{(answers.queryEntities.headOption filter {case(e, n) => n > 2) match {
         case Some((fbEntity,count)) => Html("<div id='query-card' class='offset1 span10' data-attr='"+fbEntity.fbid+"'><h3>"+fbEntity.name+"</h3><div id='query-card-spinner'></div></div>")
         case None => ""
       }

@@ -30,7 +30,7 @@ object AnswerSet {
     val filteredGroups = answers filter (answer => query.filters forall (filter => filter(answer.title)))
     val filterTabs = immutable.SortedSet.empty[TypeFilterTab] ++ filters.map(filter => TypeFilterTab(filter, answers.count(answer => filter(answer.title))))
 
-    val queryEntities = answers.
+    def queryEntities(top: Int = 20) = answers.take(top).
       // (entity, all answer sizes)
       flatMap(answer => answer.queryEntity.map((_, answer.contents.size))).
       // (entity, answer size)
@@ -49,7 +49,7 @@ object AnswerSet {
       // unlinked due to a low confidence.
       filteredGroups,
       filterTabs,
-      queryEntities)
+      queryEntities())
   }
 }
 

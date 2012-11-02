@@ -21,6 +21,9 @@
 	@move(i, i - 1, false)
 }
 
+@if(debug) {
+    <h2>@answer.queryEntity</h2>
+}
 @for((part, i) <- answer.title.parts.zipWithIndex) {
 <div id="E@i" style="@if(i > 0) { display: none }">
 	<!-- title -->
