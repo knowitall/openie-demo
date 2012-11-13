@@ -2,10 +2,10 @@
 <configuration>
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel"/>
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${application.home}/logs/application.log</file>
+    <file>${application.home}/logs/openie.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       <!-- daily rollover -->
-      <fileNamePattern>logs/application-%d{yyyy-MM-dd}.log</fileNamePattern>
+      <fileNamePattern>logs/openie-%d{yyyy-MM-dd}.log</fileNamePattern>
       <!-- keep 60 days' worth of history -->
       <maxHistory>60</maxHistory>
     </rollingPolicy>
