@@ -44,8 +44,10 @@ case class LogEntry (
     val file = LogEntry.logFile()
 
     LogEntry.synchronized {
-      using(new PrintWriter(new FileOutputStream(file, true))) { writer =>
-        writer.println(this.toRow)
+      using(new FileOutputStream(file, true)) { outputStream =>
+        using(new PrintWriter(outputStream)) { writer =>
+          writer.println(this.toRow)
+        }
       }
     }
   }
