@@ -1,6 +1,7 @@
 package controllers
 
 import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
+import edu.washington.cs.knowitall.common.Resource.using
 import edu.washington.cs.knowitall.common.Timing
 import models.{ TypeFilters, Query, TypeFilter, PositiveTypeFilter, NegativeTypeFilter, LogEntry, AnswerSet }
 import play.api.Play.current
@@ -45,7 +46,11 @@ object Application extends Controller {
   def footer(reload: Boolean = false): String = {
     def loadFooter =
       try {
-        val footer = scala.io.Source.fromFile(new java.io.File("/cse/www2/knowitall/footer.html")).mkString
+        val footerFile = new java.io.File("/cse/www2/knowitall/footer.html")
+        val footer =
+          using (scala.io.Source.fromFile(footerFile)) { file =>
+            file.mkString
+          }
         Cache.set("footer", footer)
         footer
       } catch {

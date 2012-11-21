@@ -48,15 +48,19 @@ object TypeFilters {
 
   val blacklist: Set[FreeBaseType] =
     using (this.getClass.getResource("/type_blacklist.txt").openStream()) { stream =>
-      (Source.fromInputStream(stream).getLines flatMap FreeBaseType.parse).toSet
+      using (Source.fromInputStream(stream)) { source =>
+        (source.getLines flatMap FreeBaseType.parse).toSet
+      }
     }
 
   val weights: Map[FreeBaseType, Int] =
     using (this.getClass.getResource("/type_weights.txt").openStream()) { stream =>
-      Source.fromInputStream(stream).getLines.map { line =>
-        val Array(fb, weight) = line.split("\t")
-        (FreeBaseType.parse(fb).get, weight.toInt)
-      }.toMap
+      using (Source.fromInputStream(stream)) { source =>
+        source.getLines.map { line =>
+          val Array(fb, weight) = line.split("\t")
+          (FreeBaseType.parse(fb).get, weight.toInt)
+        }.toMap
+      }
     }
 
   class EnrichedFreeBaseType(fb: FreeBaseType) {
