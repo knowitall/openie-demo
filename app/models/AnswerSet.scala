@@ -1,7 +1,6 @@
 package models
 
 import scala.collection.immutable
-import org.apache.http.annotation.Immutable
 import edu.washington.cs.knowitall.browser.extraction.FreeBaseEntity
 import edu.washington.cs.knowitall.common.enrich.Traversables._
 
