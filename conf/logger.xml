@@ -5,7 +5,7 @@
     <file>${application.home}/logs/openie.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       <!-- daily rollover -->
-      <fileNamePattern>logs/openie-%d{yyyy-MM-dd}.log</fileNamePattern>
+      <fileNamePattern>${application.home}/logs/openie-%d{yyyy-MM-dd}.log</fileNamePattern>
       <!-- keep 60 days' worth of history -->
       <maxHistory>60</maxHistory>
     </rollingPolicy>
@@ -20,7 +20,8 @@
   </appender>
   <logger name="play" level="INFO"/>
   <logger name="application" level="INFO"/>
-  <root level="ERROR">
+  <logger name="edu.washington" level="DEBUG"/>
+  <root level="DEBUG">
     <appender-ref ref="STDOUT"/>
     <appender-ref ref="FILE"/>
   </root>
