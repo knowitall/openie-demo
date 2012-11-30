@@ -55,7 +55,7 @@ object Executor {
     lazy val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
   }
 
-  final val SOURCE: FetchSource = ActorSource
+  final val SOURCE: FetchSource = LuceneSource
 
   final val CONFIDENCE_THRESHOLD: Double = 0.5
   final val ENTITY_SCORE_THRESHOLD: Double = 5.0
