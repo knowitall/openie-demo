@@ -9,15 +9,17 @@ object ApplicationBuild extends Build {
 
     val appDependencies = Seq(
       "edu.washington.cs.knowitall" % "openiedemo-backend" % "1.0.5-SNAPSHOT",
-      "net.debasishg" % "sjson_2.9.1" % "0.17" 
+      "net.debasishg" % "sjson_2.9.1" % "0.17",
+      "org.apache.solr" % "solr-solrj" % "4.0.0"
     )
 
     val main = PlayProject(appName, appVersion, appDependencies, mainLang = SCALA).settings(
-      // Add your own project settings here      
+      // Add your own project settings here
         resolvers ++= Seq(
           "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository",
           "Internal Maven Repository" at "http://knowitall.cs.washington.edu/maven2",
           "Internal Snapshot Maven Repository" at "http://knowitall.cs.washington.edu/maven2-snapshot",
-          "OpenNlp" at "http://opennlp.sourceforge.net/maven2")
+          "OpenNlp" at "http://opennlp.sourceforge.net/maven2"
+        )
     )
 }
