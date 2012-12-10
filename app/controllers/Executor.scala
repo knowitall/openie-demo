@@ -108,8 +108,8 @@ object Executor {
               val id = result.getFieldValue("arg1_entity_id").asInstanceOf[String]
               val name = result.getFieldValue("arg1_entity_name").asInstanceOf[String]
               val inlink_ratio = result.getFieldValue("arg1_entity_inlink_ratio").asInstanceOf[Double]
-              val score = result.getFieldValue("arg1_entity_inlink_score").asInstanceOf[Double]
-              Some(FreeBaseEntity(name, id, inlink_ratio, score))
+              val score = result.getFieldValue("arg1_entity_score").asInstanceOf[Double]
+              Some(FreeBaseEntity(name, id, score, inlink_ratio))
             }
           },
           types =
@@ -124,8 +124,8 @@ object Executor {
               val id = result.getFieldValue("arg2_entity_id").asInstanceOf[String]
               val name = result.getFieldValue("arg2_entity_name").asInstanceOf[String]
               val inlink_ratio = result.getFieldValue("arg2_entity_inlink_ratio").asInstanceOf[Double]
-              val score = result.getFieldValue("arg2_entity_inlink_score").asInstanceOf[Double]
-              Some(FreeBaseEntity(name, id, inlink_ratio, score))
+              val score = result.getFieldValue("arg2_entity_score").asInstanceOf[Double]
+              Some(FreeBaseEntity(name, id, score, inlink_ratio))
             }
           },
           types =
