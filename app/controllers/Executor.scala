@@ -42,6 +42,7 @@ import edu.washington.cs.knowitall.browser.lucene.LuceneFetcher
 import edu.washington.cs.knowitall.browser.lucene.ResultSet
 import org.apache.solr.client.solrj.impl.HttpSolrServer
 import org.apache.solr.client.solrj.SolrQuery
+import java.io.FileInputStream
 
 object Executor {
   type REG = ExtractionGroup[ReVerbExtraction]
@@ -62,28 +63,39 @@ object Executor {
   }
   case object SolrSource extends FetchSource {
     val solr = new HttpSolrServer("http://rv-n16.cs.washington.edu:8983/solr")
-    solr.setSoTimeout(5000); // socket read timeout
-    solr.setConnectionTimeout(1000);
+    solr.setSoTimeout(20000); // socket read timeout
+    solr.setConnectionTimeout(20000);
     solr.setDefaultMaxConnectionsPerHost(100);
     solr.setMaxTotalConnections(100);
     solr.setFollowRedirects(false); // defaults to false
-    // allowCompression defaults to false.
-    // Server side must support gzip or deflate for this to have any effect.
     solr.setAllowCompression(true);
     solr.setMaxRetries(1); // defaults to 0.  > 1 not recommended.
 
     def fetch(spec: QuerySpec) = {
       val squery = new SolrQuery();
-      val parts = (Iterable("arg1", "rel", "arg2") zip Iterable(spec.arg1, spec.rel, spec.arg2)).filter(_._2.isDefined)
-      val queryText = parts.map{case (field, value) => field + ":" + value.get}.mkString(" ")
+      val parts = (Iterable("arg1", "rel", "arg2") zip Iterable(spec.arg1, spec.rel, spec.arg2)).map { case(a, b) =>
+        if (b.isEmpty) {
+          ("-" + a, "[\"\" TO *]")
+        }
+        else {
+          ("+" + a, b.get)
+        }}
+      val queryText = parts.map{case (field, value) => field + ":\"" + value + "\""}.mkString(" ")
       println(queryText)
       squery.setQuery(queryText)
+      squery.setRows(10000)
+      squery.setTimeAllowed(20000)
       val response = solr.query(squery)
       import scala.collection.JavaConverters._
 
       val groups = for (result <- response.getResults().asScala) yield {
-      val instances = using(new ByteArrayInputStream(result.getFieldValue("instances").asInstanceOf[Array[Byte]])) { is =>
-          using (new ObjectInputStream(is)) { ois =>
+        val instances = using(new ByteArrayInputStream(result.getFieldValue("instances").asInstanceOf[Array[Byte]])) { is =>
+          using(new ObjectInputStream(is) {
+            override def resolveClass(desc: java.io.ObjectStreamClass): Class[_] = {
+              try { Class.forName(desc.getName, false, getClass.getClassLoader) }
+              catch { case ex: ClassNotFoundException => super.resolveClass(desc) }
+            }
+          }) { ois =>
             ois.readObject().asInstanceOf[List[Instance[ReVerbExtraction]]]
           }
         }
