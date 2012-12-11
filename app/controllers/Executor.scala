@@ -406,7 +406,7 @@ object Executor {
             arg1 = ExtractionArgument(Query.clean(reg.arg1.norm), arg1Entity, arg1Types),
             rel = reg.rel.copy(norm = Query.clean(reg.rel.norm)),
             arg2 = ExtractionArgument(Query.clean(reg.arg2.norm), arg2Entity, arg2Types))
-        }.toList //filter filterGroups(spec) filter filterRelation(spec.relNorm) filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
+        }.toList filter filterGroups(spec) filter filterRelation(spec.relNorm) filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
       }
 
     Logger.debug(spec.toString + " filtered with " + filtered.size + " answers in " + Timing.Seconds.format(nsFiltered))
