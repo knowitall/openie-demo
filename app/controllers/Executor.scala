@@ -73,22 +73,28 @@ object Executor {
 
     def fetch(spec: QuerySpec) = {
       val squery = new SolrQuery();
-      val parts = (Iterable("arg1", "rel", "arg2") zip Iterable(spec.arg1, spec.rel, spec.arg2)).map { case(a, b) =>
+      val parts = (Iterable("arg1", "rel", "arg2") zip Iterable(spec.arg1, spec.rel, spec.arg2)).flatMap { case(a, b) =>
         if (b.isEmpty) {
-          ("-" + a, "[\"\" TO *]")
+          None
         }
         else {
-          ("+" + a, b.get)
+          Some("+" + a, b.get)
         }}
       val queryText = parts.map{case (field, value) => field + ":\"" + value + "\""}.mkString(" ")
       println(queryText)
       squery.setQuery(queryText)
-      squery.setRows(10000)
+      squery.setRows(1000)
       squery.setTimeAllowed(20000)
-      val response = solr.query(squery)
+      val response = try {
+        Timing.timeThen {
+          solr.query(squery)
+        } { ns =>
+          Logger.debug("solr response received (" + Timing.Seconds.format(ns) + ")")
+        }
+      }
       import scala.collection.JavaConverters._
 
-      val groups = for (result <- response.getResults().asScala) yield {
+      val groups = for (result <- response.getResults().iterator().asScala) yield {
         val instances = using(new ByteArrayInputStream(result.getFieldValue("instances").asInstanceOf[Array[Byte]])) { is =>
           using(new ObjectInputStream(is) {
             override def resolveClass(desc: java.io.ObjectStreamClass): Class[_] = {
@@ -141,8 +147,13 @@ object Executor {
           instances = instances.toSet
         )
       }
-
-      lucene.Success(groups.toList)
+      
+      val (ns, list) = Timing.time {
+        groups.toList
+      }
+      
+      Logger.debug("groups retrieved: " + list.size + " (" + Timing.Seconds.format(ns) + ")")
+      lucene.Success(list)
     }
   }
 
