@@ -19,6 +19,7 @@ import edu.washington.cs.knowitall.common.Timing
 import edu.washington.cs.knowitall.common.Resource.using
 import edu.washington.cs.knowitall.tool.postag.PostaggedToken
 import edu.washington.cs.knowitall.tool.postag.Postagger
+import edu.washington.cs.knowitall.tool.stem.MorphaStemmer
 import models.Answer
 import models.AnswerTitle
 import models.AnswerTitlePart
@@ -62,7 +63,7 @@ object Executor {
     lazy val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
   }
   case object SolrSource extends FetchSource {
-    val solr = new HttpSolrServer("http://rv-n16.cs.washington.edu:8983/solr")
+    val solr = new HttpSolrServer("http://reliable.cs.washington.edu:8983/solr")
     solr.setSoTimeout(20000); // socket read timeout
     solr.setConnectionTimeout(20000);
     solr.setDefaultMaxConnectionsPerHost(100);
@@ -72,9 +73,8 @@ object Executor {
     solr.setMaxRetries(1); // defaults to 0.  > 1 not recommended.
 
     def fetch(spec: QuerySpec) = {
-      val squery = new SolrQuery();
-      val parts = (Iterable("arg1", "rel", "arg2") zip Iterable(spec.arg1, spec.rel, spec.arg2)).flatMap { case(a, b) =>
-        if (b.isEmpty) {
+      val squery = new SolrQuery()
+      val parts = (Iterable("arg1", "rel", "arg2", "arg1_types", "arg2_types", "arg1_entity", "arg2_entity") zip Iterable(spec.arg1, spec.rel , spec.arg2, spec.arg1Types, spec.arg2Types, spec.arg1Entity, spec.arg2Entity)).flatMap { case(a, b) => if (b.isEmpty) {
           None
         }
         else {
@@ -83,8 +83,9 @@ object Executor {
       val queryText = parts.map{case (field, value) => field + ":\"" + value + "\""}.mkString(" ")
       println(queryText)
       squery.setQuery(queryText)
+      squery.setSortField("size", SolrQuery.ORDER.desc)
       squery.setRows(1000)
-      squery.setTimeAllowed(20000)
+      squery.setTimeAllowed(10000)
       val response = try {
         Timing.timeThen {
           solr.query(squery)
@@ -119,7 +120,7 @@ object Executor {
             }
           },
           types =
-            if (!result.containsKey("arg1_types")) Set.empty
+            if (!result.containsKey("arg1_fulltypes")) Set.empty
             else result.getFieldValue("arg1_fulltypes").asInstanceOf[java.util.List[String]].asScala.map(FreeBaseType.parse(_).get).toSet)
 
         val arg2 = ExtractionArgument(
@@ -135,7 +136,7 @@ object Executor {
             }
           },
           types =
-            if (!result.containsKey("arg1_types")) Set.empty
+            if (!result.containsKey("arg2_fulltypes")) Set.empty
             else result.getFieldValue("arg2_fulltypes").asInstanceOf[java.util.List[String]].asScala.map(FreeBaseType.parse(_).get).toSet)
 
         val rel = ExtractionRelation(result.getFieldValue("rel_norm").asInstanceOf[String])
@@ -147,11 +148,11 @@ object Executor {
           instances = instances.toSet
         )
       }
-      
+
       val (ns, list) = Timing.time {
         groups.toList
       }
-      
+
       Logger.debug("groups retrieved: " + list.size + " (" + Timing.Seconds.format(ns) + ")")
       lucene.Success(list)
     }
