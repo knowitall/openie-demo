@@ -20,6 +20,7 @@ import edu.washington.cs.knowitall.common.Resource.using
 import edu.washington.cs.knowitall.tool.postag.PostaggedToken
 import edu.washington.cs.knowitall.tool.postag.Postagger
 import edu.washington.cs.knowitall.tool.stem.MorphaStemmer
+import edu.washington.cs.knowitall.tool.tokenize.OpenNlpTokenizer
 import models.Answer
 import models.AnswerTitle
 import models.AnswerTitlePart
@@ -47,6 +48,12 @@ import java.io.FileInputStream
 
 object Executor {
   type REG = ExtractionGroup[ReVerbExtraction]
+  
+  val tokenizer = {
+    Timing.timeThen {
+      new OpenNlpTokenizer()
+    } { ns => Logger.info("Initialized OpenNlpTokenizer (" + Timing.Seconds.format(ns) + ")") }
+  }
 
   sealed abstract class FetchSource
   case object LuceneSource extends FetchSource {
@@ -74,7 +81,16 @@ object Executor {
 
     def fetch(spec: QuerySpec) = {
       val squery = new SolrQuery()
-      val parts = (Iterable("arg1", "rel", "arg2", "arg1_types", "arg2_types", "arg1_entity", "arg2_entity") zip Iterable(spec.arg1, spec.rel , spec.arg2, spec.arg1Types, spec.arg2Types, spec.arg1Entity, spec.arg2Entity)).flatMap { case(a, b) => if (b.isEmpty) {
+      
+      def normalize(string: String) = {
+        val tokenized = tokenizer.synchronized {
+          tokenizer.tokenize(string)
+        }
+        
+        (tokenized.map(_.string) map MorphaStemmer.instance.lemmatize).mkString(" ")
+      }
+      
+      val parts = (Iterable("arg1", "rel", "arg2", "arg1_types", "arg2_types", "arg1_entity", "arg2_entity") zip Iterable(spec.arg1 map normalize, spec.rel map normalize, spec.arg2 map normalize, spec.arg1Types, spec.arg2Types, spec.arg1Entity, spec.arg2Entity)).flatMap { case(a, b) => if (b.isEmpty) {
           None
         }
         else {
