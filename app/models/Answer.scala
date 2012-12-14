@@ -48,6 +48,8 @@ object Answer {
       group: ExtractionGroup[ReVerbExtraction]=>AnswerTitle,
       fullParts: List[ExtractionPart]): Seq[Answer] = {
 
+    // create a title for each group
+    // then group by the title lemma or the entity name
     val groups = ((reg map (reg => ((group(reg), reg.instances.size), reg))).toList groupBy { case ((title, size), reg) =>
         def partText(part: AnswerTitlePart) = part.entity match {
           case Some(entity) => entity.name
@@ -64,8 +66,9 @@ object Answer {
           reg.instances.size
         }.sum
       }
-
-    // organize extraction groups by a title (group by answer)
+    
+    // create a title from the grouped ExtractionGroups
+    // this involves determining what entities and types to keep
     val collapsed: Seq[(AnswerTitle, Iterable[ExtractionGroup[ReVerbExtraction]])] = groups.map { case (text, list) =>
       val ((headTitle, headTitleSize), _) = list.head
 
@@ -139,7 +142,8 @@ object Answer {
       }.toList
 
       // The answer discards information about the extractions from the
-      // full part of the query.  However,
+      // full part of the query.  However, it's needed for the browser
+      // experience so we retain it here.
       val queryEntity = fullParts match {
         case part :: Nil =>
           val entities = instances.flatMap { inst =>
