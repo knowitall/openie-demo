@@ -112,19 +112,22 @@ object Executor {
       import scala.collection.JavaConverters._
 
       val groups = for (result <- response.getResults().iterator().asScala) yield {
-        val instances = using(new ByteArrayInputStream(result.getFieldValue("instances").asInstanceOf[Array[Byte]])) { is =>
-          using(new ObjectInputStream(is) {
-            override def resolveClass(desc: java.io.ObjectStreamClass): Class[_] = {
-              try { Class.forName(desc.getName, false, getClass.getClassLoader) }
-              catch { case ex: ClassNotFoundException => super.resolveClass(desc) }
+        val instances =
+          if (result.containsKey("instances")) {
+            using(new ByteArrayInputStream(result.getFieldValue("instances").asInstanceOf[Array[Byte]])) { is =>
+              using(new ObjectInputStream(is) {
+                override def resolveClass(desc: java.io.ObjectStreamClass): Class[_] = {
+                  try { Class.forName(desc.getName, false, getClass.getClassLoader) }
+                  catch { case ex: ClassNotFoundException => super.resolveClass(desc) }
+                }
+              }) { ois =>
+                ois.readObject().asInstanceOf[List[Instance[ReVerbExtraction]]]
+              }
             }
-          }) { ois =>
-            ois.readObject().asInstanceOf[List[Instance[ReVerbExtraction]]]
-          }
-        }
+          } else List.empty
 
         val arg1 = ExtractionArgument(
-          norm = result.getFieldValue("arg1_norm").asInstanceOf[String],
+          norm = result.getFieldValue("arg1").asInstanceOf[String],
           entity = {
             if (!result.containsKey("arg1_entity_id")) None
             else {
@@ -140,7 +143,7 @@ object Executor {
             else result.getFieldValue("arg1_fulltypes").asInstanceOf[java.util.List[String]].asScala.map(FreeBaseType.parse(_).get).toSet)
 
         val arg2 = ExtractionArgument(
-          norm = result.getFieldValue("arg2_norm").asInstanceOf[String],
+          norm = result.getFieldValue("arg2").asInstanceOf[String],
           entity = {
             if (!result.containsKey("arg2_entity_id")) None
             else {
@@ -155,7 +158,7 @@ object Executor {
             if (!result.containsKey("arg2_fulltypes")) Set.empty
             else result.getFieldValue("arg2_fulltypes").asInstanceOf[java.util.List[String]].asScala.map(FreeBaseType.parse(_).get).toSet)
 
-        val rel = ExtractionRelation(result.getFieldValue("rel_norm").asInstanceOf[String])
+        val rel = ExtractionRelation(result.getFieldValue("rel").asInstanceOf[String])
 
         ExtractionGroup[ReVerbExtraction](
           arg1 = arg1,
