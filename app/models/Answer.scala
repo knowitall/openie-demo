@@ -132,13 +132,13 @@ object Answer {
     collapsed.map { case (title, contents) =>
       val instances = (contents flatMap (c => c.instances.map((c, _)))).toList sortBy (- _._2.confidence)
       val list = instances.map { case (group, instance) =>
-        val sentence = instance.extraction.sentenceTokens.map(_.string)
-        val url = instance.extraction.sourceUrl
+        //val sentence = instance.extraction.sentenceTokens.map(_.string)
+        //val url = instance.extraction.sourceUrl
         val intervals = List(
-            instance.extraction.arg1Interval,
-            //instance.extraction.relInterval,
-            instance.extraction.arg2Interval)
-        Content(sentence.toList.map(Query.clean), url, intervals, instance.extraction.relText, instance.confidence, instance.corpus)
+            Interval.open(0, 1),
+            Interval.open(0, 1),
+            Interval.open(0, 1))
+        Content(List("foo", "bar"), "url", intervals, "rel", 1.0, "corpus")
       }.toList
 
       // The answer discards information about the extractions from the

@@ -70,7 +70,7 @@ object Executor {
     lazy val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
   }
   case object SolrSource extends FetchSource {
-    val solr = new HttpSolrServer("http://reliable.cs.washington.edu:8983/solr")
+    val solr = new HttpSolrServer("http://rv-n16.cs.washington.edu:8983/solr")
     solr.setSoTimeout(20000); // socket read timeout
     solr.setConnectionTimeout(20000);
     solr.setDefaultMaxConnectionsPerHost(100);
@@ -112,7 +112,11 @@ object Executor {
       import scala.collection.JavaConverters._
 
       val groups = for (result <- response.getResults().iterator().asScala) yield {
+        val size = result.getFieldValue("size").asInstanceOf[Int]
+        println(size)
+            
         val instances =
+          /*
           if (result.containsKey("instances")) {
             using(new ByteArrayInputStream(result.getFieldValue("instances").asInstanceOf[Array[Byte]])) { is =>
               using(new ObjectInputStream(is) {
@@ -124,7 +128,9 @@ object Executor {
                 ois.readObject().asInstanceOf[List[Instance[ReVerbExtraction]]]
               }
             }
-          } else List.empty
+          } else*/ Array.fill(size)(Instance[ReVerbExtraction](null, "corpus", 1.0)).toList
+          
+          println(instances.size)
 
         val arg1 = ExtractionArgument(
           norm = result.getFieldValue("arg1").asInstanceOf[String],
@@ -171,7 +177,7 @@ object Executor {
       val (ns, list) = Timing.time {
         groups.toList
       }
-
+      
       Logger.debug("groups retrieved: " + list.size + " (" + Timing.Seconds.format(ns) + ")")
       lucene.Success(list)
     }
@@ -205,9 +211,9 @@ object Executor {
     def group: REG => AnswerTitle = {
       def part(eg: REG, part: Symbol) = {
         part match {
-          case 'rel => AnswerTitlePart(eg.rel.norm, Relation, eg.instances.iterator.map(_.extraction.relText).map(Query.clean).toSeq, None, Set.empty)
-          case 'arg1 => AnswerTitlePart(eg.arg1.norm, Argument1, eg.instances.iterator.map(_.extraction.arg1Text).map(Query.clean).toSeq, eg.arg1.entity, eg.arg1.types.toSet)
-          case 'arg2 => AnswerTitlePart(eg.arg2.norm, Argument2, eg.instances.iterator.map(_.extraction.arg2Text).map(Query.clean).toSeq, eg.arg2.entity, eg.arg2.types.toSet)
+          case 'rel => AnswerTitlePart(eg.rel.norm, Relation, eg.rel.norm.split(" "), None, Set.empty)
+          case 'arg1 => AnswerTitlePart(eg.arg1.norm, Argument1, eg.arg1.norm.split(" "), eg.arg1.entity, eg.arg1.types.toSet)
+          case 'arg2 => AnswerTitlePart(eg.arg2.norm, Argument2, eg.arg2.norm.split(" "), eg.arg2.entity, eg.arg2.types.toSet)
         }
       }
       (query.arg1, query.rel, query.arg2) match {
@@ -397,7 +403,7 @@ object Executor {
     // apply backend deduplication
     // TODO: merge into index itself
     val (nsDeduped, deduped) = Timing.time {
-      regrouped map InstanceDeduplicator.deduplicate
+      regrouped// map InstanceDeduplicator.deduplicate
     }
     Logger.debug(spec.toString + " deduped with " + deduped.size + " answers (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsDeduped))
 
@@ -426,7 +432,7 @@ object Executor {
             arg1 = ExtractionArgument(Query.clean(reg.arg1.norm), arg1Entity, arg1Types),
             rel = reg.rel.copy(norm = Query.clean(reg.rel.norm)),
             arg2 = ExtractionArgument(Query.clean(reg.arg2.norm), arg2Entity, arg2Types))
-        }.toList filter filterGroups(spec) filter filterRelation(spec.relNorm) filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
+        }.toList filter filterGroups(spec) /*filter filterRelation(spec.relNorm)*/ filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
       }
 
     Logger.debug(spec.toString + " filtered with " + filtered.size + " answers in " + Timing.Seconds.format(nsFiltered))
