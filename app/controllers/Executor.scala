@@ -48,7 +48,11 @@ import java.io.FileInputStream
 
 object Executor {
   type REG = ExtractionGroup[ReVerbExtraction]
-  
+
+  val maxSearchGroups = 20000
+  val maxReadInstances = 10000
+  val queryTimeout = 10000
+
   val tokenizer = {
     Timing.timeThen {
       new OpenNlpTokenizer()
@@ -60,11 +64,11 @@ object Executor {
     lazy val fetcher = new lucene.ParallelExtractionGroupFetcher(
       paths,
       /* max search groups (20k)  */
-      20000,
+      maxSearchGroups,
       /* max read instances (10k) */
-      10000,
+      maxReadInstances,
       /* timout in millis (10s) */
-      10000)
+      queryTimeout)
   }
   case object ActorSource extends FetchSource {
     lazy val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
@@ -97,11 +101,12 @@ object Executor {
           Some("+" + a, b.get)
         }}
       val queryText = parts.map{case (field, value) => field + ":\"" + value + "\""}.mkString(" ")
-      println(queryText)
-      squery.setQuery(queryText)
+
+      Logger.debug("SOLR query: " + queryText)
+      squery.setQuery(queryText + " size:[50 TO *]")
       squery.setSortField("size", SolrQuery.ORDER.desc)
       squery.setRows(1000)
-      squery.setTimeAllowed(10000)
+      squery.setTimeAllowed(queryTimeout)
       val response = try {
         Timing.timeThen {
           solr.query(squery)
