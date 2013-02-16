@@ -9,6 +9,7 @@ object ApplicationBuild extends Build {
 
     val appDependencies = Seq(
       "edu.washington.cs.knowitall" % "openiedemo-backend" % "1.0.5-SNAPSHOT",
+      "edu.washington.cs.knowitall" % "browser-entitylinker" % "0.0.3-SNAPSHOT",
       "edu.washington.cs.knowitall.nlptools" % "nlptools-stem-morpha_2.9.2" % "2.2.4",
       "net.debasishg" % "sjson_2.9.1" % "0.17",
       "org.apache.solr" % "solr-solrj" % "4.0.0"

@@ -3,6 +3,7 @@ package controllers
 import java.util.regex.Pattern
 import java.io.ByteArrayInputStream
 import java.io.ObjectInputStream
+import edu.washington.cs.knowitall.browser.entity.CrosswikisCandidateFinder
 import edu.washington.cs.knowitall.browser.extraction.Extraction
 import edu.washington.cs.knowitall.browser.extraction.ExtractionArgument
 import edu.washington.cs.knowitall.browser.extraction.ExtractionRelation
@@ -51,14 +52,21 @@ object Executor {
 
   val maxSearchGroups = 20000
   val maxReadInstances = 10000
-  val queryTimeout = 10000
+  val queryTimeout = 60000
 
   val tokenizer = {
     Timing.timeThen {
       new OpenNlpTokenizer()
     } { ns => Logger.info("Initialized OpenNlpTokenizer (" + Timing.Seconds.format(ns) + ")") }
   }
-
+  val entityLinker = {
+    Timing.timeThen {
+      new CrosswikisCandidateFinder("/scratch2/", 0.15, 100)
+    } {
+      ns => Logger.info("Initialized CrosswikisCandidateFinder (" + Timing.Seconds.format(ns) + ")")
+    }
+  }
+  
   sealed abstract class FetchSource
   case object LuceneSource extends FetchSource {
     lazy val fetcher = new lucene.ParallelExtractionGroupFetcher(
@@ -74,9 +82,9 @@ object Executor {
     lazy val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
   }
   case object SolrSource extends FetchSource {
-    val solr = new HttpSolrServer("http://reliable.cs.washington.edu:8983/solr")
-    solr.setSoTimeout(20000); // socket read timeout
-    solr.setConnectionTimeout(20000);
+    val solr = new HttpSolrServer("http://rv-n14.cs.washington.edu:8985/solr")
+    solr.setSoTimeout(60000); // socket read timeout
+    solr.setConnectionTimeout(60000);
     solr.setDefaultMaxConnectionsPerHost(100);
     solr.setMaxTotalConnections(100);
     solr.setFollowRedirects(false); // defaults to false
@@ -84,6 +92,8 @@ object Executor {
     solr.setMaxRetries(1); // defaults to 0.  > 1 not recommended.
 
     def fetch(spec: QuerySpec) = {
+      import scala.collection.JavaConverters._
+
       val squery = new SolrQuery()
       
       def normalize(string: String) = {
@@ -94,13 +104,72 @@ object Executor {
         (tokenized.map(_.string) map MorphaStemmer.instance.lemmatize).mkString(" ")
       }
       
-      val parts = (Iterable("arg1", "rel", "arg2", "arg1_types", "arg2_types", "arg1_entity", "arg2_entity") zip Iterable(spec.arg1 map normalize, spec.rel map normalize, spec.arg2 map normalize, spec.arg1Types, spec.arg2Types, spec.arg1Entity, spec.arg2Entity)).flatMap { case(a, b) => if (b.isEmpty) {
+      /**
+       * If the entity was already specified (entitySpec), return that, otherwise, run the entity
+       * linker and return the best two entities. Result is of the form "(fbid1 OR fbid2 OR ...)" or
+       * just "fbid1".
+       */
+      def getEntityQuery(arg: String, entitySpec: Option[String]): Option[String] = {
+        if (entitySpec.isEmpty) {
+          // Get top 3 entities that match the arg according to Crosswikis lookup.
+          val fbidScores = entityLinker.linkToFbids(arg).asScala.take(3)
+          if (fbidScores.size == 0) {
+            None
+          } else {
+            Some("(" + fbidScores.map(_.one).mkString(" OR ") + ")")
+          }
+        } else {
+          entitySpec
+        }
+      }
+
+      /**
+       * Format arg query string so that it's of the form:
+       * " +(arg1:"bacterium" OR arg1_entity_id:(017q2 OR 0bt9lr))"
+       * (note leading space)
+       */
+      def getArgQuery(argFieldName: String, arg: Option[String],
+          entityFieldName: String, entitySpec: Option[String]): Option[String] = {
+        val normalizedArg = arg map normalize
+        arg match {
+          case Some(argString) => {
+            var result = ""
+            if (!normalizedArg.isEmpty) {
+              result = " +(" + argFieldName + ":\"" + normalizedArg.get + "\""
+            }
+            val entityQuery = getEntityQuery(argString, entitySpec) match {
+              case Some(str) => " OR " + entityFieldName + ":" + str
+              case None => ""
+            }
+            result += entityQuery + ")"
+            Some(result)
+          }
+          case None => None
+        }
+      }
+      
+      val parts = (
+        Iterable("rel", "arg1_types", "arg2_types")
+        zip Iterable(spec.rel map normalize, spec.arg1Types, spec.arg2Types)
+      ).flatMap { case(a, b) =>
+        if (b.isEmpty) {
           None
         }
         else {
           Some("+" + a, b.get)
-        }}
-      val queryText = parts.map{case (field, value) => field + ":\"" + value + "\""}.mkString(" ")
+        }
+      }
+
+      var queryText = parts.map{case (field, value) => field + ":\"" + value + "\""}.mkString(" ")
+      val arg1Query = getArgQuery("arg1", spec.arg1, "arg1_entity_id", spec.arg1Entity) match {
+        case Some(queryStr) => queryStr
+        case None => ""
+      }
+      val arg2Query = getArgQuery("arg2", spec.arg2, "arg2_entity_id", spec.arg2Entity) match {
+        case Some(queryStr) => queryStr
+        case None => ""
+      }
+      queryText += arg1Query + arg2Query
 
       Logger.debug("SOLR query: " + queryText)
       squery.setQuery(queryText + " size:[50 TO *]")
@@ -114,7 +183,6 @@ object Executor {
           Logger.debug("solr response received (" + Timing.Seconds.format(ns) + ")")
         }
       }
-      import scala.collection.JavaConverters._
 
       val groups = for (result <- response.getResults().iterator().asScala) yield {
         val instances = using(new ByteArrayInputStream(result.getFieldValue("instances").asInstanceOf[Array[Byte]])) { is =>
