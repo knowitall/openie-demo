@@ -13,5 +13,5 @@ GET     /logs                       controllers.Application.logsFromDate()
 GET     /logs/:year/:month/:day     controllers.Application.logs(year: Int, month: Int, day: Int)
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /robots.txt                 controllers.Assets.at(path="/public", file="/robots.txt")
+GET     /robots.txt                 controllers.Assets.at(path="/public", file="robots.txt")
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
