@@ -36,28 +36,24 @@ import models.TypeFilters
 object Executor {
   type REG = ExtractionGroup[ReVerbExtraction]
 
+  // parameters determining how deep to search
   val maxSearchGroups = 20000
   val maxReadInstances = 10000
   val queryTimeout = 10000
 
+  // where data is coming from
   final val SOURCE: FetchSource = SolrSource
 
+  // minimum thresholds for extraction groups
   final val CONFIDENCE_THRESHOLD: Double = 0.5
   final val ENTITY_SCORE_THRESHOLD: Double = 5.0
   final val MAX_ANSWER_LENGTH = 60
 
+  // a representation of the result set
   abstract class Result
   case class Success(groups: Seq[Answer]) extends Result
   case class Timeout(groups: Seq[Answer], hitCount: Int) extends Result
   case class Limited(groups: Seq[Answer], hitCount: Int) extends Result
-
-  def fetch(querySpec: QuerySpec): ResultSet = {
-    SOURCE match {
-      case LuceneSource => LuceneSource.fetcher.getGroups(querySpec)
-      case ActorSource => ActorSource.fetcher.fetch(querySpec)
-      case SolrSource => SolrSource.fetch(querySpec)
-    }
-  }
 
   def execute(query: Query): Result = {
     def group: REG => AnswerTitle = {
@@ -236,7 +232,7 @@ object Executor {
     // execute the query
     val spec = QuerySpec(queryTerms(query.arg1), queryTerms(query.rel), queryTerms(query.arg2), queryEntity(query.arg1), queryEntity(query.arg2), queryTypes(query.arg1), queryTypes(query.arg2), queryCorpora(query.corpora))
     val (nsQuery, result) = Timing.time {
-      fetch(spec)
+      SOURCE.fetch(spec)
     }
 
     // open up the retrieved case class

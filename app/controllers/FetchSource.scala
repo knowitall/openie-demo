@@ -29,7 +29,10 @@ import edu.washington.cs.knowitall.tool.tokenize.OpenNlpTokenizer
 import play.api.Logger
 import play.libs.Akka
 
-sealed abstract class FetchSource
+sealed abstract class FetchSource {
+  // a fetcher returns a ResultSet contains extraction groups
+  def fetch(querySpec: QuerySpec): lucene.ResultSet
+}
 
 object Fetch {
   val tokenizer = {
@@ -53,10 +56,15 @@ case object LuceneSource extends FetchSource {
     Executor.maxReadInstances,
     /* timout in millis (10s) */
     Executor.queryTimeout)
+  
+  override def fetch(querySpec: QuerySpec) = fetcher.getGroups(querySpec)
 }
+
 case object ActorSource extends FetchSource {
   lazy val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
+  override def fetch(querySpec: QuerySpec) = fetcher.fetch(querySpec)
 }
+
 case object SolrSource extends FetchSource {
   val solr = new HttpSolrServer("http://reliable.cs.washington.edu:8983/solr")
   solr.setSoTimeout(20000); // socket read timeout
@@ -67,7 +75,7 @@ case object SolrSource extends FetchSource {
   solr.setAllowCompression(true);
   solr.setMaxRetries(1); // defaults to 0.  > 1 not recommended.
 
-  def fetch(spec: QuerySpec) = {
+  override def fetch(spec: QuerySpec) = {
     val squery = new SolrQuery()
 
     def normalize(string: String) = {
@@ -99,8 +107,7 @@ case object SolrSource extends FetchSource {
         Logger.debug("solr response received (" + Timing.Seconds.format(ns) + ")")
       }
     }
-    import scala.collection.JavaConverters._
-
+    import scala.collection.JavaConverters._ 
     val groups = for (result <- response.getResults().iterator().asScala) yield {
       val instances = using(new ByteArrayInputStream(result.getFieldValue("instances").asInstanceOf[Array[Byte]])) { is =>
         using(new ObjectInputStream(is) {
