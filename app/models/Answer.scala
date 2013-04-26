@@ -27,7 +27,7 @@ case class AnswerTitle(connector: String, parts: Seq[AnswerTitlePart]) {
 }
 
 /** The Answer class represents a result in the Answer pane.
-  * 
+  *
   * @param  title  the title of this answer
   * @param  contents  the extractions and sources of this answer
   * @param  queryEntity  the entity for these extractions in the singular full section of the query
@@ -65,6 +65,7 @@ object Answer {
         }.sum
       }
 
+    // organize extraction groups by a title (group by answer)
     val collapsed: Seq[(AnswerTitle, Iterable[ExtractionGroup[ReVerbExtraction]])] = groups.map { case (text, list) =>
       val ((headTitle, headTitleSize), _) = list.head
 
@@ -80,11 +81,11 @@ object Answer {
           list.flatMap(_._1._1.parts(i).synonyms)(scala.collection.breakOut)
 
         // find the largest entity from the groups in this answer
-        val entities: Option[FreeBaseEntity] = list.flatMap { case ((title, size), _) => 
+        val entities: Option[FreeBaseEntity] = list.flatMap { case ((title, size), _) =>
           // turn the entities into a tuple with the groups' size
           title.parts(i).entity.map((_, size)) } match {
             case Nil => None
-            // group like entities and add their sizes.  We might have multiple 
+            // group like entities and add their sizes.  We might have multiple
             // groups that have the same entity and fit into the same answer.
             // Take the entity that has the largest size.
             case entities => Some(entities.mergeHistograms.maxBy(_._2)._1)
@@ -105,10 +106,10 @@ object Answer {
         }).map { case ((title, size), _) =>
             title.parts(i).types
         }.getOrElse(Set.empty)
-        
+
         // combine and remove base and user types
         val types = (if (!linkedTypes.isEmpty) linkedTypes else unlinkableTypes).filter(typ => typ.domain != "base" && typ.domain != "user")
-        
+
         // group the synonyms and order them by size, descending
         val sortedUniqueSynonyms =
           synonyms.groupBy(_.toLowerCase).toList.map { case (name, synonyms) =>
@@ -124,6 +125,7 @@ object Answer {
       (title, list.map(_._2))
     }
 
+    // convert to Content
     collapsed.map { case (title, contents) =>
       val instances = (contents flatMap (c => c.instances.map((c, _)))).toList sortBy (- _._2.confidence)
       val list = instances.map { case (group, instance) =>
@@ -135,11 +137,11 @@ object Answer {
             instance.extraction.arg2Interval)
         Content(sentence.toList.map(Query.clean), url, intervals, instance.extraction.relText, instance.confidence, instance.corpus)
       }.toList
-      
+
       // The answer discards information about the extractions from the
-      // full part of the query.  However, 
+      // full part of the query.  However,
       val queryEntity = fullParts match {
-        case part :: Nil => 
+        case part :: Nil =>
           val entities = instances.flatMap { inst =>
             part match {
               case Argument1 => inst._1.arg1.entity
@@ -153,7 +155,7 @@ object Answer {
           val collapsedEntities = entities.groupBy(_.fbid).toList.sortBy(_._2.size)(Ordering[Int].reverse).map { group =>
             group._2.maxBy(_.score)
           }
-          
+
           Exception.allCatch opt collapsedEntities.histogram.maxBy(_._2)._1
         case _ => None
       }

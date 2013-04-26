@@ -1,7 +1,6 @@
 package controllers
 
 import java.util.regex.Pattern
-import edu.washington.cs.knowitall.browser.extraction.Extraction
 import edu.washington.cs.knowitall.browser.extraction.ExtractionArgument
 import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
 import edu.washington.cs.knowitall.browser.extraction.FreeBaseEntity
@@ -12,9 +11,10 @@ import edu.washington.cs.knowitall.browser.extraction.ReVerbExtraction
 import edu.washington.cs.knowitall.browser.extraction.ReVerbExtractionGroup
 import edu.washington.cs.knowitall.browser.lucene
 import edu.washington.cs.knowitall.browser.lucene.QuerySpec
+import edu.washington.cs.knowitall.browser.lucene.ResultSet
 import edu.washington.cs.knowitall.common.Timing
 import edu.washington.cs.knowitall.tool.postag.PostaggedToken
-import edu.washington.cs.knowitall.tool.postag.Postagger.prepositions
+import edu.washington.cs.knowitall.tool.postag.Postagger
 import models.Answer
 import models.AnswerTitle
 import models.AnswerTitlePart
@@ -28,55 +28,32 @@ import models.Query.Fixed
 import models.Query.TermConstraint
 import models.Query.TypeConstraint
 import models.Relation
-import models.TypeFilters
 import models.TypeFilters.enrichFreeBaseType
 import play.api.Logger
-import akka.actor.TypedActor
-import play.libs.Akka
-import akka.actor.TypedProps
-import edu.washington.cs.knowitall.browser.lucene.LuceneFetcher
-import edu.washington.cs.knowitall.browser.lucene.ResultSet
+import edu.washington.cs.knowitall.browser.extraction.Extraction
+import models.TypeFilters
 
 object Executor {
   type REG = ExtractionGroup[ReVerbExtraction]
 
-  sealed abstract class FetchSource
-  case object LuceneSource extends FetchSource {
-    lazy val fetcher = new lucene.ParallelExtractionGroupFetcher(
-      paths,
-      /* max search groups (20k)  */
-      20000,
-      /* max read instances (10k) */
-      10000,
-      /* timout in millis (10s) */
-      10000)
-  }
-  case object ActorSource extends FetchSource {
-    lazy val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
-  }
+  // parameters determining how deep to search
+  val maxSearchGroups = 20000
+  val maxReadInstances = 10000
+  val queryTimeout = 10000
 
-  final val SOURCE: FetchSource = ActorSource
+  // where data is coming from
+  final val SOURCE: FetchSource = SolrSource
 
+  // minimum thresholds for extraction groups
   final val CONFIDENCE_THRESHOLD: Double = 0.5
   final val ENTITY_SCORE_THRESHOLD: Double = 5.0
   final val MAX_ANSWER_LENGTH = 60
 
+  // a representation of the result set
   abstract class Result
   case class Success(groups: Seq[Answer]) extends Result
   case class Timeout(groups: Seq[Answer], hitCount: Int) extends Result
   case class Limited(groups: Seq[Answer], hitCount: Int) extends Result
-
-  val paths = Seq("/scratch/common/openie-demo/index-1.0.4",
-    "/scratch2/common/openie-demo/index-1.0.4",
-    "/scratch3/common/openie-demo/index-1.0.4",
-    "/scratch4/common/openie-demo/index-1.0.4")
-
-  def fetch(querySpec: QuerySpec): ResultSet = {
-    SOURCE match {
-      case LuceneSource => LuceneSource.fetcher.getGroups(querySpec)
-      case ActorSource => ActorSource.fetcher.fetch(querySpec)
-    }
-  }
 
   def execute(query: Query): Result = {
     def group: REG => AnswerTitle = {
@@ -184,7 +161,7 @@ object Executor {
     def filterRelation(relNorm: Option[String])(group: ExtractionGroup[ReVerbExtraction]) = relNorm match {
       // if the query does not constrain rel, we can ignore this filter
       case Some(queryRelNorm) => {
-        val filteredRelNormTokens = (queryRelNorm.toLowerCase.split(" ").filter { str => !prepositions.contains(str) }).toSet
+        val filteredRelNormTokens = (queryRelNorm.toLowerCase.split(" ").filter { str => !(Postagger.prepositions contains str) }).toSet
         if (!filteredRelNormTokens.isEmpty) filterRelationHelper(filteredRelNormTokens, group) else true
       }
       case None => true
@@ -255,7 +232,7 @@ object Executor {
     // execute the query
     val spec = QuerySpec(queryTerms(query.arg1), queryTerms(query.rel), queryTerms(query.arg2), queryEntity(query.arg1), queryEntity(query.arg2), queryTypes(query.arg1), queryTypes(query.arg2), queryCorpora(query.corpora))
     val (nsQuery, result) = Timing.time {
-      fetch(spec)
+      SOURCE.fetch(spec)
     }
 
     // open up the retrieved case class
@@ -299,11 +276,11 @@ object Executor {
           val arg2Types = if (!arg2EntityRemoved) reg.arg2.types filter typeFilter else Set.empty[FreeBaseType]
 
           reg.copy(
-            instances = reg.instances filter filterCorpora filter filterInstances,
+            instances = reg.instances,// filter filterCorpora filter filterInstances,
             arg1 = ExtractionArgument(Query.clean(reg.arg1.norm), arg1Entity, arg1Types),
             rel = reg.rel.copy(norm = Query.clean(reg.rel.norm)),
             arg2 = ExtractionArgument(Query.clean(reg.arg2.norm), arg2Entity, arg2Types))
-        } filter filterGroups(spec) filter filterRelation(spec.relNorm) filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
+        }.toList filter filterGroups(spec) filter filterRelation(spec.relNorm) filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
       }
 
     Logger.debug(spec.toString + " filtered with " + filtered.size + " answers in " + Timing.Seconds.format(nsFiltered))
