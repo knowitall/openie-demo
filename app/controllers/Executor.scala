@@ -1,11 +1,8 @@
 package controllers
 
 import java.util.regex.Pattern
-import java.io.ByteArrayInputStream
-import java.io.ObjectInputStream
 import edu.washington.cs.knowitall.browser.extraction.Extraction
 import edu.washington.cs.knowitall.browser.extraction.ExtractionArgument
-import edu.washington.cs.knowitall.browser.extraction.ExtractionRelation
 import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
 import edu.washington.cs.knowitall.browser.extraction.FreeBaseEntity
 import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
@@ -16,9 +13,8 @@ import edu.washington.cs.knowitall.browser.extraction.ReVerbExtractionGroup
 import edu.washington.cs.knowitall.browser.lucene
 import edu.washington.cs.knowitall.browser.lucene.QuerySpec
 import edu.washington.cs.knowitall.common.Timing
-import edu.washington.cs.knowitall.common.Resource.using
 import edu.washington.cs.knowitall.tool.postag.PostaggedToken
-import edu.washington.cs.knowitall.tool.postag.Postagger
+import edu.washington.cs.knowitall.tool.postag.Postagger.prepositions
 import models.Answer
 import models.AnswerTitle
 import models.AnswerTitlePart
@@ -40,8 +36,6 @@ import play.libs.Akka
 import akka.actor.TypedProps
 import edu.washington.cs.knowitall.browser.lucene.LuceneFetcher
 import edu.washington.cs.knowitall.browser.lucene.ResultSet
-import org.apache.solr.client.solrj.impl.HttpSolrServer
-import org.apache.solr.client.solrj.SolrQuery
 
 object Executor {
   type REG = ExtractionGroup[ReVerbExtraction]
@@ -60,81 +54,8 @@ object Executor {
   case object ActorSource extends FetchSource {
     lazy val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
   }
-  case object SolrSource extends FetchSource {
-    val solr = new HttpSolrServer("http://rv-n16.cs.washington.edu:8983/solr")
-    solr.setSoTimeout(5000); // socket read timeout
-    solr.setConnectionTimeout(1000);
-    solr.setDefaultMaxConnectionsPerHost(100);
-    solr.setMaxTotalConnections(100);
-    solr.setFollowRedirects(false); // defaults to false
-    // allowCompression defaults to false.
-    // Server side must support gzip or deflate for this to have any effect.
-    solr.setAllowCompression(true);
-    solr.setMaxRetries(1); // defaults to 0.  > 1 not recommended.
 
-    def fetch(spec: QuerySpec) = {
-      val squery = new SolrQuery();
-      val parts = (Iterable("arg1", "rel", "arg2") zip Iterable(spec.arg1, spec.rel, spec.arg2)).filter(_._2.isDefined)
-      val queryText = parts.map{case (field, value) => field + ":" + value.get}.mkString(" ")
-      println(queryText)
-      squery.setQuery(queryText)
-      val response = solr.query(squery)
-      import scala.collection.JavaConverters._
-
-      val groups = for (result <- response.getResults().asScala) yield {
-      val instances = using(new ByteArrayInputStream(result.getFieldValue("instances").asInstanceOf[Array[Byte]])) { is =>
-          using (new ObjectInputStream(is)) { ois =>
-            ois.readObject().asInstanceOf[List[Instance[ReVerbExtraction]]]
-          }
-        }
-
-        val arg1 = ExtractionArgument(
-          norm = result.getFieldValue("arg1_norm").asInstanceOf[String],
-          entity = {
-            if (!result.containsKey("arg1_entity_id")) None
-            else {
-              val id = result.getFieldValue("arg1_entity_id").asInstanceOf[String]
-              val name = result.getFieldValue("arg1_entity_name").asInstanceOf[String]
-              val inlink_ratio = result.getFieldValue("arg1_entity_inlink_ratio").asInstanceOf[Double]
-              val score = result.getFieldValue("arg1_entity_inlink_score").asInstanceOf[Double]
-              Some(FreeBaseEntity(name, id, inlink_ratio, score))
-            }
-          },
-          types =
-            if (!result.containsKey("arg1_types")) Set.empty
-            else result.getFieldValue("arg1_fulltypes").asInstanceOf[java.util.List[String]].asScala.map(FreeBaseType.parse(_).get).toSet)
-
-        val arg2 = ExtractionArgument(
-          norm = result.getFieldValue("arg2_norm").asInstanceOf[String],
-          entity = {
-            if (!result.containsKey("arg2_entity_id")) None
-            else {
-              val id = result.getFieldValue("arg2_entity_id").asInstanceOf[String]
-              val name = result.getFieldValue("arg2_entity_name").asInstanceOf[String]
-              val inlink_ratio = result.getFieldValue("arg2_entity_inlink_ratio").asInstanceOf[Double]
-              val score = result.getFieldValue("arg2_entity_inlink_score").asInstanceOf[Double]
-              Some(FreeBaseEntity(name, id, inlink_ratio, score))
-            }
-          },
-          types =
-            if (!result.containsKey("arg1_types")) Set.empty
-            else result.getFieldValue("arg2_fulltypes").asInstanceOf[java.util.List[String]].asScala.map(FreeBaseType.parse(_).get).toSet)
-
-        val rel = ExtractionRelation(result.getFieldValue("rel_norm").asInstanceOf[String])
-
-        ExtractionGroup[ReVerbExtraction](
-          arg1 = arg1,
-          rel  = rel,
-          arg2 = arg2,
-          instances = instances.toSet
-        )
-      }
-
-      lucene.Success(groups.toList)
-    }
-  }
-
-  final val SOURCE: FetchSource = SolrSource
+  final val SOURCE: FetchSource = ActorSource
 
   final val CONFIDENCE_THRESHOLD: Double = 0.5
   final val ENTITY_SCORE_THRESHOLD: Double = 5.0
@@ -154,7 +75,6 @@ object Executor {
     SOURCE match {
       case LuceneSource => LuceneSource.fetcher.getGroups(querySpec)
       case ActorSource => ActorSource.fetcher.fetch(querySpec)
-      case SolrSource => SolrSource.fetch(querySpec)
     }
   }
 
@@ -264,7 +184,7 @@ object Executor {
     def filterRelation(relNorm: Option[String])(group: ExtractionGroup[ReVerbExtraction]) = relNorm match {
       // if the query does not constrain rel, we can ignore this filter
       case Some(queryRelNorm) => {
-        val filteredRelNormTokens = (queryRelNorm.toLowerCase.split(" ").filter { str => !(Postagger.prepositions contains str) }).toSet
+        val filteredRelNormTokens = (queryRelNorm.toLowerCase.split(" ").filter { str => !prepositions.contains(str) }).toSet
         if (!filteredRelNormTokens.isEmpty) filterRelationHelper(filteredRelNormTokens, group) else true
       }
       case None => true
@@ -379,11 +299,11 @@ object Executor {
           val arg2Types = if (!arg2EntityRemoved) reg.arg2.types filter typeFilter else Set.empty[FreeBaseType]
 
           reg.copy(
-            instances = reg.instances,// filter filterCorpora filter filterInstances,
+            instances = reg.instances filter filterCorpora filter filterInstances,
             arg1 = ExtractionArgument(Query.clean(reg.arg1.norm), arg1Entity, arg1Types),
             rel = reg.rel.copy(norm = Query.clean(reg.rel.norm)),
             arg2 = ExtractionArgument(Query.clean(reg.arg2.norm), arg2Entity, arg2Types))
-        }.toList //filter filterGroups(spec) filter filterRelation(spec.relNorm) filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
+        } filter filterGroups(spec) filter filterRelation(spec.relNorm) filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
       }
 
     Logger.debug(spec.toString + " filtered with " + filtered.size + " answers in " + Timing.Seconds.format(nsFiltered))
