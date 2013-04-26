@@ -6,7 +6,7 @@ import java.net.UnknownHostException
 import java.net.InetAddress
 import java.text.SimpleDateFormat
 
-import edu.washington.cs.knowitall.common.Resource.using
+import edu.knowitall.common.Resource.using
 
 import LogEntry.LOG_DIRECTORY_FILE
 import scala.util.control.Exception._

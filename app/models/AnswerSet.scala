@@ -1,8 +1,8 @@
 package models
 
 import scala.collection.immutable
-import edu.washington.cs.knowitall.browser.extraction.FreeBaseEntity
-import edu.washington.cs.knowitall.common.enrich.Traversables._
+import edu.knowitall.openie.models.FreeBaseEntity
+import edu.knowitall.common.enrich.Traversables._
 
 /** The Answer set is a collection of the answers.
   *

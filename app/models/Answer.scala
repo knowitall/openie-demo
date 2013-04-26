@@ -3,10 +3,10 @@ package models
 import scala.util.control.Exception
 import scala.Option.option2Iterable
 
-import edu.washington.cs.knowitall.browser.extraction.{ReVerbExtraction, FreeBaseType, FreeBaseEntity, ExtractionGroup}
-import edu.washington.cs.knowitall.collection.immutable.Interval
-import edu.washington.cs.knowitall.common.enrich.Traversables._
-import edu.washington.cs.knowitall.common.enrich.Traversables.traversableOncePairIntTo
+import edu.knowitall.openie.models.{ReVerbExtraction, FreeBaseType, FreeBaseEntity, ExtractionGroup}
+import edu.knowitall.collection.immutable.Interval
+import edu.knowitall.common.enrich.Traversables._
+import edu.knowitall.common.enrich.Traversables.traversableOncePairIntTo
 
 /** An Answer can have multiple parts, each being linked to a different entity. */
 @SerialVersionUID(42L)

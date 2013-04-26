@@ -1,8 +1,8 @@
 package controllers
 
-import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
-import edu.washington.cs.knowitall.common.Resource.using
-import edu.washington.cs.knowitall.common.Timing
+import edu.knowitall.openie.models.FreeBaseType
+import edu.knowitall.common.Resource.using
+import edu.knowitall.common.Timing
 import models.{ TypeFilters, Query, TypeFilter, PositiveTypeFilter, NegativeTypeFilter, LogEntry, AnswerSet }
 import play.api.Play.current
 import play.api.cache.Cache
@@ -12,12 +12,13 @@ import play.api.mvc.{ Controller, Action }
 import play.api.Logger
 import play.api.libs.concurrent
 import scala.util.control.Exception
-import edu.washington.cs.knowitall.browser.extraction.ExtractionGroupProtocol
+import edu.knowitall.openie.models.ExtractionGroupProtocol
 import sjson.json.JsonSerialization.tojson
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormatter
 import org.joda.time.format.DateTimeFormat
 import play.api.mvc.RequestHeader
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object Application extends Controller {
   final val PAGE_SIZE = 20
@@ -54,7 +55,7 @@ object Application extends Controller {
         Cache.set("footer", footer)
         footer
       } catch {
-        case e => Logger.error("Exception loading footer." + e); ""
+        case e: Exception => Logger.error("Exception loading footer." + e); ""
       }
 
     if (reload) {
@@ -101,9 +102,8 @@ object Application extends Controller {
     Ok(views.html.sentences(group, debug))
   }
 
-  def logsFromDate(date: DateTime = DateTime.now) = Action {
+  def logsFromDate(date: DateTime = DateTime.now) =
     logs(date.getYear, date.getMonthOfYear, date.getDayOfMonth)
-  }
 
   def logs(year: Int, month: Int, day: Int) = Action {
     val today = new DateTime(year, month, day, 0, 0, 0, 0)
@@ -161,14 +161,12 @@ object Application extends Controller {
   def doSearch(query: Query, filterString: String, pageNumber: Int, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
     val maxQueryTime = 20 * 1000 /* ms */
 
-    val answers = concurrent.Akka.future {
+    val answers = scala.concurrent.future {
       searchGroups(query, debug)
     }
 
     Async {
-      answers.orTimeout("Query timeout after " + maxQueryTime + " ms due to high server load.", maxQueryTime).map {
-        case Right(timeout) => Logger.warn(query.toString + " timed out after " + maxQueryTime + " ms"); InternalServerError(timeout)
-        case Left((answers, message)) =>
+      answers.map { case (answers, message) =>
           val filters: Set[TypeFilter] = filterString match {
             case "" | "all" => Set()
             case "misc" => answers.filters.map(_.filter).collect { case filter: PositiveTypeFilter => filter } .map(filter => NegativeTypeFilter(filter.typ, query.freeParts)).toSet

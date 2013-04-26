@@ -1,20 +1,20 @@
 package controllers
 
 import java.util.regex.Pattern
-import edu.washington.cs.knowitall.browser.extraction.ExtractionArgument
-import edu.washington.cs.knowitall.browser.extraction.ExtractionGroup
-import edu.washington.cs.knowitall.browser.extraction.FreeBaseEntity
-import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
-import edu.washington.cs.knowitall.browser.extraction.Instance
-import edu.washington.cs.knowitall.browser.extraction.InstanceDeduplicator
-import edu.washington.cs.knowitall.browser.extraction.ReVerbExtraction
-import edu.washington.cs.knowitall.browser.extraction.ReVerbExtractionGroup
-import edu.washington.cs.knowitall.browser.lucene
-import edu.washington.cs.knowitall.browser.lucene.QuerySpec
-import edu.washington.cs.knowitall.browser.lucene.ResultSet
-import edu.washington.cs.knowitall.common.Timing
-import edu.washington.cs.knowitall.tool.postag.PostaggedToken
-import edu.washington.cs.knowitall.tool.postag.Postagger
+import edu.knowitall.openie.models.ExtractionArgument
+import edu.knowitall.openie.models.ExtractionGroup
+import edu.knowitall.openie.models.FreeBaseEntity
+import edu.knowitall.openie.models.FreeBaseType
+import edu.knowitall.openie.models.Instance
+import edu.knowitall.openie.models.InstanceDeduplicator
+import edu.knowitall.openie.models.ReVerbExtraction
+import edu.knowitall.openie.models.ReVerbExtractionGroup
+import edu.knowitall.browser.lucene
+import edu.knowitall.browser.lucene.QuerySpec
+import edu.knowitall.browser.lucene.ResultSet
+import edu.knowitall.common.Timing
+import edu.knowitall.tool.postag.PostaggedToken
+import edu.knowitall.tool.postag.Postagger
 import models.Answer
 import models.AnswerTitle
 import models.AnswerTitlePart
@@ -30,7 +30,7 @@ import models.Query.TypeConstraint
 import models.Relation
 import models.TypeFilters.enrichFreeBaseType
 import play.api.Logger
-import edu.washington.cs.knowitall.browser.extraction.Extraction
+import edu.knowitall.openie.models.Extraction
 import models.TypeFilters
 
 object Executor {

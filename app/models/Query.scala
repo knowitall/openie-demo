@@ -3,18 +3,18 @@ package models
 import java.io.{ ObjectInputStream, FileInputStream, File }
 import java.util.regex.Pattern
 import scala.Option.option2Iterable
-import edu.washington.cs.knowitall.browser.extraction._
-import edu.washington.cs.knowitall.browser.lucene
-import edu.washington.cs.knowitall.browser.lucene.{ Timeout, Success, QuerySpec, LuceneFetcher, Limited }
-import edu.washington.cs.knowitall.common.Resource.using
-import edu.washington.cs.knowitall.common.Timing
+import edu.knowitall.openie.models._
+import edu.knowitall.browser.lucene
+import edu.knowitall.browser.lucene.{ Timeout, Success, QuerySpec, Limited }
+import edu.knowitall.common.Resource.using
+import edu.knowitall.common.Timing
 import Query._
 import akka.actor.{ TypedProps, TypedActor }
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import play.api.Logger
-import edu.washington.cs.knowitall.browser.extraction.InstanceDeduplicator
-import edu.washington.cs.knowitall.browser.extraction.ExtractionRelation
+import edu.knowitall.openie.models.InstanceDeduplicator
+import edu.knowitall.openie.models.ExtractionRelation
 import controllers.routes
 
 case class Query(
@@ -24,7 +24,7 @@ case class Query(
   corpora: Option[Query.CorporaConstraint]) {
 
   import Query._
-  import edu.washington.cs.knowitall.tool.postag.PostaggedToken
+  import edu.knowitall.tool.postag.PostaggedToken
 
   def arg1String = arg1.getOrElse("").toString
   def relString = rel.getOrElse("").toString

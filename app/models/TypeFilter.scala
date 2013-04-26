@@ -1,8 +1,8 @@
 package models
 
-import edu.washington.cs.knowitall.browser.extraction.FreeBaseType
-import edu.washington.cs.knowitall.common.enrich.Traversables.traversableOnceTo
-import edu.washington.cs.knowitall.common.Resource.using
+import edu.knowitall.openie.models.FreeBaseType
+import edu.knowitall.common.enrich.Traversables.traversableOnceTo
+import edu.knowitall.common.Resource.using
 import scala.io.Source
 
 sealed abstract trait TypeFilter {
