@@ -110,58 +110,63 @@ case object SolrSource extends FetchSource {
         Logger.debug("solr response received (" + Timing.Seconds.format(ns) + ")")
       }
     }
+
     import scala.collection.JavaConverters._
-    val groups = for (result <- response.getResults().iterator().asScala) yield {
+    val groups =
+      Timing.timeThen {
+        for (result <- response.getResults().asScala) yield {
+          val bytes = result.getFieldValue("instances").asInstanceOf[Array[Byte]]
+          val instances: List[Instance[ReVerbExtraction]] =
+            kryo.invert(bytes)
+              .getOrElse(throw new IllegalArgumentException("Could not deserialize instances: " + bytes.toSeq.toString))
+              .asInstanceOf[List[Instance[ReVerbExtraction]]]
 
-      val instances: List[Instance[ReVerbExtraction]] =
-        kryo.invert(result.getFieldValue("instances").asInstanceOf[Array[Byte]]).asInstanceOf[List[Instance[ReVerbExtraction]]]
+          val arg1 = ExtractionArgument(
+            norm = result.getFieldValue("arg1_norm").asInstanceOf[String],
+            entity = {
+              if (!result.containsKey("arg1_entity_id")) None
+              else {
+                val id = result.getFieldValue("arg1_entity_id").asInstanceOf[String]
+                val name = result.getFieldValue("arg1_entity_name").asInstanceOf[String]
+                val inlink_ratio = result.getFieldValue("arg1_entity_inlink_ratio").asInstanceOf[Double]
+                val score = result.getFieldValue("arg1_entity_score").asInstanceOf[Double]
+                Some(FreeBaseEntity(name, id, score, inlink_ratio))
+              }
+            },
+            types =
+              if (!result.containsKey("arg1_fulltypes")) Set.empty
+              else result.getFieldValue("arg1_fulltypes").asInstanceOf[java.util.List[String]].asScala.map(FreeBaseType.parse(_).get).toSet)
 
-      val arg1 = ExtractionArgument(
-        norm = result.getFieldValue("arg1_norm").asInstanceOf[String],
-        entity = {
-          if (!result.containsKey("arg1_entity_id")) None
-          else {
-            val id = result.getFieldValue("arg1_entity_id").asInstanceOf[String]
-            val name = result.getFieldValue("arg1_entity_name").asInstanceOf[String]
-            val inlink_ratio = result.getFieldValue("arg1_entity_inlink_ratio").asInstanceOf[Double]
-            val score = result.getFieldValue("arg1_entity_score").asInstanceOf[Double]
-            Some(FreeBaseEntity(name, id, score, inlink_ratio))
-          }
-        },
-        types =
-          if (!result.containsKey("arg1_fulltypes")) Set.empty
-          else result.getFieldValue("arg1_fulltypes").asInstanceOf[java.util.List[String]].asScala.map(FreeBaseType.parse(_).get).toSet)
+          val arg2 = ExtractionArgument(
+            norm = result.getFieldValue("arg2_norm").asInstanceOf[String],
+            entity = {
+              if (!result.containsKey("arg2_entity_id")) None
+              else {
+                val id = result.getFieldValue("arg2_entity_id").asInstanceOf[String]
+                val name = result.getFieldValue("arg2_entity_name").asInstanceOf[String]
+                val inlink_ratio = result.getFieldValue("arg2_entity_inlink_ratio").asInstanceOf[Double]
+                val score = result.getFieldValue("arg2_entity_score").asInstanceOf[Double]
+                Some(FreeBaseEntity(name, id, score, inlink_ratio))
+              }
+            },
+            types =
+              if (!result.containsKey("arg2_fulltypes")) Set.empty
+              else result.getFieldValue("arg2_fulltypes").asInstanceOf[java.util.List[String]].asScala.map(FreeBaseType.parse(_).get).toSet)
 
-      val arg2 = ExtractionArgument(
-        norm = result.getFieldValue("arg2_norm").asInstanceOf[String],
-        entity = {
-          if (!result.containsKey("arg2_entity_id")) None
-          else {
-            val id = result.getFieldValue("arg2_entity_id").asInstanceOf[String]
-            val name = result.getFieldValue("arg2_entity_name").asInstanceOf[String]
-            val inlink_ratio = result.getFieldValue("arg2_entity_inlink_ratio").asInstanceOf[Double]
-            val score = result.getFieldValue("arg2_entity_score").asInstanceOf[Double]
-            Some(FreeBaseEntity(name, id, score, inlink_ratio))
-          }
-        },
-        types =
-          if (!result.containsKey("arg2_fulltypes")) Set.empty
-          else result.getFieldValue("arg2_fulltypes").asInstanceOf[java.util.List[String]].asScala.map(FreeBaseType.parse(_).get).toSet)
+          val rel = ExtractionRelation(result.getFieldValue("rel_norm").asInstanceOf[String])
 
-      val rel = ExtractionRelation(result.getFieldValue("rel_norm").asInstanceOf[String])
-
-      ExtractionGroup[ReVerbExtraction](
-        arg1 = arg1,
-        rel = rel,
-        arg2 = arg2,
-        instances = instances.toSet)
+          ExtractionGroup[ReVerbExtraction](
+            arg1 = arg1,
+            rel = rel,
+            arg2 = arg2,
+            instances = instances.toSet)
+        }
+      }
+    { ns =>
+      Logger.debug("groups created from SOLR response (" + Timing.Seconds.format(ns) + ")")
     }
 
-    val (ns, list) = Timing.time {
-      groups.toList
-    }
-
-    Logger.debug("groups retrieved: " + list.size + " (" + Timing.Seconds.format(ns) + ")")
-    lucene.Success(list)
+    Logger.debug("groups retrieved: " + groups.size)
+    lucene.Success(groups.toList)
   }
 }

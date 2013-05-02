@@ -15,13 +15,13 @@
   </appender>
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>%coloredLevel %logger{15} - %message%n%xException{5}</pattern>
+      <pattern>%coloredLevel %logger - %message%n%xException{5}</pattern>
     </encoder>
   </appender>
   <logger name="play" level="INFO"/>
-  <logger name="application" level="INFO"/>
-  <logger name="edu.washington" level="DEBUG"/>
-  <root level="DEBUG">
+  <logger name="application" level="DEBUG"/>
+  <logger name="edu.knowitall" level="DEBUG"/>
+  <root level="INFO">
     <appender-ref ref="STDOUT"/>
     <appender-ref ref="FILE"/>
   </root>
