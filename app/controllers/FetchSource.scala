@@ -67,7 +67,9 @@ case object ActorSource extends FetchSource {
 */
 
 case object SolrSource extends FetchSource {
-  val solr = new HttpSolrServer("http://rv-n14.cs.washington.edu:8987/solr/")
+  import edu.knowitall.openie.models.serialize.Chill
+  val kryo = Chill.createInjection()
+  val solr = new HttpSolrServer("http://rv-n16.cs.washington.edu:8983/solr/")
   solr.setSoTimeout(20000); // socket read timeout
   solr.setConnectionTimeout(20000);
   solr.setDefaultMaxConnectionsPerHost(100);
@@ -110,16 +112,9 @@ case object SolrSource extends FetchSource {
     }
     import scala.collection.JavaConverters._
     val groups = for (result <- response.getResults().iterator().asScala) yield {
-      val instances = using(new ByteArrayInputStream(result.getFieldValue("instances").asInstanceOf[Array[Byte]])) { is =>
-        using(new ObjectInputStream(is) {
-          override def resolveClass(desc: java.io.ObjectStreamClass): Class[_] = {
-            try { Class.forName(desc.getName, false, getClass.getClassLoader) }
-            catch { case ex: ClassNotFoundException => super.resolveClass(desc) }
-          }
-        }) { ois =>
-          ois.readObject().asInstanceOf[List[Instance[ReVerbExtraction]]]
-        }
-      }
+
+      val instances: List[Instance[ReVerbExtraction]] =
+        kryo.invert(result.getFieldValue("instances").asInstanceOf[Array[Byte]]).asInstanceOf[List[Instance[ReVerbExtraction]]]
 
       val arg1 = ExtractionArgument(
         norm = result.getFieldValue("arg1_norm").asInstanceOf[String],
