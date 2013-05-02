@@ -1,24 +1,38 @@
 package controllers
 
-import edu.knowitall.openie.models.FreeBaseType
+import scala.annotation.implicitNotFound
+import scala.concurrent.ExecutionContext.Implicits.global
+import org.apache.commons.codec.binary.Base64
+import org.joda.time.DateTime
 import edu.knowitall.common.Resource.using
 import edu.knowitall.common.Timing
-import models.{ TypeFilters, Query, TypeFilter, PositiveTypeFilter, NegativeTypeFilter, LogEntry, AnswerSet }
+import edu.knowitall.openie.models.Extraction
+import edu.knowitall.openie.models.ExtractionGroupProtocol.listFormat
+import edu.knowitall.openie.models.FreeBaseType
+import edu.knowitall.openie.models.Instance
+import edu.knowitall.openie.models.InstanceProtocol.InstanceFormat
+import edu.knowitall.openie.models.serialize.Chill
+import models.AnswerSet
+import models.LogEntry
+import models.NegativeTypeFilter
+import models.PositiveTypeFilter
+import models.Query
+import models.TypeFilter
+import models.TypeFilters
+import play.api.Logger
 import play.api.Play.current
 import play.api.cache.Cache
-import play.api.data.Forms.{ text, optional, mapping }
 import play.api.data.Form
-import play.api.mvc.{ Controller, Action }
-import play.api.Logger
-import play.api.libs.concurrent
-import scala.util.control.Exception
-import edu.knowitall.openie.models.ExtractionGroupProtocol
-import sjson.json.JsonSerialization.tojson
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormatter
-import org.joda.time.format.DateTimeFormat
+import play.api.data.Forms.mapping
+import play.api.data.Forms.optional
+import play.api.data.Forms.text
+import play.api.mvc.Action
+import play.api.mvc.Controller
 import play.api.mvc.RequestHeader
-import scala.concurrent.ExecutionContext.Implicits.global
+import sjson.json.JsonSerialization.tojson
+import edu.knowitall.openie.models.ExtractionGroupProtocol
+import edu.knowitall.openie.models.InstanceProtocol
+import play.api.templates.Html
 
 object Application extends Controller {
   final val PAGE_SIZE = 20
@@ -89,6 +103,23 @@ object Application extends Controller {
   def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int, corpora: Option[String]) = Action {
     import ExtractionGroupProtocol._
     Ok(tojson(Executor.executeRaw(Query.fromStrings(arg1, rel, arg2, corpora).toLowerCase).take(count)).toString.replaceAll("[\\p{C}]",""))
+  }
+
+  def instancesJson() = Action { implicit request =>
+    Ok(Html("""<html><head><title>Instance Deserializer</title></head><body><h1>Instance Deserializer</h1><form method="POST"><textarea cols="80" rows="20" name="base64"></textarea><br /><input type="submit" /></body></html>"""))
+  }
+
+  case class InstanceInput(base64: String)
+  val instanceForm = Form((mapping("base64" -> text)(InstanceInput.apply)(InstanceInput.unapply)))
+  def instancesJsonSubmit() = Action { implicit request =>
+    val input = instanceForm.bindFromRequest().get
+    val base64 = input.base64
+
+    import InstanceProtocol._
+    val kryo = Chill.createInjection()
+    val bytes = Base64.decodeBase64(base64)
+    val instances = kryo.invert(bytes).get.asInstanceOf[List[Instance[Extraction]]]
+    Ok(tojson(instances.head).toString.replaceAll("[\\p{C}]",""))
   }
 
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean, corpora: Option[String]) = Action {

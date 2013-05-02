@@ -6,11 +6,15 @@
 GET     /                           controllers.Application.index(reload: Boolean ?= false)
 GET     /search                     controllers.Application.submit
 GET     /search/                    controllers.Application.search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String ?= "all", page: Int ?= 0, debug: Boolean ?= false, log: Boolean ?= true, corpora: Option[String] ?= None)
-GET     /json/                      controllers.Application.json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int ?= 25, corpora: Option[String] ?= None)
 GET     /results/                   controllers.Application.results(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String ?= "all", page: Int ?= 0, debug: Boolean ?= false, corpora: Option[String] ?= None)
 GET     /sentences/                 controllers.Application.sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean ?= false, corpora: Option[String] ?= None)
 GET     /logs                       controllers.Application.logsFromDate()
 GET     /logs/:year/:month/:day     controllers.Application.logs(year: Int, month: Int, day: Int)
+
+# Technical
+GET     /json/                      controllers.Application.json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int ?= 25, corpora: Option[String] ?= None)
+GET     /instances/                 controllers.Application.instancesJson
+POST    /instances/                 controllers.Application.instancesJsonSubmit
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /robots.txt                 controllers.Assets.at(path="/public", file="robots.txt")
