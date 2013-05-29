@@ -42,31 +42,6 @@ object Fetch {
   }
 }
 
-case object LuceneSource extends FetchSource {
-  val paths = Seq("/scratch/common/openie-demo/index-1.0.4",
-    "/scratch2/common/openie-demo/index-1.0.4",
-    "/scratch3/common/openie-demo/index-1.0.4",
-    "/scratch4/common/openie-demo/index-1.0.4")
-
-  lazy val fetcher = new lucene.ParallelExtractionGroupFetcher(
-    paths,
-    /* max search groups (20k)  */
-    Executor.maxSearchGroups,
-    /* max read instances (10k) */
-    Executor.maxReadInstances,
-    /* timout in millis (10s) */
-    Executor.queryTimeout)
-
-  override def fetch(querySpec: QuerySpec) = fetcher.getGroups(querySpec)
-}
-
-/*
-case object ActorSource extends FetchSource {
-  lazy val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor(current.configuration.getString("source.akka.url")))
-  override def fetch(querySpec: QuerySpec) = fetcher.fetch(querySpec)
-}
-*/
-
 case object SolrSource extends FetchSource {
   import edu.knowitall.openie.models.serialize.Chill
   val kryo = Chill.createInjection()
