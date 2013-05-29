@@ -12,7 +12,7 @@ object ApplicationBuild extends Build {
       "edu.washington.cs.knowitall.openie" %% "openie-models" % "1.0.0-SNAPSHOT",
       "edu.washington.cs.knowitall.nlptools" %% "nlptools-stem-morpha" % "2.4.1",
       "net.debasishg" %% "sjson" % "0.19",
-      "org.apache.solr" % "solr-solrj" % "4.2.1"
+      "org.apache.solr" % "solr-solrj" % "4.3.0"
     )
 
     val main = play.Project(appName, appVersion, appDependencies).settings(
