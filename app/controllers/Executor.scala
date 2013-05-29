@@ -74,7 +74,7 @@ object Executor {
 
         case (Some(_: Fixed), _, _) => (eg: REG) => AnswerTitle(" ", Seq(part(eg, 'rel), part(eg, 'arg2)))
         case (_, Some(_: Fixed), _) => (eg: REG) => AnswerTitle(", ", Seq(part(eg, 'arg1), part(eg, 'arg2)))
-        case (_, _, Some(_: Fixed)) => (eg: REG) => AnswerTitle(", ", Seq(part(eg, 'arg1), part(eg, 'rel)))
+        case (_, _, Some(_: Fixed)) => (eg: REG) => AnswerTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel)))
 
         case _ => (eg: REG) => AnswerTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
       }
