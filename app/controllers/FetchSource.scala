@@ -25,6 +25,7 @@ import edu.knowitall.common.Resource.using
 import edu.knowitall.common.Timing
 import edu.knowitall.tool.stem.MorphaStemmer
 import edu.knowitall.tool.tokenize.OpenNlpTokenizer
+import play.api.Play.current
 import play.api.Logger
 import play.libs.Akka
 
@@ -61,7 +62,7 @@ case object LuceneSource extends FetchSource {
 
 /*
 case object ActorSource extends FetchSource {
-  lazy val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor("akka://openie-lucene-server@reliable.cs.washington.edu:9002/user/fetcher"))
+  lazy val fetcher = TypedActor(Akka.system).typedActorOf(TypedProps[LuceneFetcher](), Akka.system.actorFor(current.configuration.getString("source.akka.url")))
   override def fetch(querySpec: QuerySpec) = fetcher.fetch(querySpec)
 }
 */
@@ -69,7 +70,7 @@ case object ActorSource extends FetchSource {
 case object SolrSource extends FetchSource {
   import edu.knowitall.openie.models.serialize.Chill
   val kryo = Chill.createInjection()
-  val solr = new HttpSolrServer("http://rv-n16.cs.washington.edu:8983/solr/")
+  val solr = new HttpSolrServer(current.configuration.getString("source.solr.url").get)
   solr.setSoTimeout(20000); // socket read timeout
   solr.setConnectionTimeout(20000);
   solr.setDefaultMaxConnectionsPerHost(100);
