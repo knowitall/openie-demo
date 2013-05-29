@@ -178,7 +178,7 @@ object Application extends Controller {
         // cache unless we had a timeout
         if (!result.isInstanceOf[Executor.Timeout]) {
           Logger.debug("Saving " + query.toString + " to cache.")
-          Cache.set(query.toString.toLowerCase, answers, 3600)
+          Cache.set(query.toString.toLowerCase, answers, 60 * 10)
         }
 
         (answers, message)
