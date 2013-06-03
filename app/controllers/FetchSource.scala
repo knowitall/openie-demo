@@ -60,6 +60,8 @@ case object SolrSource extends FetchSource {
   override def fetch(spec: QuerySpec) = {
     val squery = new SolrQuery()
 
+    def quote(string: String) = "\"" + string + "\""
+
     // turn a string into a query string.  We don't use a normalized field in SOLR
     // because extractions are grouped by lemmas--the actual text might be unique
     // between the instances--which one to use?
@@ -70,6 +72,15 @@ case object SolrSource extends FetchSource {
 
       (tokenized.map(_.string) map MorphaStemmer.lemmatize).mkString(" ")
     }
+    def normalizeOr(string: String) = {
+      val tokenized = Fetch.tokenizer.synchronized {
+        Fetch.tokenizer.tokenize(string)
+      }
+
+      val normalized = (tokenized.map(_.string) map MorphaStemmer.lemmatize).mkString(" ")
+      if (normalized != string) "(" + quote(normalized) + " OR " + quote(string) + ")"
+      else quote(normalized)
+    }
 
     // figure which fields we will query for
     // (fieldName, fieldValue)
@@ -77,9 +88,9 @@ case object SolrSource extends FetchSource {
         "arg1", "rel", "arg2",
         "arg1_types", "arg2_types",
         "arg1_entity", "arg2_entity") zip Iterable(
-            spec.arg1 map normalize, spec.rel map normalize, spec.arg2 map normalize,
-            spec.arg1Types, spec.arg2Types,
-            spec.arg1Entity, spec.arg2Entity)).flatMap {
+            spec.arg1 map normalizeOr, spec.rel map normalizeOr, spec.arg2 map normalizeOr,
+            spec.arg1Types map quote, spec.arg2Types map quote,
+            spec.arg1Entity map quote, spec.arg2Entity map quote)).flatMap {
       case (a, b) => if (b.isEmpty) {
         None
       } else {
@@ -88,7 +99,7 @@ case object SolrSource extends FetchSource {
     }
 
     // build the query text
-    val queryText = parts.map { case (field, value) => field + ":\"" + value + "\"" }.mkString(" ")
+    val queryText = parts.map { case (field, value) => field + ":" + value + "" }.mkString(" ")
 
     Logger.debug("SOLR query: " + queryText)
 
