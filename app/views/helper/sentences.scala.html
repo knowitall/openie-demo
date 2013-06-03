@@ -16,7 +16,7 @@
 			
 			@if(c.intervals.exists(_.end==c.strings.size)) {</b>}
 			<span style="color: #888">@{
-				if (c.corpus == "cw") {" (via ClueWeb09)"}
+				if (c.corpus == "cw") {" (via ClueWeb12)"}
 				else if (c.corpus == "g1b") {" (via Google)"}
 				else if (c.corpus == "wiki") {" (via Wikipedia)"}
 				else if (c.corpus == "news") {" (via News)"}
@@ -33,7 +33,7 @@
 		<div class="hover-source">
 			Extracted from the
 			@{c.corpus match {
-				case "cw" => { "ClueWeb09" }
+				case "cw" => { "ClueWeb12" }
 				case "g1b" => { "Google" }
 				case "wiki" => {"Wikipedia"}
 				case "news" => {"News"}
