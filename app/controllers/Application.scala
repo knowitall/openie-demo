@@ -164,8 +164,8 @@ object Application extends Controller {
 
         val (groups, message) = result match {
           case Executor.Success(groups) => (groups, None)
-          case Executor.Timeout(groups, count) => (groups, Some("timeout"))
-          case Executor.Limited(groups, count) => (groups, Some("results truncated"))
+          case Executor.Timeout(groups) => (groups, Some("timeout"))
+          case Executor.Limited(groups) => (groups, Some("results truncated"))
         }
 
         val answers = AnswerSet.from(query, groups, TypeFilters.fromGroups(query, groups, debug))
@@ -176,7 +176,7 @@ object Application extends Controller {
           " and " + groups.iterator.map(_.contents.size).sum + " sentences" + message.map(" (" + _ + ")").getOrElse(""))
 
         // cache unless we had a timeout
-        if (!result.isInstanceOf[Executor.Timeout]) {
+        if (!result.isInstanceOf[Executor.Timeout[_]]) {
           Logger.debug("Saving " + query.toString + " to cache.")
           Cache.set(query.toString.toLowerCase, answers, 60 * 10)
         }

@@ -2,14 +2,11 @@ package controllers
 
 import java.io.ByteArrayInputStream
 import java.io.ObjectInputStream
-
 import scala.Option.option2Iterable
 import scala.collection.JavaConverters.asScalaBufferConverter
 import scala.collection.JavaConverters.asScalaIteratorConverter
-
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.impl.HttpSolrServer
-
 import akka.actor.TypedActor
 import akka.actor.TypedProps
 import edu.knowitall.openie.models.ExtractionArgument
@@ -28,10 +25,11 @@ import edu.knowitall.tool.tokenize.OpenNlpTokenizer
 import play.api.Play.current
 import play.api.Logger
 import play.libs.Akka
+import controllers.Executor.{ Limited, Timeout, Success }
 
 sealed abstract class FetchSource {
   // a fetcher returns a ResultSet contains extraction groups
-  def fetch(querySpec: QuerySpec): lucene.ResultSet
+  def fetch(querySpec: QuerySpec): Executor.Result[ExtractionGroup[ReVerbExtraction]]
 }
 
 object Fetch {
@@ -43,14 +41,15 @@ object Fetch {
 }
 
 case object SolrSource extends FetchSource {
+  private final val SOLRQUERY_MAX_ROWS = 500
   import edu.knowitall.openie.models.serialize.Chill
 
   val kryo = Chill.createInjection()
   val solr = new HttpSolrServer(current.configuration.getString("source.solr.url").get)
 
   // SOLR settings
-  solr.setSoTimeout(20000); // socket read timeout
-  solr.setConnectionTimeout(20000);
+  solr.setSoTimeout(30000); // socket read timeout
+  solr.setConnectionTimeout(30000);
   solr.setDefaultMaxConnectionsPerHost(100);
   solr.setMaxTotalConnections(100);
   solr.setFollowRedirects(false); // defaults to false
@@ -106,7 +105,7 @@ case object SolrSource extends FetchSource {
     // set query options
     squery.setQuery(queryText + " size:[50 TO *]")
     squery.setSort("size", SolrQuery.ORDER.desc)
-    squery.setRows(1000)
+    squery.setRows(SOLRQUERY_MAX_ROWS)
     squery.setTimeAllowed(Executor.queryTimeout)
 
     // submit query and await response
@@ -119,11 +118,14 @@ case object SolrSource extends FetchSource {
       }
     }
 
+
     import scala.collection.JavaConverters._
-    val groups =
-      Timing.timeThen {
+    var resultSize = 0
+    val (ns, groups) =
+      Timing.time {
         // convert the results to ExtractionGroup[ReVerbExtraction]
         for (result <- response.getResults().asScala) yield {
+          resultSize += 1
           // deserialize instances
           val bytes = result.getFieldValue("instances").asInstanceOf[Array[Byte]]
           val instances: List[Instance[ReVerbExtraction]] =
@@ -165,11 +167,18 @@ case object SolrSource extends FetchSource {
             instances = instances.toSet)
         }
       }
-    { ns =>
-      Logger.debug("groups created from SOLR response (" + Timing.Seconds.format(ns) + ")")
-    }
 
+    Logger.debug("groups created from SOLR response (" + Timing.Seconds.format(ns) + ")")
     Logger.debug("groups retrieved: " + groups.size)
-    lucene.Success(groups.toList)
+
+    if (groups.size >= SOLRQUERY_MAX_ROWS) {
+      Limited(groups)
+    }
+    else if (ns / Timing.Seconds.divisor > Executor.queryTimeout) {
+      Timeout(groups)
+    }
+    else {
+      Success(groups)
+    }
   }
 }

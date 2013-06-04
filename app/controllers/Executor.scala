@@ -50,12 +50,12 @@ object Executor {
   final val MAX_ANSWER_LENGTH = 60
 
   // a representation of the result set
-  abstract class Result
-  case class Success(groups: Seq[Answer]) extends Result
-  case class Timeout(groups: Seq[Answer], hitCount: Int) extends Result
-  case class Limited(groups: Seq[Answer], hitCount: Int) extends Result
+  abstract class Result[T]
+  case class Success[T](groups: Seq[T]) extends Result[T]
+  case class Timeout[T](groups: Seq[T]) extends Result[T]
+  case class Limited[T](groups: Seq[T]) extends Result[T]
 
-  def execute(query: Query): Result = {
+  def execute(query: Query): Result[Answer] = {
     def group: REG => AnswerTitle = {
       def part(eg: REG, part: Symbol) = {
         part match {
@@ -87,15 +87,15 @@ object Executor {
     Logger.debug("Converted to %d answers in %s".format(groups.size, Timing.Seconds.format(nsGroups)))
 
     result match {
-      case lucene.Success(results) => Success(groups)
-      case lucene.Limited(results, hitCount) => Limited(groups, hitCount)
-      case lucene.Timeout(results, hitCount) => Timeout(groups, hitCount)
+      case Success(results) => Success(groups)
+      case Limited(results) => Limited(groups)
+      case Timeout(results) => Timeout(groups)
     }
   }
 
   def executeRaw(query: Query): List[ExtractionGroup[ReVerbExtraction]] = executeHelper(query)._2.sortBy(-_.instances.size)
 
-  private def executeHelper(query: Query): (lucene.ResultSet, List[ExtractionGroup[ReVerbExtraction]]) = {
+  private def executeHelper(query: Query): (Result[ExtractionGroup[ReVerbExtraction]], List[ExtractionGroup[ReVerbExtraction]]) = {
 
     def filterInstances(inst: Instance[ReVerbExtraction]): Boolean = {
       def clean(arg: String) = {
@@ -236,10 +236,10 @@ object Executor {
     }
 
     // open up the retrieved case class
-    val (results, hitCount) = result match {
-      case lucene.Success(results) => (results, results.size)
-      case lucene.Limited(results, hitCount) => (results, hitCount)
-      case lucene.Timeout(results, hitCount) => (results, hitCount)
+    val (results) = result match {
+      case Success(results) => (results)
+      case Limited(results) => (results)
+      case Timeout(results) => (results)
     }
     Logger.debug(spec.toString + " searched with " + results.size + " groups (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsQuery))
 
