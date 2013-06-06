@@ -18,6 +18,8 @@ object ApplicationBuild extends Build {
     val main = play.Project(appName, appVersion, appDependencies).settings(
       // Add your own project settings here
         resolvers ++= Seq(
+          "internal snapshot" at "http://knowitall.cs.washington.edu/maven2-snapshot/",
+          "internal release" at "http://knowitall.cs.washington.edu/maven2/"
         )
     )
 }
