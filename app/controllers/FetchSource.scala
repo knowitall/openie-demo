@@ -2,6 +2,7 @@ package controllers
 
 import java.io.ByteArrayInputStream
 import java.io.ObjectInputStream
+import scala.collection.mutable
 import scala.Option.option2Iterable
 import scala.collection.JavaConverters.asScalaBufferConverter
 import scala.collection.JavaConverters.asScalaIteratorConverter
@@ -26,6 +27,7 @@ import play.api.Play.current
 import play.api.Logger
 import play.libs.Akka
 import controllers.Executor.{ Limited, Timeout, Success }
+import com.twitter.bijection.Injection
 
 sealed abstract class FetchSource {
   // a fetcher returns a ResultSet contains extraction groups
@@ -44,7 +46,26 @@ case object SolrSource extends FetchSource {
   private final val SOLRQUERY_MAX_ROWS = 500
   import edu.knowitall.openie.models.serialize.Chill
 
-  val kryo = Chill.createInjection()
+  // KRYO is not threadsafe, so make a queue of instances
+  val kryos = {
+    val q = new mutable.SynchronizedQueue[Injection[AnyRef, Array[Byte]]]()
+    for (i <- 1 to 8) {
+      q.enqueue(Chill.createInjection())
+    }
+    q
+  }
+  def withElement[T >: Null, R](queue: mutable.SynchronizedQueue[T])(block: T=>R): R = {
+    var q: T = null
+    try {
+      q = queue.dequeue()
+      block(q)
+    }
+    finally {
+      if (q != null) {
+        queue.enqueue(q)
+      }
+    }
+  }
   val solr = new HttpSolrServer(current.configuration.getString("source.solr.url").get)
 
   // SOLR settings
@@ -123,48 +144,50 @@ case object SolrSource extends FetchSource {
     var resultSize = 0
     val (ns, groups) =
       Timing.time {
-        // convert the results to ExtractionGroup[ReVerbExtraction]
-        for (result <- response.getResults().asScala) yield {
-          resultSize += 1
-          // deserialize instances
-          val bytes = result.getFieldValue("instances").asInstanceOf[Array[Byte]]
-          val instances: List[Instance[ReVerbExtraction]] =
-            kryo.invert(bytes)
-              .getOrElse(throw new IllegalArgumentException("Could not deserialize instances: " + bytes.toSeq.toString))
-              .asInstanceOf[List[Instance[ReVerbExtraction]]]
+        withElement(kryos) { kryo =>
+          // convert the results to ExtractionGroup[ReVerbExtraction]
+          for (result <- response.getResults().asScala) yield {
+            resultSize += 1
+            // deserialize instances
+            val bytes = result.getFieldValue("instances").asInstanceOf[Array[Byte]]
+            val instances: List[Instance[ReVerbExtraction]] =
+              kryo.invert(bytes)
+                .getOrElse(throw new IllegalArgumentException("Could not deserialize instances: " + bytes.toSeq.toString))
+                .asInstanceOf[List[Instance[ReVerbExtraction]]]
 
-          def buildArgument(argName: String) = {
-            ExtractionArgument(
-              norm = result.getFieldValue(argName).asInstanceOf[String],
-              entity = {
-                // if there is an entity id, we have an entity
-                if (!result.containsKey(argName + "_entity_id")) None
-                else {
-                  val id = result.getFieldValue(argName + "_entity_id").asInstanceOf[String]
-                  val name = result.getFieldValue(argName + "_entity_name").asInstanceOf[String]
-                  val inlink_ratio = result.getFieldValue(argName + "_entity_inlink_ratio").asInstanceOf[Double]
-                  val score = result.getFieldValue(argName + "_entity_score").asInstanceOf[Double]
-                  Some(FreeBaseEntity(name, id, score, inlink_ratio))
-                }
-              },
-              types =
-                // if the set "fulltypes" is non-empty, we have types
-                if (!result.containsKey(argName + "_fulltypes")) Set.empty
-                else {
-                  val types = result.getFieldValue(argName + "_fulltypes").asInstanceOf[java.util.List[String]].asScala
-                  types.map(FreeBaseType.parse(_).get).toSet
-                })
+            def buildArgument(argName: String) = {
+              ExtractionArgument(
+                norm = result.getFieldValue(argName).asInstanceOf[String],
+                entity = {
+                  // if there is an entity id, we have an entity
+                  if (!result.containsKey(argName + "_entity_id")) None
+                  else {
+                    val id = result.getFieldValue(argName + "_entity_id").asInstanceOf[String]
+                    val name = result.getFieldValue(argName + "_entity_name").asInstanceOf[String]
+                    val inlink_ratio = result.getFieldValue(argName + "_entity_inlink_ratio").asInstanceOf[Double]
+                    val score = result.getFieldValue(argName + "_entity_score").asInstanceOf[Double]
+                    Some(FreeBaseEntity(name, id, score, inlink_ratio))
+                  }
+                },
+                types =
+                  // if the set "fulltypes" is non-empty, we have types
+                  if (!result.containsKey(argName + "_fulltypes")) Set.empty
+                  else {
+                    val types = result.getFieldValue(argName + "_fulltypes").asInstanceOf[java.util.List[String]].asScala
+                    types.map(FreeBaseType.parse(_).get).toSet
+                  })
+            }
+
+            val rel = ExtractionRelation(result.getFieldValue("rel").asInstanceOf[String])
+            val arg1 = buildArgument("arg1")
+            val arg2 = buildArgument("arg2")
+
+            ExtractionGroup[ReVerbExtraction](
+              arg1 = arg1,
+              rel = rel,
+              arg2 = arg2,
+              instances = instances.toSet)
           }
-
-          val rel = ExtractionRelation(result.getFieldValue("rel").asInstanceOf[String])
-          val arg1 = buildArgument("arg1")
-          val arg2 = buildArgument("arg2")
-
-          ExtractionGroup[ReVerbExtraction](
-            arg1 = arg1,
-            rel = rel,
-            arg2 = arg2,
-            instances = instances.toSet)
         }
       }
 
