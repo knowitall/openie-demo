@@ -90,8 +90,8 @@ object Application extends Controller {
   /**
     * Handle POST requests to search.
     */
-  def submit = Action { implicit request =>
-    val debug = request.queryString.get("debug").flatMap(_.headOption.map(_ == "1")).getOrElse(false)
+  def submit(debug: Boolean = false) = Action { implicit request =>
+    // val debug = request.queryString.get("debug").flatMap(_.headOption.map(_ == "1")).getOrElse(false)
 
     searchForm.bindFromRequest.fold(
       errors => BadRequest(views.html.index(errors, footer())),

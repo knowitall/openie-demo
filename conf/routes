@@ -4,7 +4,7 @@
 
 # Home page
 GET     /                           controllers.Application.index(reload: Boolean ?= false)
-GET     /search                     controllers.Application.submit
+GET     /search                     controllers.Application.submit(debug: Boolean ?= false)
 GET     /search/                    controllers.Application.search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String ?= "all", page: Int ?= 0, debug: Boolean ?= false, log: Boolean ?= true, corpora: Option[String] ?= None)
 GET     /results/                   controllers.Application.results(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String ?= "all", page: Int ?= 0, debug: Boolean ?= false, corpora: Option[String] ?= None)
 GET     /sentences/                 controllers.Application.sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean ?= false, corpora: Option[String] ?= None)

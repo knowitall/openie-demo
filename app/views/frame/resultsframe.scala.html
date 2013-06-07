@@ -3,7 +3,7 @@
 @import helper.twitterBootstrap._
 
 @helper.main("Open Information Extraction", compact=true) {
-  @helper.form(action = routes.Application.submit, 'class -> "well form-inline hidden-phone") {
+  @helper.form(action = routes.Application.submit(false), 'class -> "well form-inline hidden-phone") {
     <div class="results-form">
       <label for="arg1">Argument 1:</label>
       <span class="input">

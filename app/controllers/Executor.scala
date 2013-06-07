@@ -55,7 +55,7 @@ object Executor {
   case class Timeout[T](groups: Seq[T]) extends Result[T]
   case class Limited[T](groups: Seq[T]) extends Result[T]
 
-  def execute(query: Query): Result[Answer] = {
+  def execute(query: Query, entityScoreThreshold: Double = ENTITY_SCORE_THRESHOLD): Result[Answer] = {
     def group: REG => AnswerTitle = {
       def part(eg: REG, part: Symbol) = {
         part match {

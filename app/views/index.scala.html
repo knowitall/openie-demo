@@ -45,7 +45,7 @@
     </div>
     <div class="row" style="margin-top:2em;">  
       <div class="offset1">
-        @helper.form(action = routes.Application.submit) {
+        @helper.form(action = routes.Application.submit(false)) {
         <div class="search-arg">
         @helper.inputText(
             searchForm("arg1"),
