@@ -147,7 +147,7 @@ object Application extends Controller {
   def searchGroups(query: Query, debug: Boolean) = {
     Logger.debug("incoming " + query)
     Cache.getAs[AnswerSet](query.toString.toLowerCase) match {
-      case Some(answers) =>
+      case Some(answers) if !debug =>
         Logger.debug("retrieving " + query + " from cache")
 
         val AnswerSet(groups, filters, entities) = answers
@@ -158,7 +158,7 @@ object Application extends Controller {
           " with " + groups.size + " answers" +
           " and " + groups.iterator.map(_.contents.size).sum + " results")
         (answers, Some("cached"))
-      case None =>
+      case _ =>
         Logger.debug("executing " + query + " in lucene")
 
         // cache miss
