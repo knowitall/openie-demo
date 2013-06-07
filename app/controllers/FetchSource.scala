@@ -31,10 +31,11 @@ import com.twitter.bijection.Injection
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.TimeUnit
+import models.Query
 
 sealed abstract class FetchSource {
   // a fetcher returns a ResultSet contains extraction groups
-  def fetch(querySpec: QuerySpec): Executor.Result[ExtractionGroup[ReVerbExtraction]]
+  def fetch(query: Query): Executor.Result[ExtractionGroup[ReVerbExtraction]]
 }
 
 object Fetch {
@@ -81,9 +82,7 @@ case object SolrSource extends FetchSource {
   solr.setAllowCompression(true);
   solr.setMaxRetries(1); // defaults to 0.  > 1 not recommended.
 
-  override def fetch(spec: QuerySpec) = {
-    val squery = new SolrQuery()
-
+  def queryString(spec: Query) = {
     def quote(string: String) = "\"" + string + "\""
 
     // turn a string into a query string.  We don't use a normalized field in SOLR
@@ -112,9 +111,9 @@ case object SolrSource extends FetchSource {
         "arg1", "rel", "arg2",
         "arg1_types", "arg2_types",
         "arg1_entity", "arg2_entity") zip Iterable(
-            spec.arg1 map normalizeOr, spec.rel map normalizeOr, spec.arg2 map normalizeOr,
-            spec.arg1Types map quote, spec.arg2Types map quote,
-            spec.arg1Entity map quote, spec.arg2Entity map quote)).flatMap {
+            spec.arg1StringField map normalizeOr, spec.relStringField map normalizeOr, spec.arg2StringField map normalizeOr,
+            spec.arg1TypeField map quote, spec.arg2TypeField map quote,
+            spec.arg1EntityField map quote, spec.arg2EntityField map quote)).flatMap {
       case (a, b) => if (b.isEmpty) {
         None
       } else {
@@ -123,7 +122,13 @@ case object SolrSource extends FetchSource {
     }
 
     // build the query text
-    val queryText = parts.map { case (field, value) => field + ":" + value + "" }.mkString(" ")
+    parts.map { case (field, value) => field + ":" + value + "" }.mkString(" ")
+  }
+
+  override def fetch(query: Query) = {
+    val squery = new SolrQuery()
+
+    val queryText = queryString(query)
 
     Logger.debug("SOLR query: " + queryText)
 

@@ -91,9 +91,11 @@ object Application extends Controller {
     * Handle POST requests to search.
     */
   def submit = Action { implicit request =>
+    val debug = request.queryString.get("debug").flatMap(_.headOption.map(_ == "1")).getOrElse(false)
+
     searchForm.bindFromRequest.fold(
       errors => BadRequest(views.html.index(errors, footer())),
-      query => doSearch(query, "all", 0))
+      query => doSearch(query, "all", 0, debug=debug))
   }
 
   def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean, corpora: Option[String]) = Action { implicit request =>
@@ -190,6 +192,7 @@ object Application extends Controller {
   }
 
   def doSearch(query: Query, filterString: String, pageNumber: Int, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
+    println(debug)
     val maxQueryTime = 20 * 1000 /* ms */
 
     val answers = scala.concurrent.future {

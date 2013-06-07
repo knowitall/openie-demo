@@ -5,7 +5,7 @@ import java.util.regex.Pattern
 import scala.Option.option2Iterable
 import edu.knowitall.openie.models._
 import edu.knowitall.browser.lucene
-import edu.knowitall.browser.lucene.{ Timeout, Success, QuerySpec, Limited }
+import edu.knowitall.browser.lucene.{ Timeout, Success, Limited }
 import edu.knowitall.common.Resource.using
 import edu.knowitall.common.Timing
 import Query._
@@ -29,6 +29,40 @@ case class Query(
   def arg1String = arg1.getOrElse("").toString
   def relString = rel.getOrElse("").toString
   def arg2String = arg2.getOrElse("").toString
+
+  def arg1StringField: Option[String] = arg1 match {
+    case Some(TermConstraint(term)) => Some(term)
+    case _ => None
+  }
+  def relStringField: Option[String] = rel match {
+    case Some(TermConstraint(term)) => Some(term)
+    case _ => None
+  }
+  def arg2StringField: Option[String] = arg2 match {
+    case Some(TermConstraint(term)) => Some(term)
+    case _ => None
+  }
+  def arg1TypeField: Option[String] = arg1 match {
+    case Some(TypeConstraint(typ)) => Some(typ)
+    case _ => None
+  }
+  def arg2TypeField: Option[String] = arg2 match {
+    case Some(TypeConstraint(typ)) => Some(typ)
+    case _ => None
+  }
+  def arg1EntityField: Option[String] = arg1 match {
+    case Some(EntityConstraint(entity)) => Some(entity)
+    case _ => None
+  }
+  def arg2EntityField: Option[String] = arg2 match {
+    case Some(EntityConstraint(entity)) => Some(entity)
+    case _ => None
+  }
+  def corpusField: Option[String] = corpora match {
+    case Some(CorporaConstraint(corpString)) => Some(corpString)
+    case _ => None
+  }
+
 
   def toLowerCase: Query = {
     val lowerCasedQuery = Query(arg1.map(_.toLowerCase), rel.map(_.toLowerCase), arg2.map(_.toLowerCase), corpora)

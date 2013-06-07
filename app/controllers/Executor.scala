@@ -188,7 +188,7 @@ object Executor {
       !daysOfWeek.contains(group.arg2.norm)
     }
 
-    def filterGroups(spec: QuerySpec)(group: ExtractionGroup[_ <: Extraction]): Boolean = {
+    def filterGroups(group: ExtractionGroup[_ <: Extraction]): Boolean = {
       // if there are constraints, apply them to each part in case lucene messed up
       def filterPart(constraint: Option[Constraint], entity: Option[FreeBaseEntity], types: Iterable[FreeBaseType]) = {
         constraint.map {
@@ -209,30 +209,9 @@ object Executor {
       }
     }
 
-    def queryTerms(constraint: Option[Query.Constraint]): Option[String] = constraint match {
-      case Some(TermConstraint(term)) => Some(term)
-      case _ => None
-    }
-
-    def queryTypes(constraint: Option[Query.Constraint]): Option[String] = constraint match {
-      case Some(TypeConstraint(typ)) => Some(typ)
-      case _ => None
-    }
-
-    def queryEntity(constraint: Option[Query.Constraint]): Option[String] = constraint match {
-      case Some(EntityConstraint(entity)) => Some(entity)
-      case _ => None
-    }
-
-    def queryCorpora(constraint: Option[Query.CorporaConstraint]): Option[String] = constraint match {
-      case Some(CorporaConstraint(corpString)) => Some(corpString)
-      case _ => None
-    }
-
     // execute the query
-    val spec = QuerySpec(queryTerms(query.arg1), queryTerms(query.rel), queryTerms(query.arg2), queryEntity(query.arg1), queryEntity(query.arg2), queryTypes(query.arg1), queryTypes(query.arg2), queryCorpora(query.corpora))
     val (nsQuery, result) = Timing.time {
-      SOURCE.fetch(spec)
+      SOURCE.fetch(query)
     }
 
     // open up the retrieved case class
@@ -241,19 +220,19 @@ object Executor {
       case Limited(results) => (results)
       case Timeout(results) => (results)
     }
-    Logger.debug(spec.toString + " searched with " + results.size + " groups (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsQuery))
+    Logger.debug(query.toString + " searched with " + results.size + " groups (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsQuery))
 
     val (nsRegroup, regrouped) = Timing.time {
       ReVerbExtractionGroup.indexGroupingToFrontendGrouping(results)
     }
-    Logger.debug(spec.toString + " regrouped with " + regrouped.size + " answers (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsRegroup))
+    Logger.debug(query.toString + " regrouped with " + regrouped.size + " answers (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsRegroup))
 
     // apply backend deduplication
     // TODO: merge into index itself
     val (nsDeduped, deduped) = Timing.time {
       regrouped map InstanceDeduplicator.deduplicate
     }
-    Logger.debug(spec.toString + " deduped with " + deduped.size + " answers (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsDeduped))
+    Logger.debug(query.toString + " deduped with " + deduped.size + " answers (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsDeduped))
 
     def entityFilter(entity: FreeBaseEntity) =
       entity.score > ENTITY_SCORE_THRESHOLD
@@ -263,6 +242,8 @@ object Executor {
       typ.valid
     }
 
+    // // TODO: remove last need for QuerySpec
+    val spec = QuerySpec(query.arg1StringField, query.relStringField, query.arg2StringField, query.arg1TypeField, query.arg2TypeField, query.corpusField)
     val (nsFiltered, filtered: List[ExtractionGroup[ReVerbExtraction]]) =
       Timing.time {
         deduped.iterator.map { reg =>
@@ -280,10 +261,10 @@ object Executor {
             arg1 = ExtractionArgument(Query.clean(reg.arg1.norm), arg1Entity, arg1Types),
             rel = reg.rel.copy(norm = Query.clean(reg.rel.norm)),
             arg2 = ExtractionArgument(Query.clean(reg.arg2.norm), arg2Entity, arg2Types))
-        }.toList filter filterGroups(spec) filter filterRelation(spec.relNorm) filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
+        }.toList filter filterGroups filter filterRelation(spec.relNorm) filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
       }
 
-    Logger.debug(spec.toString + " filtered with " + filtered.size + " answers in " + Timing.Seconds.format(nsFiltered))
+    Logger.debug(query.toString + " filtered with " + filtered.size + " answers in " + Timing.Seconds.format(nsFiltered))
 
     (result, filtered)
   }

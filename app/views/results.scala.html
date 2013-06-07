@@ -5,6 +5,10 @@
 <!-- spinner for tabs -->
 <div id="tab-spinner" style="display:none"></div>
 
+<!-- query string -->
+@if(debug) {
+  <p style="font-weight: bold">@SolrSource.queryString(query)</p>
+}
 
 <!-- suggestions -->
 @helper.suggestions(query, answers.answerCount)
