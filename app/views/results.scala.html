@@ -7,7 +7,9 @@
 
 <!-- query string -->
 @if(debug) {
-  <p style="font-weight: bold">@SolrSource.queryString(query)</p>
+  @defining(SolrSource.queryString(query)) { query =>
+    <p style="font-weight: bold">SOLR Query: <a href="@SolrSource.solrUrl/select?q=@query">@query</a></p>
+  }
 }
 
 <!-- suggestions -->

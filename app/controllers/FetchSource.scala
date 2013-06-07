@@ -71,7 +71,10 @@ case object SolrSource extends FetchSource {
       }
     }
   }
-  val solr = new HttpSolrServer(current.configuration.getString("source.solr.url").get)
+  val solrUrl = current.configuration.getString("source.solr.url").getOrElse {
+    throw new Exception("Unspecified configuration 'source.solr.url'.")
+  }
+  val solr = new HttpSolrServer(solrUrl)
 
   // SOLR settings
   solr.setSoTimeout(30000); // socket read timeout
