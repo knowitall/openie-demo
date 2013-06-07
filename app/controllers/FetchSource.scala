@@ -28,6 +28,9 @@ import play.api.Logger
 import play.libs.Akka
 import controllers.Executor.{ Limited, Timeout, Success }
 import com.twitter.bijection.Injection
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.TimeUnit
 
 sealed abstract class FetchSource {
   // a fetcher returns a ResultSet contains extraction groups
@@ -48,21 +51,22 @@ case object SolrSource extends FetchSource {
 
   // KRYO is not threadsafe, so make a queue of instances
   val kryos = {
-    val q = new mutable.SynchronizedQueue[Injection[AnyRef, Array[Byte]]]()
-    for (i <- 1 to 8) {
-      q.enqueue(Chill.createInjection())
+    val capacity = 8
+    val q = new ArrayBlockingQueue[Injection[AnyRef, Array[Byte]]](capacity)
+    for (i <- 1 to capacity) {
+      q.offer(Chill.createInjection())
     }
     q
   }
-  def withElement[T >: Null, R](queue: mutable.SynchronizedQueue[T])(block: T=>R): R = {
+  def withElement[T >: Null, R](queue: BlockingQueue[T])(block: T=>R): R = {
     var q: T = null
     try {
-      q = queue.dequeue()
+      q = queue.poll(60, TimeUnit.SECONDS)
       block(q)
     }
     finally {
       if (q != null) {
-        queue.enqueue(q)
+        queue.offer(q)
       }
     }
   }
