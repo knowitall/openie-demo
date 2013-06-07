@@ -192,7 +192,6 @@ object Application extends Controller {
   }
 
   def doSearch(query: Query, filterString: String, pageNumber: Int, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
-    println(debug)
     val maxQueryTime = 20 * 1000 /* ms */
 
     val answers = scala.concurrent.future {
