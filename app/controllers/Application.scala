@@ -33,6 +33,7 @@ import sjson.json.JsonSerialization.tojson
 import edu.knowitall.openie.models.ExtractionGroupProtocol
 import edu.knowitall.openie.models.InstanceProtocol
 import play.api.templates.Html
+import controllers.Executor.ExecutionSettings
 
 object Application extends Controller {
   final val PAGE_SIZE = 20
@@ -87,19 +88,28 @@ object Application extends Controller {
     Ok(views.html.index(searchForm, footer(reloadFooter)))
   }
 
+  private def settingsFromRequest(debug: Boolean, request: play.api.mvc.Request[play.api.mvc.AnyContent]) = {
+    var settings = Executor.ExecutionSettings.default
+    if (debug) {
+      val entityThresh: Option[Double] = request.queryString.get("entityThresh").flatMap(_.headOption.map(_.toDouble))
+
+      entityThresh.foreach(thresh => settings = settings.copy(entityScoreThreshold = thresh))
+    }
+    settings
+  }
+
   /**
     * Handle POST requests to search.
     */
   def submit(debug: Boolean = false) = Action { implicit request =>
-    // val debug = request.queryString.get("debug").flatMap(_.headOption.map(_ == "1")).getOrElse(false)
-
     searchForm.bindFromRequest.fold(
       errors => BadRequest(views.html.index(errors, footer())),
-      query => doSearch(query, "all", 0, debug=debug))
+      query => doSearch(query, "all", 0, settingsFromRequest(debug, request), debug=debug))
   }
 
   def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean, corpora: Option[String]) = Action { implicit request =>
-    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filter, page, debug=debug, log=log)
+    val entityThresh: Option[Double] = request.queryString.get("entityThresh").flatMap(_.headOption.map(_.toDouble))
+    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
   }
 
   def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int, corpora: Option[String]) = Action {
@@ -127,7 +137,7 @@ object Application extends Controller {
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean, corpora: Option[String]) = Action {
     val query = Query.fromStrings(arg1, rel, arg2, corpora)
     Logger.info("Showing sentences for title " + title + " in " + query)
-    val group = searchGroups(query, debug)._1.groups.find(_.title.text == title) match {
+    val group = searchGroups(query, ExecutionSettings.default, debug)._1.groups.find(_.title.text == title) match {
       case None => throw new IllegalArgumentException("could not find group title: " + title)
       case Some(group) => group
     }
@@ -144,7 +154,7 @@ object Application extends Controller {
     Ok(views.html.logs(LogEntry.logs(year, month, day), today))
   }
 
-  def searchGroups(query: Query, debug: Boolean) = {
+  def searchGroups(query: Query, settings: ExecutionSettings, debug: Boolean) = {
     Logger.debug("incoming " + query)
     Cache.getAs[AnswerSet](query.toString.toLowerCase) match {
       case Some(answers) if !debug =>
@@ -162,7 +172,7 @@ object Application extends Controller {
         Logger.debug("executing " + query + " in lucene")
 
         // cache miss
-        val (ns, result) = Timing.time(Executor.execute(query.toLowerCase))
+        val (ns, result) = Timing.time(Executor.execute(query.toLowerCase, settings))
 
         val (groups, message) = result match {
           case Executor.Success(groups) => (groups, None)
@@ -188,14 +198,14 @@ object Application extends Controller {
   }
 
   def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, debug: Boolean = false, corpora: Option[String]) = Action { implicit request =>
-    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filterString, pageNumber, debug=debug, log=true, justResults=true)
+    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filterString, pageNumber, settingsFromRequest(debug, request), debug=debug, log=true, justResults=true)
   }
 
-  def doSearch(query: Query, filterString: String, pageNumber: Int, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
+  def doSearch(query: Query, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
     val maxQueryTime = 20 * 1000 /* ms */
 
     val answers = scala.concurrent.future {
-      searchGroups(query, debug)
+      searchGroups(query, settings, debug)
     }
 
     Async {

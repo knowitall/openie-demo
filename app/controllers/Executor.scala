@@ -45,9 +45,14 @@ object Executor {
   final val SOURCE: FetchSource = SolrSource
 
   // minimum thresholds for extraction groups
-  final val CONFIDENCE_THRESHOLD: Double = 0.5
-  final val ENTITY_SCORE_THRESHOLD: Double = 5.0
-  final val MAX_ANSWER_LENGTH = 60
+  case class ExecutionSettings(
+    val extractionConfidenceThreshold: Double = 0.5,
+    val entityScoreThreshold: Double = 5.0,
+    val maxAnswerLength: Int = 60
+  )
+  object ExecutionSettings {
+    val default = ExecutionSettings()
+  }
 
   // a representation of the result set
   abstract class Result[T]
@@ -55,7 +60,7 @@ object Executor {
   case class Timeout[T](groups: Seq[T]) extends Result[T]
   case class Limited[T](groups: Seq[T]) extends Result[T]
 
-  def execute(query: Query, entityScoreThreshold: Double = ENTITY_SCORE_THRESHOLD): Result[Answer] = {
+  def execute(query: Query, settings: ExecutionSettings = ExecutionSettings.default): Result[Answer] = {
     def group: REG => AnswerTitle = {
       def part(eg: REG, part: Symbol) = {
         part match {
@@ -80,7 +85,7 @@ object Executor {
       }
     }
 
-    val (result, converted) = executeHelper(query)
+    val (result, converted) = executeHelper(query, settings)
 
     val (nsGroups, groups) = Timing.time { Answer.fromExtractionGroups(converted.toList, group, query.fullParts).filter(!_.title.text.trim.isEmpty) }
 
@@ -93,9 +98,11 @@ object Executor {
     }
   }
 
-  def executeRaw(query: Query): List[ExtractionGroup[ReVerbExtraction]] = executeHelper(query)._2.sortBy(-_.instances.size)
+  def executeRaw(query: Query, settings: ExecutionSettings = ExecutionSettings.default): List[ExtractionGroup[ReVerbExtraction]] = executeHelper(query, settings)._2.sortBy(-_.instances.size)
 
-  private def executeHelper(query: Query): (Result[ExtractionGroup[ReVerbExtraction]], List[ExtractionGroup[ReVerbExtraction]]) = {
+  private def executeHelper(query: Query, settings: ExecutionSettings): (Result[ExtractionGroup[ReVerbExtraction]], List[ExtractionGroup[ReVerbExtraction]]) = {
+    def entityFilter(entity: FreeBaseEntity) =
+      entity.score > settings.entityScoreThreshold
 
     def filterInstances(inst: Instance[ReVerbExtraction]): Boolean = {
       def clean(arg: String) = {
@@ -127,7 +134,7 @@ object Executor {
       }
 
       def tooLong =
-        inst.extraction.arg1Text.length + inst.extraction.arg2Text.length + inst.extraction.relText.length > MAX_ANSWER_LENGTH
+        inst.extraction.arg1Text.length + inst.extraction.arg2Text.length + inst.extraction.relText.length > settings.maxAnswerLength
 
       def containsPronoun =
         pronouns.contains(arg1clean) || pronouns.contains(arg2clean)
@@ -139,7 +146,7 @@ object Executor {
       if (negative ||
         tooLong ||
         containsPronoun ||
-        inst.confidence < CONFIDENCE_THRESHOLD ||
+        inst.confidence < settings.extractionConfidenceThreshold ||
         (arg1clean.isEmpty || relclean.isEmpty || arg2clean.isEmpty) ||
         (arg1clean == arg2clean) ||
         (nonQuestionableChars.matcher(extr).replaceAll("").size >= 5) ||
@@ -233,9 +240,6 @@ object Executor {
       regrouped map InstanceDeduplicator.deduplicate
     }
     Logger.debug(query.toString + " deduped with " + deduped.size + " answers (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsDeduped))
-
-    def entityFilter(entity: FreeBaseEntity) =
-      entity.score > ENTITY_SCORE_THRESHOLD
 
     def typeFilter(typ: FreeBaseType) = {
       import TypeFilters._
