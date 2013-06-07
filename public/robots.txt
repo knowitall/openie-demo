@@ -1,4 +1,2 @@
 User-agent: *
-Crawl-delay: 180
-Disallow: /results/
-Disallow: /sentences/
+Disallow: /
