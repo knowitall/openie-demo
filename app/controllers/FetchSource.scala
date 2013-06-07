@@ -51,7 +51,7 @@ case object SolrSource extends FetchSource {
 
   // KRYO is not threadsafe, so make a queue of instances
   val kryos = {
-    val capacity = 8
+    val capacity = 4
     val q = new ArrayBlockingQueue[Injection[AnyRef, Array[Byte]]](capacity)
     for (i <- 1 to capacity) {
       q.offer(Chill.createInjection())
