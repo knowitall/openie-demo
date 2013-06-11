@@ -4,8 +4,7 @@ import java.io.ByteArrayInputStream
 import java.io.ObjectInputStream
 import scala.collection.mutable
 import scala.Option.option2Iterable
-import scala.collection.JavaConverters.asScalaBufferConverter
-import scala.collection.JavaConverters.asScalaIteratorConverter
+import scala.collection.JavaConverters._
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.impl.HttpSolrServer
 import akka.actor.TypedActor
@@ -143,29 +142,27 @@ case object SolrSource extends FetchSource {
 
     // submit query and await response
     // TODO: make async
-    val response = try {
-      Timing.timeThen {
-        solr.query(squery)
-      } { ns =>
-        Logger.debug("solr response received (" + Timing.Seconds.format(ns) + ")")
-      }
+    val (nsSolr, response) = Timing.time {
+      solr.query(squery).getResults()
     }
+    Logger.debug("SOLR response received (" + Timing.Seconds.format(nsSolr) + ")  NumFound: " + response.getNumFound() + "  Size: " + response.size())
 
 
-    import scala.collection.JavaConverters._
-    var resultSize = 0
+    var instanceSize: Int = 0
     val (ns, groups) =
       Timing.time {
         withElement(kryos) { kryo =>
           // convert the results to ExtractionGroup[ReVerbExtraction]
-          for (result <- response.getResults().asScala) yield {
-            resultSize += 1
+          for (result <- response.iterator.asScala if instanceSize < 20000) yield {
             // deserialize instances
             val bytes = result.getFieldValue("instances").asInstanceOf[Array[Byte]]
-            val instances: List[Instance[ReVerbExtraction]] =
+            val (nsKryo, instances: List[Instance[ReVerbExtraction]]) = Timing.time {
               kryo.invert(bytes)
                 .getOrElse(throw new IllegalArgumentException("Could not deserialize instances: " + bytes.toSeq.toString))
                 .asInstanceOf[List[Instance[ReVerbExtraction]]]
+            }
+            Logger.trace(s"Instances deserialized (${ Timing.Seconds.format(nsKryo) }) for (${ result.getFieldValue("text") }) from ${ bytes.size } bytes: ${ instances.size }")
+            instanceSize += instances.size
 
             def buildArgument(argName: String) = {
               ExtractionArgument(
@@ -200,13 +197,15 @@ case object SolrSource extends FetchSource {
               arg2 = arg2,
               instances = instances.toSet)
           }
-        }
+        }.toList
       }
 
     Logger.debug("groups created from SOLR response (" + Timing.Seconds.format(ns) + ")")
-    Logger.debug("groups retrieved: " + groups.size)
+    Logger.debug(s"$instanceSize instances from ${groups.size}/${response.size} groups")
 
-    if (groups.size >= SOLRQUERY_MAX_ROWS) {
+    // the result set is limited if SOLR limited the results or the
+    // instance limit limited the results
+    if (groups.size >= SOLRQUERY_MAX_ROWS || groups.size < response.size) {
       Limited(groups)
     }
     else if (ns / Timing.Seconds.divisor > Executor.queryTimeout) {
