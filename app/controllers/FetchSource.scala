@@ -26,7 +26,7 @@ import play.api.Play.current
 import play.api.Logger
 import play.libs.Akka
 import controllers.Executor.{ Limited, Timeout, Success }
-import com.twitter.bijection.Injection
+import com.twitter.bijection.Bijection
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.TimeUnit
@@ -52,9 +52,9 @@ case object SolrSource extends FetchSource {
   // KRYO is not threadsafe, so make a queue of instances
   val kryos = {
     val capacity = 4
-    val q = new ArrayBlockingQueue[Injection[AnyRef, Array[Byte]]](capacity)
+    val q = new ArrayBlockingQueue[Bijection[AnyRef, Array[Byte]]](capacity)
     for (i <- 1 to capacity) {
-      q.offer(Chill.createInjection())
+      q.offer(Chill.createBijection())
     }
     q
   }
@@ -158,8 +158,8 @@ case object SolrSource extends FetchSource {
             val bytes = result.getFieldValue("instances").asInstanceOf[Array[Byte]]
             val (nsKryo, instances: List[Instance[ReVerbExtraction]]) = Timing.time {
               kryo.invert(bytes)
-                .getOrElse(throw new IllegalArgumentException("Could not deserialize instances: " + bytes.toSeq.toString))
                 .asInstanceOf[List[Instance[ReVerbExtraction]]]
+                // throw new IllegalArgumentException("Could not deserialize instances: " + bytes.toSeq.toString)
             }
             Logger.trace(s"Instances deserialized (${ Timing.Seconds.format(nsKryo) }) for (${ result.getFieldValue("text") }) from ${ bytes.size } bytes: ${ instances.size }")
             instanceSize += instances.size

@@ -128,9 +128,9 @@ object Application extends Controller {
     val base64 = input.base64
 
     import InstanceProtocol._
-    val kryo = Chill.createInjection()
+    val kryo = Chill.createBijection()
     val bytes = Base64.decodeBase64(base64)
-    val instances = kryo.invert(bytes).get.asInstanceOf[List[Instance[Extraction]]]
+    val instances = kryo.invert(bytes).asInstanceOf[List[Instance[Extraction]]]
     Ok(tojson(instances.head).toString.replaceAll("[\\p{C}]",""))
   }
 
