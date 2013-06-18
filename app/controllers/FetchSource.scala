@@ -112,7 +112,7 @@ case object SolrSource extends FetchSource {
     val parts = (Iterable(
         "arg1", "rel", "arg2",
         "arg1_types", "arg2_types",
-        "arg1_entity", "arg2_entity") zip Iterable(
+        "arg1_entity_name", "arg2_entity_name") zip Iterable(
             spec.arg1StringField map normalizeOr, spec.relStringField map normalizeOr, spec.arg2StringField map normalizeOr,
             spec.arg1TypeField map quote, spec.arg2TypeField map quote,
             spec.arg1EntityField map quote, spec.arg2EntityField map quote)).flatMap {
