@@ -137,7 +137,7 @@ object Application extends Controller {
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean, corpora: Option[String]) = Action {
     val query = Query.fromStrings(arg1, rel, arg2, corpora)
     Logger.info("Showing sentences for title " + title + " in " + query)
-    val group = searchGroups(query, ExecutionSettings.default, debug)._1.groups.find(_.title.text == title) match {
+    val group = searchGroups(query, ExecutionSettings.default, debug)._1.answers.find(_.title.text == title) match {
       case None => throw new IllegalArgumentException("could not find group title: " + title)
       case Some(group) => group
     }
