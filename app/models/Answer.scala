@@ -34,7 +34,7 @@ case class AnswerTitle(connector: String, parts: Seq[AnswerTitlePart]) {
   * @param  queryEntity  the entity for these extractions in the singular full section of the query
   */
 @SerialVersionUID(44L)
-case class Answer(title: AnswerTitle, contents: List[Content], queryEntity: Option[FreeBaseEntity]) {
+case class Answer(title: AnswerTitle, contents: List[Content], queryEntity: List[(FreeBaseEntity, Int)]) {
   def contentsByRelation = contents.groupBy(_.rel).toList.sortBy{ case (r, cs) => -cs.size }
 }
 
@@ -159,24 +159,31 @@ object Answer {
 
           // The answer discards information about the extractions from the
           // full part of the query.  However,
-          val queryEntity = fullParts match {
+          val queryEntity: List[(FreeBaseEntity, Int)] = fullParts match {
             case part :: Nil =>
-              val entities = contents.flatMap { inst =>
+              val entities: Iterable[(FreeBaseEntity, Int)] = contents.flatMap { group =>
                 part match {
-                  case Argument1 => inst.arg1.entity
-                  case Argument2 => inst.arg2.entity
-                  case Relation => inst.rel.entity
+                  // map each option[entity] to option[entity, # of its entity]
+                  case Argument1 => group.arg1.entity.map((_, group.instances.size))
+                  case Argument2 => group.arg2.entity.map((_, group.instances.size))
+                  case Relation => group.rel.entity.map((_, group.instances.size))
                 }
               }
 
               // collapse entities with different scores together
-              // use the score from the best-linked entity
-              val collapsedEntities = entities.groupBy(_.fbid).toList.sortBy(_._2.size)(Ordering[Int].reverse).map { group =>
-                group._2.maxBy(_.score)
+              // use the score from the best-linked entity 
+              val collapsedEntities = entities.groupBy(_._1.fbid).toList.map { case (fbid, entities) =>
+                // use the highest score entity for each entity
+                val entity = entities.maxBy{ case (entity, count) => entity.score }._1
+                // sum the count of the entities
+                val count = entities.iterator.map { case (entity, count) => count }.sum
+                (entity, count)
               }
 
-              Exception.allCatch opt collapsedEntities.histogram.maxBy(_._2)._1
-            case _ => None
+              // sum the number of counts for each entity, and return a list
+              // of (entity, # of that entity)
+              collapsedEntities.mergeHistograms.toList.sortBy(_._2)(Ordering[Int].reverse)
+            case _ => Nil
           }
 
           Answer(title, list, queryEntity)
