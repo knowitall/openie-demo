@@ -174,16 +174,16 @@
   display: inline-block;
 }
 
-#query-card {
+[id^=query-card] {
   overflow: hidden;
 }
 
-#query-card img {
+[id^=query-card] img {
   float: left;
   margin-right: 5px;
 }
 
-#query-card-spinner {
+[id^=query-card-spinner] {
   width: 100px;
   height: 100px;
   background: white;

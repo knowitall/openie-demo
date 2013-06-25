@@ -2,6 +2,15 @@
 
 @import helper.twitterBootstrap._
 
+  <div class="row">
+    <!-- if the query is a linked entity, insert a knowledge card about it -->
+    @{answers.queryEntities.headOption filter {case(e, n) => n > 2} match {
+        case Some((fbEntity,count)) => Html("<div id='query-card' class='offset1 span10' data-attr='"+fbEntity.fbid+"'><h3>"+fbEntity.name+"</h3><div id='query-card-spinner'></div></div>")
+        case None => ""
+      }
+    }
+  </div>
+
 <!-- spinner for tabs -->
 <div id="tab-spinner" style="display:none"></div>
 
@@ -59,7 +68,7 @@
 	<!-- left tabs with entities -->
 	<div class="tabbable tabs-left">
 		<ul class="nav nav-tabs">
-			@for((answer, i) <- answers.groups.zipWithIndex) {
+			@for((answer, i) <- answers.answers.zipWithIndex) {
 			<li class="hidden-phone"><a href="#L@{i}" class="answer" data-toggle="tab" data-fbid="@{answer.title.parts.map(_.entity.map(_.fbid).getOrElse("")).mkString(";")}">@helper.grouptitle(answer.title, debug) (@answer.contents.size)</a></li>
 			<li class="visible-phone"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), answer.title.text, debug)}" class="answer">@Html(answer.title.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", ")) (@answer.contents.size)</a></li>
 			}
@@ -67,7 +76,7 @@
 
 		<!-- tab content -->
 		<div class="tab-content hidden-phone">
-			@for((answer, i) <- answers.groups.zipWithIndex) {
+			@for((answer, i) <- answers.answers.zipWithIndex) {
 				<div class="tab-pane" id="L@{i}">
 					<div class="close-tab"><a href="#close@{i}" class="close-tab" title="close sentences"><i class="icon-remove"></i></a></div>
 					@helper.cardtab(query, answer, i, maxSentenceCount, debug)
