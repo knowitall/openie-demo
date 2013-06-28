@@ -3,15 +3,21 @@
 @import helper.twitterBootstrap._
 	
 <!-- print out all queryEntities with knowledge cards about them -->
-@for((entity, index) <- answers.queryEntities.zipWithIndex){
-    <div class='row'>
-    @{Option(entity._1) match {
-      case Some(fbe) => Html("<div id='query-card-"+index+"' class='offset1 span10' data-attr='"+fbe.fbid+"'><h3>"+fbe.name+ " (" + entity._2 + ") " +"</h3><div id='query-card-spinner-"+index+"'></div></div>")
-      case None => ""
-      }
-    }
-    </div><br/>
+@for(((fbe, entityCount), index) <- answers.queryEntities.zipWithIndex){
+    <!-- choose a cut-off to filter out the entities that have few 
+    results, and only display to a max of 7 entities -->
+    @if(index < 7 && entityCount > 5){
+    	<!-- display entities with big # of results -->
+	    <div class='row'>
+	    <div id='query-card-@index' class='offset1 span10' data-attr='@fbe.fbid'><a href="@{routes.Application.results(Option("entity:"+fbe.name), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno - 1, debug)}"><h3>@fbe.name (@entityCount)</h3></a><div id='query-card-spinner-@index'></div></div>
+	    </div>
+	}
 }
+
+<!-- display a "All" link with a query of un-linked entity -->
+<div class='row'>
+	<a href="@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno, false, debug)}"><h3>Search for all</h3></a>
+</div>
 	
 <script type="text/javascript">
 // spinner options presets
@@ -44,20 +50,22 @@ var tabSpin = function(params) {
 	tabto(params);
 }
 
+//get the response from freeBase and append it to the query-card
 var getJson = function(index, id) {
-	$.getJSON("https://www.googleapis.com/freebase/v1/text/m/"+id+"?format=plain&lang=en&maxlength=1000&callback=?", function(response) {
+	$.getJSON("https://www.googleapis.com/freebase/v1/text/m/"+id+"?format=plain&lang=en&maxlength=500&callback=?", function(response) {
 		if (response != undefined && response.result != undefined) {
 			// stop spinner
 			$("#query-card-spinner-"+index).data("spinner").stop();
 			$("#query-card-spinner-"+index).hide();
 
-			$("#query-card-"+index).append("<div><img src=\"https://usercontent.googleapis.com/freebase/v1/image/m/"+id+"?maxheight=150&maxwidth=150\">");
+			$("#query-card-"+index).append("<div class='query-card-content'><img src=\"https://usercontent.googleapis.com/freebase/v1/image/m/"+id+"?maxheight=150&maxwidth=150\">");
 			$("#query-card-"+index).append(response.result + "<a href=\"http://www.freebase.com/view/m/" +id+ "\">read more</a></div>");
 				
 		}
 	})
 }
 		
+//load the knowledge cards for the entities		
 var numberOfEntities = $(".row");
 
 for(var i = 0;i<numberOfEntities.length;i++){

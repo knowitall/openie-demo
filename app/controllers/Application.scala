@@ -197,11 +197,11 @@ object Application extends Controller {
     }
   }
 
-  def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, debug: Boolean = false, corpora: Option[String]) = Action { implicit request =>
-    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filterString, pageNumber, settingsFromRequest(debug, request), debug=debug, log=true, justResults=true)
+  def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, disambiguate: Boolean, debug: Boolean = false, corpora: Option[String]) = Action { implicit request =>
+    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filterString, pageNumber, settingsFromRequest(debug, request), disambiguate, debug=debug, log=true, justResults=false)
   }
 
-  def doSearch(query: Query, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
+  def doSearch(query: Query, filterString: String, pageNumber: Int, settings: ExecutionSettings, disambiguate: Boolean = true, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
     val maxQueryTime = 20 * 1000 /* ms */
 
     val answers = scala.concurrent.future {
@@ -225,16 +225,27 @@ object Application extends Controller {
             entry.log()
           }
 
+          
           if (justResults) {
-            Ok(
-              views.html.disambiguate(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug))
-                //views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug))
+            if(disambiguate) {
+              Ok(
+                views.html.disambiguate(query, filtered, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug))
+            }else{
+              Ok(
+                views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)) 
+            }
           } else {
-            Ok(
-              views.html.frame.resultsframe(
-                searchForm, query, message, page, filtered.answerCount, filtered.sentenceCount)(
-                  views.html.disambiguate(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
-                  //views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+            if(disambiguate) {
+        	  Ok(
+                views.html.frame.resultsframe(
+                  searchForm, query, message, filtered, filtered.answerCount, filtered.sentenceCount)(
+                    views.html.disambiguate(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+            }else{
+              Ok(
+                views.html.frame.resultsframe(
+                  searchForm, query, message, page, filtered.answerCount, filtered.sentenceCount)(
+                    views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+            }
           }
       }
     }

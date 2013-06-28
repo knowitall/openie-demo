@@ -127,7 +127,7 @@
 }
 
 #stats {
-  margin: 1em 0;
+  margin: 0.5em 0;
 }
 
 .tab-content blockquote {
@@ -174,13 +174,10 @@
   display: inline-block;
 }
 
-[id^=query-card] {
-  overflow: hidden;
-}
-
 [id^=query-card] img {
   float: left;
   margin-right: 5px;
+  margin-right: 20px;
 }
 
 [id^=query-card-spinner] {
@@ -189,6 +186,10 @@
   background: white;
   margin: auto auto;
   display: none;
+}
+
+.query-card-content {
+  font-size: 15px;
 }
 
 .tab-pane ul {
