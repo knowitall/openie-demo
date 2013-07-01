@@ -1,17 +1,12 @@
-@(query: Query, answers: AnswerSet, filters: Set[TypeFilter], filterString: String, pageno: Int, pageCount: Int, maxSentenceCount: Int, debug: Boolean)
+@(query: Query, entities: List[((edu.knowitall.openie.models.FreeBaseEntity, Int), Int)], filters: Set[TypeFilter], filterString: String, pageno: Int, pageCount: Int, maxSentenceCount: Int, debug: Boolean)
 
 @import helper.twitterBootstrap._
 	
 <!-- print out all queryEntities with knowledge cards about them -->
-@for(((fbe, entityCount), index) <- answers.queryEntities.zipWithIndex){
-    <!-- choose a cut-off to filter out the entities that have few 
-    results, and only display to a max of 7 entities -->
-    @if(index < 7 && entityCount > 5){
-    	<!-- display entities with big # of results -->
+@for(((fbe, entityCount), index) <- entities){
 	    <div class='row'>
-	    <div id='query-card-@index' class='offset1 span10' data-attr='@fbe.fbid'><a href="@{routes.Application.results(Option("entity:"+fbe.name), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno - 1, debug)}"><h3>@fbe.name (@entityCount)</h3></a><div id='query-card-spinner-@index'></div></div>
+	    <div id='query-card-@index' class='offset1 span10' data-attr='@fbe.fbid'><a href="@{routes.Application.results(Option("entity:"+fbe.name), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno, false,debug)}"><h3>@fbe.name (@entityCount)</h3></a><div id='query-card-spinner-@index'></div></div>
 	    </div>
-	}
 }
 
 <!-- display a "All" link with a query of un-linked entity -->

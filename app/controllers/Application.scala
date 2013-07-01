@@ -27,6 +27,7 @@ import play.api.data.Forms.mapping
 import play.api.data.Forms.optional
 import play.api.data.Forms.text
 import play.api.mvc.Action
+import play.api.mvc.Result
 import play.api.mvc.Controller
 import play.api.mvc.RequestHeader
 import sjson.json.JsonSerialization.tojson
@@ -102,11 +103,52 @@ object Application extends Controller {
     * Handle POST requests to search.
     */
   def submit(debug: Boolean = false) = Action { implicit request =>
-    searchForm.bindFromRequest.fold(
+    
+//    searchForm.bindFromRequest.fold(
+//      errors => BadRequest(views.html.index(errors, footer())),
+//      query => doSearch(query, "all", 0, settingsFromRequest(debug, request), debug=debug))
+    
+    val query = searchForm.bindFromRequest.fold(
       errors => BadRequest(views.html.index(errors, footer())),
-      query => doSearch(query, "all", 0, settingsFromRequest(debug, request), debug=debug))
-  }
+      query => query)
+    val formQuery = query.asInstanceOf[Query]  
+    val answers = scala.concurrent.future {
+      searchGroups(formQuery, settingsFromRequest(debug, request), debug)
+    }
+    
+    Async {
+      answers.map { case (answers, message) =>
+          val filters: Set[TypeFilter] = "all" match {
+            case "" | "all" => Set()
+            case "misc" => answers.filters.map(_.filter).collect { case filter: PositiveTypeFilter => filter } .map(filter => NegativeTypeFilter(filter.typ, formQuery.freeParts)).toSet
+            case s => Set(PositiveTypeFilter(FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string: " + s)), formQuery.freeParts))
+          }
 
+          val filtered = answers filter filters
+          Logger.info(query + " with " + filters + " has " + filtered.answerCount + " answers " + filtered.sentenceCount + " results")
+          val page = filtered.page(0, PAGE_SIZE)
+          
+
+          val entry = LogEntry.fromRequest(formQuery, "all", answers.answerCount, answers.sentenceCount, request)
+          entry.log()
+
+          //choose a cut-off to filter out the entities that have few
+          //results, and only display to a max of 7 entities
+          val disambiguousEntities = filtered.queryEntities.zipWithIndex.filter{ 
+            case ((fbe, entityCount), index)  => index < 7 && entityCount > 5 
+          }        		  
+    
+          if(disambiguousEntities.size == 0){
+            doSearch(formQuery, "all", 0, settingsFromRequest(debug, request), debug=debug) 
+      	  }else if(disambiguousEntities.size == 1){
+        	doSearch(Query.fromStrings(Option("entity:" + disambiguousEntities(0)._1._1.name), formQuery.rel.map(_.toString), formQuery.arg2.map(_.toString), formQuery.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug=debug) 
+          }else{
+            disambiguate(formQuery, "all", 0, settingsFromRequest(debug, request), debug=debug) 
+          }
+      }
+    }
+  }
+  
   def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean, corpora: Option[String]) = Action { implicit request =>
     val entityThresh: Option[Double] = request.queryString.get("entityThresh").flatMap(_.headOption.map(_.toDouble))
     doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
@@ -197,11 +239,11 @@ object Application extends Controller {
     }
   }
 
-  def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, disambiguate: Boolean, debug: Boolean = false, corpora: Option[String]) = Action { implicit request =>
-    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filterString, pageNumber, settingsFromRequest(debug, request), disambiguate, debug=debug, log=true, justResults=false)
+  def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, justResults: Boolean, debug: Boolean = false, corpora: Option[String]) = Action { implicit request =>
+    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filterString, pageNumber, settingsFromRequest(debug, request), debug=debug, log=true, justResults=justResults)
   }
-
-  def doSearch(query: Query, filterString: String, pageNumber: Int, settings: ExecutionSettings, disambiguate: Boolean = true, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
+  
+  def doSearch(query: Query, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
     val maxQueryTime = 20 * 1000 /* ms */
 
     val answers = scala.concurrent.future {
@@ -225,29 +267,54 @@ object Application extends Controller {
             entry.log()
           }
 
-          
           if (justResults) {
-            if(disambiguate) {
-              Ok(
-                views.html.disambiguate(query, filtered, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug))
-            }else{
-              Ok(
-                views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)) 
-            }
+            Ok(views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug))
           } else {
-            if(disambiguate) {
-        	  Ok(
-                views.html.frame.resultsframe(
-                  searchForm, query, message, filtered, filtered.answerCount, filtered.sentenceCount)(
-                    views.html.disambiguate(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
-            }else{
-              Ok(
-                views.html.frame.resultsframe(
-                  searchForm, query, message, page, filtered.answerCount, filtered.sentenceCount)(
-                    views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
-            }
+            Ok(
+              views.html.frame.resultsframe(
+                searchForm, query, message, page, filtered.answerCount, filtered.sentenceCount)(
+                  views.html.results(query, page, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
           }
       }
     }
   }
+  
+  def disambiguate(query: Query, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
+    val maxQueryTime = 20 * 1000 /* ms */
+
+    val answers = scala.concurrent.future {
+      searchGroups(query, settings, debug)
+    }
+
+    Async {
+      answers.map { case (answers, message) =>
+          val filters: Set[TypeFilter] = filterString match {
+            case "" | "all" => Set()
+            case "misc" => answers.filters.map(_.filter).collect { case filter: PositiveTypeFilter => filter } .map(filter => NegativeTypeFilter(filter.typ, query.freeParts)).toSet
+            case s => Set(PositiveTypeFilter(FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string: " + s)), query.freeParts))
+          }
+
+          val filtered = answers filter filters
+          Logger.info(query + " with " + filters + " has " + filtered.answerCount + " answers " + filtered.sentenceCount + " results")
+          val page = filtered.page(pageNumber, PAGE_SIZE)
+
+          if (log) {
+            val entry = LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request)
+            entry.log()
+          }
+
+          //choose a cut-off to filter out the entities that have few
+          //results, and only display to a max of 7 entities
+          val disambiguousEntities = filtered.queryEntities.zipWithIndex.filter{ 
+            case ((fbe, entityCount), index)  => index < 7 && entityCount > 5 
+          }  
+          
+          Ok(
+              views.html.frame.resultsframe(
+                searchForm, query, message, filtered, filtered.answerCount, filtered.sentenceCount)(
+                  views.html.disambiguate(query, disambiguousEntities, filters.toSet, filterString, pageNumber, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+      }
+    }
+  }
+  
 }

@@ -271,7 +271,6 @@ input.span1,textarea.span1,.uneditable-input.span1 {
 }
 @media(min-width:1200px) {
     .row {
-    margin-left: 2px;
     *zoom:1;
     border-bottom: 1px solid #eee;}
 .row:before,.row:after {

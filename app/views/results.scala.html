@@ -27,25 +27,25 @@
 <!-- filters -->
 @if(answers.filters.size > 0) {
 	<ul class="nav nav-tabs nav-stacked visible-phone">
-		<li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all types</a></li>
+		<li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, true, debug)}')">all types</a></li>
 
 	@for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(4)) {
 		@defining(filters.contains(filter)) { active =>
-			<li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+			<li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, true, debug)}')">@filter.displayName (@count)</a></li>
 		}
 	}
 	</ul>
 
 	<ul class="nav nav-tabs hidden-phone">
-		<li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, debug)}')">all</a></li>
+		<li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "all", 0, true, debug)}')">all</a></li>
 
 		@for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(5)) {
 			@defining(filters.contains(filter)) { active =>
-				<li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+				<li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, true, debug)}')">@filter.displayName (@count)</a></li>
 			}
 		}
 
-		<li class="@{if(filterString == "misc") "active" else ""}"><a href="#misc" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "misc", 0, debug)}')">misc.</a></li>
+		<li class="@{if(filterString == "misc") "active" else ""}"><a href="#misc" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), "misc", 0, true, debug)}')">misc.</a></li>
 
 		@if(answers.filters.size > 5) {
 			<li class="dropdown">
@@ -53,7 +53,7 @@
 				<ul class="dropdown-menu">
 				@for(TypeFilterTab(filter, count)<-answers.filters.iterator.drop(5)) {
 					@defining(filters.contains(filter)) { active =>
-						<li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, debug)}')">@filter.displayName (@count)</a></li>
+						<li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filter.name, 0, true, debug)}')">@filter.displayName (@count)</a></li>
 					}
 				}
 				</ul>
