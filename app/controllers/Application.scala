@@ -108,7 +108,6 @@ object Application extends Controller {
   }
 
   def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean, corpora: Option[String]) = Action { implicit request =>
-    val entityThresh: Option[Double] = request.queryString.get("entityThresh").flatMap(_.headOption.map(_.toDouble))
     doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
   }
 
