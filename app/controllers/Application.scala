@@ -39,6 +39,8 @@ object Application extends Controller {
   final val PAGE_SIZE = 20
   final val MAX_SENTENCE_COUNT = 15
 
+  Logger.info("Server started.")
+
   /**
     * The actual definition of the search form.
     */
@@ -112,8 +114,11 @@ object Application extends Controller {
   }
 
   def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int, corpora: Option[String]) = Action {
+    val query = Query.fromStrings(arg1, rel, arg2, corpora)
+    Logger.info("Json request: " + query)
+
     import ExtractionGroupProtocol._
-    Ok(tojson(Executor.executeRaw(Query.fromStrings(arg1, rel, arg2, corpora).toLowerCase).take(count)).toString.replaceAll("[\\p{C}]",""))
+    Ok(tojson(Executor.executeRaw(query.toLowerCase).take(count)).toString.replaceAll("[\\p{C}]",""))
   }
 
   def instancesJson() = Action { implicit request =>
@@ -135,7 +140,7 @@ object Application extends Controller {
 
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean, corpora: Option[String]) = Action {
     val query = Query.fromStrings(arg1, rel, arg2, corpora)
-    Logger.info("Showing sentences for title " + title + " in " + query)
+    Logger.info("Sentences request for title '" + title + "' in: " + query)
     val group = searchGroups(query, ExecutionSettings.default, debug)._1.answers.find(_.title.text == title) match {
       case None => throw new IllegalArgumentException("could not find group title: " + title)
       case Some(group) => group
@@ -201,6 +206,8 @@ object Application extends Controller {
   }
 
   def doSearch(query: Query, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
+    Logger.info("Search request: " + query)
+
     val maxQueryTime = 20 * 1000 /* ms */
 
     val answers = scala.concurrent.future {
