@@ -5,6 +5,7 @@ import java.io.ObjectInputStream
 import scala.collection.mutable
 import scala.Option.option2Iterable
 import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.impl.HttpSolrServer
 import akka.actor.TypedActor
@@ -58,11 +59,18 @@ case object SolrSource extends FetchSource {
     }
     q
   }
-  def withElement[T >: Null, R](queue: BlockingQueue[T])(block: T=>R): R = {
-    var q: T = null
+  def withElement[R](queue: BlockingQueue[Bijection[AnyRef, Array[Byte]]])(block: Bijection[AnyRef, Array[Byte]]=>R): R = {
+    var q: Bijection[AnyRef, Array[Byte]] = null
     try {
       q = queue.poll(60, TimeUnit.SECONDS)
       block(q)
+    }
+    catch {
+      case NonFatal(e) =>
+        // recreate kryo instance
+        // the old one might be corrupt
+        q = Chill.createBijection()
+        throw e
     }
     finally {
       if (q != null) {
