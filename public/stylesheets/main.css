@@ -178,6 +178,7 @@
   float: left;
   margin-right: 5px;
   margin-right: 20px;
+  margin-top: 8px;
 }
 
 [id^=query-card-spinner] {
@@ -189,6 +190,7 @@
 }
 
 .query-card-content {
+  margin-bottom: 8px;
   font-size: 15px;
 }
 
