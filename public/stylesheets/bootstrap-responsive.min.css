@@ -271,8 +271,7 @@ input.span1,textarea.span1,.uneditable-input.span1 {
 }
 @media(min-width:1200px) {
     .row {
-    *zoom:1;
-    border-bottom: 1px solid #eee;}
+    *zoom:1;}
 .row:before,.row:after {
     display:table;
     content:""}
@@ -281,6 +280,11 @@ input.span1,textarea.span1,.uneditable-input.span1 {
 [class*="span"] {
     float:left;
     margin-left:30px}
+.disambiguateEntityCard{
+    border-bottom: 1px solid #eee;
+    margin-left: 2px;
+    clear: both;
+}   
 .container,.navbar-fixed-top .container,.navbar-fixed-bottom .container {
     width:1170px}
 .span12 {

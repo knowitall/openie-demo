@@ -14,6 +14,7 @@
     		<a href="@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), Option("entity:"+fbe.name), filterString, pageno, false,debug)}">
     	}
     	<h3>@fbe.name (@answerCount)</h3></a><div id='query-card-spinner-@index'></div></div>
+	    <div class='disambiguateEntityCard'></div>	
     </div>
 }
 
