@@ -124,15 +124,21 @@ object Application extends Controller {
               val ambiguousEntities = filtered.queryEntities.zipWithIndex.filter{ 
                 case ((fbe, entityCount), index)  => index < 7 && entityCount > 5 
               }             
-                            
+              
               if(ambiguousEntities.size == 0){
-                  doSearch(query, "all", 0, settingsFromRequest(debug, request), debug=debug) 
+	            //when there is no entity that satisfy the cut-off filter above
+	            //i.e, when results number is too small, do the regular query search.
+                doSearch(query, "all", 0, settingsFromRequest(debug, request), debug=debug) 
               }else if(ambiguousEntities.size == 1){
+                //when there is only a single entity present after the filter
+                //go directly to the linked entity query search
                 query.arg2.map(_.toString) match {
                   case Some(x) => doSearch(Query.fromStrings(query.arg1.map(_.toString), query.rel.map(_.toString), Option("entity:" + ambiguousEntities(0)._1._1.name), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug=debug)
                   case None => doSearch(Query.fromStrings(Option("entity:" + ambiguousEntities(0)._1._1.name), query.rel.map(_.toString), query.arg2.map(_.toString), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug=debug) 
                 }
               }else{
+                //if there are more than 1 entities that are ambiguous
+                //direct to the disambiguation page and display an query-card for each
                 disambiguate(query, "all", 0, settingsFromRequest(debug, request), debug=debug) 
               }
           }
@@ -141,7 +147,13 @@ object Application extends Controller {
     )
   }
   
-  private def setupFilters(query: Query, answers: AnswerSet, filterString: String)={
+  /**
+   * Do the filtering of answers according to the query, answerSet and filterString.
+   * 
+   * 
+   * @return a tuple of (filters, filtered results, and single page of filtered results)
+   */
+  private def setupFilters(query: Query, answers: AnswerSet, filterString: String) = {
       val filters: Set[TypeFilter] = filterString match {
         case "" | "all" => Set()
         case "misc" => answers.filters.map(_.filter).collect { case filter: PositiveTypeFilter => filter } .map(filter => NegativeTypeFilter(filter.typ, query.freeParts)).toSet
@@ -268,6 +280,8 @@ object Application extends Controller {
             LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request).log()
           }
 
+          //if only the category of results is clicked, change the page's result content
+          //else generate a header with the result content
           if (justResults) {
             Ok(views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug))
           } else {
@@ -297,21 +311,23 @@ object Application extends Controller {
 
           //choose a cut-off to filter out the entities that have few
           //results, and only display to a max of 7 entities
-          val filteredAmbiguousEntities = filter._2.queryEntities.zipWithIndex.filter{ 
+          val ambiguousEntitiesWithEntityCount = filter._2.queryEntities.zipWithIndex.filter{ 
             case ((fbe, entityCount), index)  => index < 7 && entityCount > 5 
           }  
           
           //get the ambiguous Entities with their index and answerCount
           val answer = filter._2.answers.flatMap(x => x.queryEntity)
-          val ambiguousEntities = for(((fbe, entityCount), index) <- filteredAmbiguousEntities)yield{
+          val ambiguousEntitiesWithAnswerCount = for(((fbe, entityCount), index) <- ambiguousEntitiesWithEntityCount) yield {
             val answerCount = answer.count(_._1.fbid == fbe.fbid)
             ((fbe, answerCount), index)
           }
           
+          //direct to disambiguate page with a resultsFrame header, and disambiguate
+          //query card contents
           Ok(
               views.html.frame.resultsframe(
                 searchForm, query, message, filter._2, filter._2.answerCount, filter._2.sentenceCount)(
-                  views.html.disambiguate(query, ambiguousEntities, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+                  views.html.disambiguate(query, ambiguousEntitiesWithAnswerCount, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
       }
     }
   }
