@@ -139,7 +139,7 @@ object Application extends Controller {
               }else{
                 //if there are more than 1 entities that are ambiguous
                 //direct to the disambiguation page and display an query-card for each
-                disambiguate(query, "all", 0, settingsFromRequest(debug, request), debug=debug)
+                disambiguate(query, settingsFromRequest(debug, request), debug=debug)
               }
           }
         }
@@ -294,7 +294,7 @@ object Application extends Controller {
     }
   }
 
-  def disambiguate(query: Query, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
+  def disambiguate(query: Query, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true)(implicit request: RequestHeader) = {
     val maxQueryTime = 20 * 1000 /* ms */
 
     val answers = scala.concurrent.future {
@@ -302,6 +302,8 @@ object Application extends Controller {
     }
 
     Async {
+      val filterString = "all"
+
       answers.map { case (answers, message) =>
         val filter = setupFilters(query, answers, filterString)
 
@@ -327,7 +329,7 @@ object Application extends Controller {
         Ok(
             views.html.frame.resultsframe(
               searchForm, query, message, filter._2, filter._2.answerCount, filter._2.sentenceCount)(
-                views.html.disambiguate(query, ambiguousEntitiesWithAnswerCount, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+                views.html.disambiguate(query, ambiguousEntitiesWithAnswerCount, filter._1.toSet, filterString, 0, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
       }
     }
   }
