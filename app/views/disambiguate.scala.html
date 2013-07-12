@@ -1,11 +1,11 @@
-@(query: Query, entities: List[((edu.knowitall.openie.models.FreeBaseEntity, Int), Int)], filters: Set[TypeFilter], filterString: String, pageno: Int, pageCount: Int, maxSentenceCount: Int, debug: Boolean)
+@(query: Query, entities: List[(edu.knowitall.openie.models.FreeBaseEntity, Int)], filters: Set[TypeFilter], filterString: String, pageno: Int, pageCount: Int, maxSentenceCount: Int, debug: Boolean)
 
 @import helper.twitterBootstrap._
 
 <div id="stats">Do you mean...</div>
 	
 <!-- print out all queryEntities with knowledge cards about them -->
-@for(((fbe, answerCount), index) <- entities){
+@for(((fbe, answerCount), index) <- entities.zipWithIndex){
     <div class='row'>
     	<div id='query-card-@index' class='offset1 span10' data-attr='@fbe.fbid'>
     	@if(query.arg2.map(_.toString).isEmpty){

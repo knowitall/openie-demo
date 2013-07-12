@@ -1,3 +1,35 @@
+body {
+  line-height: 20px;
+  font-size: 15px;
+}
+
+h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+
+h7 {
+font-size: 22px;
+line-height: 27px;
+margin-left: 85px;
+}
+
+.row {
+  margin-left: -20px;
+}
+
+.offset1 {
+  margin-left: 105px;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  padding-bottom: 20px;
+  padding-top: 7px;
+}
+
+.offset2 {
+  margin-left: 160px;
+}
+
 .hid { display: none }
 .title-entity { font-weight: bold }
 .title-typed { font-style: italic }
@@ -193,6 +225,12 @@
   margin-bottom: 8px;
   font-size: 15px;
 }
+
+.disambiguateEntityCard{
+  border-bottom: 1px solid #eee;
+  margin-left: 2px;
+  clear: both;
+}  
 
 .tab-pane ul {
   list-style-type: none;

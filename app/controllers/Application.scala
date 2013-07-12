@@ -319,11 +319,11 @@ object Application extends Controller {
           val answer = filter._2.answers.flatMap(x => x.queryEntity)
           val ambiguousEntitiesWithAnswerCount = for(((fbe, entityCount), index) <- ambiguousEntitiesWithEntityCount) yield {
             val answerCount = answer.count(_._1.fbid == fbe.fbid)
-            ((fbe, answerCount), index)
+            (fbe, answerCount)
           }
           
           //direct to disambiguate page with a resultsFrame header, and disambiguate
-          //query card contents
+          //query card contents.
           Ok(
               views.html.frame.resultsframe(
                 searchForm, query, message, filter._2, filter._2.answerCount, filter._2.sentenceCount)(
