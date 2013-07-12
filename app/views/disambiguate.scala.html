@@ -1,0 +1,121 @@
+@(query: Query, entities: List[(edu.knowitall.openie.models.FreeBaseEntity, Int)], filters: Set[TypeFilter], filterString: String, pageno: Int, pageCount: Int, maxSentenceCount: Int, debug: Boolean)
+
+@import helper.twitterBootstrap._
+
+<div id="stats">Do you mean...</div>
+	
+<!-- print out all queryEntities with knowledge cards about them -->
+@for(((fbe, answerCount), index) <- entities.zipWithIndex){
+    <div class='row'>
+    	<div id='query-card-@index' class='offset1 span10' data-attr='@fbe.fbid'>
+    	@if(query.arg2.map(_.toString).isEmpty){
+    		<a href="@{routes.Application.results(Option("entity:"+fbe.name), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno, false,debug)}">
+    	} else {
+    		<a href="@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), Option("entity:"+fbe.name), filterString, pageno, false,debug)}">
+    	}
+    	<h3>@fbe.name (@answerCount)</h3></a><div id='query-card-spinner-@index'></div></div>
+	    <div class='disambiguateEntityCard'></div>	
+    </div>
+}
+
+<!-- display a "All" link with a query of un-linked entity -->
+@if(query.arg2.map(_.toString).isEmpty){
+	<a href="@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno, false, debug)}"><h7><b>Query for all "@query.arg1.map(_.toString)"</b></h7></a>
+}else{
+	<a href="@{routes.Application.results(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno, false, debug)}"><h7><b>Query for all "@query.arg2.map(_.toString)"</b></h7></a>
+}
+	
+<script type="text/javascript">
+// spinner options presets
+var smallSpinnerOpts = {lines: 9, length: 0, width: 4, radius: 6, rotate: 0, color: '#000', speed: .95, trail: 60, shadow: false, hwaccel: false, className: 'spinner', zIndex: 2e9, top: 'auto', left: 'auto'};
+var spinnerOpts = {lines: 9, length: 0, width: 15, radius: 30, rotate: 0, color: '#000', speed: .95, trail: 60, shadow: false, hwaccel: false, className: 'spinner', zIndex: 2e9, top: 'auto', left: 'auto'};
+
+$.extend({
+	getUrlVars: function(){
+		var vars = [], hash;
+		var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+
+		for(var i = 0; i < hashes.length; i++) {
+			hash = hashes[i].split('=');
+			vars.push(hash[0]);
+			vars[hash[0]] = hash[1];
+		}
+
+		return vars;
+	},
+
+	getUrlVar: function(name){
+		return $.getUrlVars()[name];
+	}
+});
+
+// a spinner that triggers on tab switch
+// calls the bootstrap function that switches tabs
+var tabSpin = function(params) {
+	$("#tab-spinner").spin(spinnerOpts);
+	tabto(params);
+}
+
+//get the response from freeBase and append it to the query-card
+var getJson = function(index, id) {
+	$.getJSON("https://www.googleapis.com/freebase/v1/text/m/"+id+"?format=plain&lang=en&maxlength=500&callback=?", function(response) {
+		if (response != undefined && response.result != undefined) {
+			// stop spinner
+			$("#query-card-spinner-"+index).data("spinner").stop();
+			$("#query-card-spinner-"+index).hide();
+
+			$("#query-card-"+index).append("<div class='query-card-content'><img src=\"https://usercontent.googleapis.com/freebase/v1/image/m/"+id+"?maxheight=150&maxwidth=150\">");
+			$("#query-card-"+index).append(response.result + "<a href=\"http://www.freebase.com/view/m/" +id+ "\">read more</a></div>");
+				
+		}
+	})
+}
+		
+//load the knowledge cards for the entities		
+var numberOfEntities = $(".row");
+
+for(var i = 0;i<numberOfEntities.length;i++){
+	if ( $("#query-card-"+i).length == 1 ) {
+		// make sure we only have one
+		if ( $("#query-card-content").length == 0 ) {	
+			// start a spinner
+			$("#query-card-spinner-"+i).show();
+			$("#query-card-spinner-"+i).spin(spinnerOpts);
+	
+			var id = $("#query-card-"+i).attr("data-attr");
+	
+			var src = 'https://usercontent.googleapis.com/freebase/v1/image/m/'+id+'?maxheight=150&maxwidth=150'
+			
+			// attempt to preload images
+			try {
+				var image = new Image();
+				image.src = src;
+			} catch(e) {}
+	
+			// pull freebase entity information as JSON object
+			getJson(i, id);
+		}
+	}
+}
+
+$(document).ready(function() {
+
+	$(".entity-link").click(function() {
+		$("#tab-spinner").spin(spinnerOpts);
+	})
+
+	$('.close-tab').click(function() {
+		$('.tab-pane.active').removeClass('active');
+		$(".tabbable.tabs-left").find(".active").removeClass("active");
+	})
+
+	$(".btn").click(function() {
+		$("#tab-spinner").spin(spinnerOpts);
+	});
+		
+	$('#moreDropdown').click(function (e) {
+		e.preventDefault();
+		$(this).tab('show');
+	})
+})
+</script>

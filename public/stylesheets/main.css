@@ -1,3 +1,35 @@
+body {
+  line-height: 20px;
+  font-size: 15px;
+}
+
+h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+
+h7 {
+font-size: 22px;
+line-height: 27px;
+margin-left: 85px;
+}
+
+.row {
+  margin-left: -20px;
+}
+
+.offset1 {
+  margin-left: 105px;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  padding-bottom: 20px;
+  padding-top: 7px;
+}
+
+.offset2 {
+  margin-left: 160px;
+}
+
 .hid { display: none }
 .title-entity { font-weight: bold }
 .title-typed { font-style: italic }
@@ -127,7 +159,7 @@
 }
 
 #stats {
-  margin: 1em 0;
+  margin: 0.5em 0;
 }
 
 .tab-content blockquote {
@@ -174,22 +206,31 @@
   display: inline-block;
 }
 
-#query-card {
-  overflow: hidden;
-}
-
-#query-card img {
+[id^=query-card] img {
   float: left;
   margin-right: 5px;
+  margin-right: 20px;
+  margin-top: 8px;
 }
 
-#query-card-spinner {
+[id^=query-card-spinner] {
   width: 100px;
   height: 100px;
   background: white;
   margin: auto auto;
   display: none;
 }
+
+.query-card-content {
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+.disambiguateEntityCard{
+  border-bottom: 1px solid #eee;
+  margin-left: 2px;
+  clear: both;
+}  
 
 .tab-pane ul {
   list-style-type: none;
