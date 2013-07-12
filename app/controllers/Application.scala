@@ -274,22 +274,22 @@ object Application extends Controller {
 
     Async {
       answers.map { case (answers, message) =>
-          val filter = setupFilters(query, answers, filterString)
+        val filter = setupFilters(query, answers, filterString)
 
-          if (log) {
-            LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request).log()
-          }
+        if (log) {
+          LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request).log()
+        }
 
-          //if only the category of results is clicked, change the page's result content
-          //else generate a header with the result content
-          if (justResults) {
-            Ok(views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug))
-          } else {
-            Ok(
-              views.html.frame.resultsframe(
-                searchForm, query, message, filter._3, filter._2.answerCount, filter._2.sentenceCount)(
-                  views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
-          }
+        //if only the category of results is clicked, change the page's result content
+        //else generate a header with the result content
+        if (justResults) {
+          Ok(views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug))
+        } else {
+          Ok(
+            views.html.frame.resultsframe(
+              searchForm, query, message, filter._3, filter._2.answerCount, filter._2.sentenceCount)(
+                views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+        }
       }
     }
   }
@@ -303,31 +303,31 @@ object Application extends Controller {
 
     Async {
       answers.map { case (answers, message) =>
-          val filter = setupFilters(query, answers, filterString)
+        val filter = setupFilters(query, answers, filterString)
 
-          if (log) {
-            LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request).log()
-          }
+        if (log) {
+          LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request).log()
+        }
 
-          //choose a cut-off to filter out the entities that have few
-          //results, and only display to a max of 7 entities
-          val ambiguousEntitiesWithEntityCount = filter._2.queryEntities.zipWithIndex.filter{
-            case ((fbe, entityCount), index)  => index < 7 && entityCount > 5
-          }
+        //choose a cut-off to filter out the entities that have few
+        //results, and only display to a max of 7 entities
+        val ambiguousEntitiesWithEntityCount = filter._2.queryEntities.zipWithIndex.filter{
+          case ((fbe, entityCount), index)  => index < 7 && entityCount > 5
+        }
 
-          //get the ambiguous Entities with their index and answerCount
-          val answer = filter._2.answers.flatMap(x => x.queryEntity)
-          val ambiguousEntitiesWithAnswerCount = for(((fbe, entityCount), index) <- ambiguousEntitiesWithEntityCount) yield {
-            val answerCount = answer.count(_._1.fbid == fbe.fbid)
-            (fbe, answerCount)
-          }
+        //get the ambiguous Entities with their index and answerCount
+        val answer = filter._2.answers.flatMap(x => x.queryEntity)
+        val ambiguousEntitiesWithAnswerCount = for(((fbe, entityCount), index) <- ambiguousEntitiesWithEntityCount) yield {
+          val answerCount = answer.count(_._1.fbid == fbe.fbid)
+          (fbe, answerCount)
+        }
 
-          //direct to disambiguate page with a resultsFrame header, and disambiguate
-          //query card contents.
-          Ok(
-              views.html.frame.resultsframe(
-                searchForm, query, message, filter._2, filter._2.answerCount, filter._2.sentenceCount)(
-                  views.html.disambiguate(query, ambiguousEntitiesWithAnswerCount, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+        //direct to disambiguate page with a resultsFrame header, and disambiguate
+        //query card contents.
+        Ok(
+            views.html.frame.resultsframe(
+              searchForm, query, message, filter._2, filter._2.answerCount, filter._2.sentenceCount)(
+                views.html.disambiguate(query, ambiguousEntitiesWithAnswerCount, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
       }
     }
   }
