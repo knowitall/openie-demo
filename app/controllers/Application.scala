@@ -112,10 +112,10 @@ object Application extends Controller {
         val answers = scala.concurrent.future {
           searchGroups(query, settingsFromRequest(debug, request), debug)
         }
-
+        
         Async {
           answers.map { case (answers, message) =>
-              val filtered = setupFilters(query, answers, "all")._2
+              val filtered = setupFilters(query, answers, "all", 0)._2
 
               LogEntry.fromRequest(query, "all", answers.answerCount, answers.sentenceCount, request).log()
 
@@ -153,7 +153,7 @@ object Application extends Controller {
    *
    * @return a tuple of (filters, filtered results, and single page of filtered results)
    */
-  private def setupFilters(query: Query, answers: AnswerSet, filterString: String) = {
+  private def setupFilters(query: Query, answers: AnswerSet, filterString: String, pageNumber : Int) = {
       val filters: Set[TypeFilter] = filterString match {
         case "" | "all" => Set()
         case "misc" => answers.filters.map(_.filter).collect { case filter: PositiveTypeFilter => filter } .map(filter => NegativeTypeFilter(filter.typ, query.freeParts)).toSet
@@ -162,7 +162,7 @@ object Application extends Controller {
 
       val filtered = answers filter filters
       Logger.info(query + " with " + filters + " has " + filtered.answerCount + " answers " + filtered.sentenceCount + " results")
-      val page = filtered.page(0, PAGE_SIZE)
+      val page = filtered.page(pageNumber, PAGE_SIZE)
 
       (filters, filtered, page)
   }
@@ -274,7 +274,7 @@ object Application extends Controller {
 
     Async {
       answers.map { case (answers, message) =>
-        val filter = setupFilters(query, answers, filterString)
+        val filter = setupFilters(query, answers, filterString, pageNumber)
 
         if (log) {
           LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request).log()
@@ -287,8 +287,8 @@ object Application extends Controller {
         } else {
           Ok(
             views.html.frame.resultsframe(
-              searchForm, query, message, filter._3, filter._2.answerCount, filter._2.sentenceCount)(
-                views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+             searchForm, query, message, filter._3, filter._2.answerCount, filter._2.sentenceCount, true)(
+               views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
         }
       }
     }
@@ -305,7 +305,7 @@ object Application extends Controller {
       val filterString = "all"
 
       answers.map { case (answers, message) =>
-        val filter = setupFilters(query, answers, filterString)
+        val filter = setupFilters(query, answers, filterString, 0)
 
         if (log) {
           LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request).log()
@@ -313,23 +313,26 @@ object Application extends Controller {
 
         //choose a cut-off to filter out the entities that have few
         //results, and only display to a max of 7 entities
-        val ambiguousEntitiesWithEntityCount = filter._2.queryEntities.zipWithIndex.filter{
-          case ((fbe, entityCount), index)  => index < 7 && entityCount > 5
-        }
-
+        val ambiguousEntitiesWithEntityCount = filter._2.queryEntities.zipWithIndex.filter{ 
+          case ((fbe, entityCount), index)  => index < 7 && entityCount > 5 
+        }  
+          
         //get the ambiguous Entities with their index and answerCount
         val answer = filter._2.answers.flatMap(x => x.queryEntity)
         val ambiguousEntitiesWithAnswerCount = for(((fbe, entityCount), index) <- ambiguousEntitiesWithEntityCount) yield {
           val answerCount = answer.count(_._1.fbid == fbe.fbid)
           (fbe, answerCount)
         }
-
+          
+        //sort the ambiguous entities according to the answer count in decreasing order.
+        val sortedAmbiguousEntitiesWithAnswerCount = ambiguousEntitiesWithAnswerCount.sortBy(-_._2)
+        
         //direct to disambiguate page with a resultsFrame header, and disambiguate
         //query card contents.
         Ok(
-            views.html.frame.resultsframe(
-              searchForm, query, message, filter._2, filter._2.answerCount, filter._2.sentenceCount)(
-                views.html.disambiguate(query, ambiguousEntitiesWithAnswerCount, filter._1.toSet, filterString, 0, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+          views.html.frame.resultsframe(
+            searchForm, query, message, filter._2, filter._2.answerCount, filter._2.sentenceCount, false)(
+              views.html.disambiguate(query, sortedAmbiguousEntitiesWithAnswerCount, filter._1.toSet, filterString, 0, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
       }
     }
   }
