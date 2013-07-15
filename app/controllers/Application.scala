@@ -113,7 +113,6 @@ object Application extends Controller {
           searchGroups(query, settingsFromRequest(debug, request), debug)
         }
       
-        Logger.info("query is " + query + "~~~~~~~~~~~~~~~~~~~~~~~~")
         Async {
           answers.map { case (answers, message) =>
               val filtered = setupFilters(query, answers, "all")._2
@@ -140,7 +139,7 @@ object Application extends Controller {
               }else{
                 //if there are more than 1 entities that are ambiguous
                 //direct to the disambiguation page and display an query-card for each
-                disambiguate(Query.fromStrings(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), Option("wiki")), "all", 0, settingsFromRequest(debug, request), debug=debug) 
+                disambiguate(query, "all", 0, settingsFromRequest(debug, request), debug=debug) 
               }
           }
         }
