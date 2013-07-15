@@ -113,6 +113,7 @@ object Application extends Controller {
           searchGroups(query, settingsFromRequest(debug, request), debug)
         }
       
+        Logger.info("query is " + query + "~~~~~~~~~~~~~~~~~~~~~~~~")
         Async {
           answers.map { case (answers, message) =>
               val filtered = setupFilters(query, answers, "all")._2
@@ -139,7 +140,7 @@ object Application extends Controller {
               }else{
                 //if there are more than 1 entities that are ambiguous
                 //direct to the disambiguation page and display an query-card for each
-                disambiguate(query, "all", 0, settingsFromRequest(debug, request), debug=debug) 
+                disambiguate(Query.fromStrings(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), Option("wiki")), "all", 0, settingsFromRequest(debug, request), debug=debug) 
               }
           }
         }
@@ -322,12 +323,15 @@ object Application extends Controller {
             (fbe, answerCount)
           }
           
+          //sort the ambiguous entities according to the answer count in decreasing order.
+          val sortedAmbiguousEntitiesWithAnswerCount = ambiguousEntitiesWithAnswerCount.sortBy(-_._2)
+          
           //direct to disambiguate page with a resultsFrame header, and disambiguate
           //query card contents.
           Ok(
               views.html.frame.resultsframe(
                 searchForm, query, message, filter._2, filter._2.answerCount, filter._2.sentenceCount)(
-                  views.html.disambiguate(query, ambiguousEntitiesWithAnswerCount, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+                  views.html.disambiguate(query, sortedAmbiguousEntitiesWithAnswerCount, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
       }
     }
   }
