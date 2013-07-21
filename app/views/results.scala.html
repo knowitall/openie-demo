@@ -2,15 +2,6 @@
 
 @import helper.twitterBootstrap._
 
-  <div class="row">
-    <!-- if the query is a linked entity, insert a knowledge card about it -->
-    @{answers.queryEntities.headOption filter {case(e, n) => n > 2} match {
-        case Some((fbEntity,count)) => Html("<div id='query-card' class='offset1 span10' data-attr='"+fbEntity.fbid+"'><h3>"+fbEntity.name+"</h3><div id='query-card-spinner'></div></div>")
-        case None => ""
-      }
-    }
-  </div>
-
 <!-- spinner for tabs -->
 <div id="tab-spinner" style="display:none"></div>
 
@@ -64,29 +55,29 @@
 <!-- /filters -->
 
 
-	<!-- tabbable -->
-	<!-- left tabs with entities -->
-	<div class="tabbable tabs-left">
-		<ul class="nav nav-tabs">
-			@for((answer, i) <- answers.answers.zipWithIndex) {
-			<li class="hidden-phone"><a href="#L@{i}" class="answer" data-toggle="tab" data-fbid="@{answer.title.parts.map(_.entity.map(_.fbid).getOrElse("")).mkString(";")}">@helper.grouptitle(answer.title, debug) (@answer.contents.size)</a></li>
-			<li class="visible-phone"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), answer.title.text, debug)}" class="answer">@Html(answer.title.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", ")) (@answer.contents.size)</a></li>
-			}
-		</ul>
+<!-- tabbable -->
+<!-- left tabs with entities -->
+<div class="tabbable tabs-left">
+	<ul class="nav nav-tabs">
+		@for((answer, i) <- answers.answers.zipWithIndex) {
+		<li class="hidden-phone"><a href="#L@{i}" class="answer" data-toggle="tab" data-fbid="@{answer.title.parts.map(_.entity.map(_.fbid).getOrElse("")).mkString(";")}">@helper.grouptitle(answer.title, debug) (@answer.contents.size)</a></li>
+		<li class="visible-phone"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), answer.title.text, debug)}" class="answer">@Html(answer.title.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", ")) (@answer.contents.size)</a></li>
+		}
+	</ul>
 
-		<!-- tab content -->
-		<div class="tab-content hidden-phone">
-			@for((answer, i) <- answers.answers.zipWithIndex) {
-				<div class="tab-pane" id="L@{i}">
-					<div class="close-tab"><a href="#close@{i}" class="close-tab" title="close sentences"><i class="icon-remove"></i></a></div>
-					@helper.cardtab(query, answer, i, maxSentenceCount, debug)
-				</div>
-			}
-		</div>
+	<!-- tab content -->
+	<div class="tab-content hidden-phone">
+		@for((answer, i) <- answers.answers.zipWithIndex) {
+			<div class="tab-pane" id="L@{i}">
+				<div class="close-tab"><a href="#close@{i}" class="close-tab" title="close sentences"><i class="icon-remove"></i></a></div>
+				@helper.cardtab(query, answer, i, maxSentenceCount, debug)
+			</div>
+		}
 	</div>
-	<!-- /tabbable -->
+</div>
+<!-- /tabbable -->
 	
-	<!-- Pagination -->
+<!-- Pagination -->
 @if(pageCount > 1) {
 	<div class="pagination" align="center">
 		<ul>
@@ -110,17 +101,6 @@
 		</ul>
 	</div>
 }
-
-	<!-- freebase attr footer -->
-	<div class="freebase-attribution">
-		<img alt="Freebase CC-BY" height="23px" style="border: 0;" width="61px" src="http://www.freebase.com/policies/freebase-cc-by-61x23.png"/>
-
-		<div>
-			<p>Source: <a href="http://www.freebase.com/">Freebase</a>, licensed under <a href="http://creativecommons.org/licenses/by/2.5/">CC-BY</a></p>
-			<p>Other content from <a href="http://en.wikipedia.org/">Wikipedia</a>, licensed under <a href="http://creativecommons.org/licenses/by-sa/2.5/">CC BY-SA</a></p>
-		</div>
-	</div>
-	<!-- /freebase attr footer -->
 
 <script type="text/javascript">
 // spinner options presets

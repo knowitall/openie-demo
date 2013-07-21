@@ -287,8 +287,8 @@ object Application extends Controller {
           } else {
             Ok(
               views.html.frame.resultsframe(
-                searchForm, query, message, filter._3, filter._2.answerCount, filter._2.sentenceCount)(
-                  views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+                searchForm, query, message, filter._3, filter._2.answerCount, filter._2.sentenceCount, true)(
+                    views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
           }
       }
     }
@@ -329,7 +329,7 @@ object Application extends Controller {
           //query card contents.
           Ok(
               views.html.frame.resultsframe(
-                searchForm, query, message, filter._2, filter._2.answerCount, filter._2.sentenceCount)(
+                searchForm, query, message, filter._2, filter._2.answerCount, filter._2.sentenceCount, false)(
                   views.html.disambiguate(query, sortedAmbiguousEntitiesWithAnswerCount, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
       }
     }
