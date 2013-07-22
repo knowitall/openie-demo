@@ -279,7 +279,7 @@ object Application extends Controller {
         if (log) {
           LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request).log()
         }
-        
+
         //if only the category of results is clicked, change the page's result content
         //else generate a header with the result content
         if (justResults) {
