@@ -32,10 +32,12 @@ import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.TimeUnit
 import models.Query
+import edu.knowitall.openie.models.Extraction
+import edu.knowitall.openie.models.ExtractionCluster
 
 sealed abstract class FetchSource {
   // a fetcher returns a ResultSet contains extraction groups
-  def fetch(query: Query): Executor.Result[ExtractionGroup[ReVerbExtraction]]
+  def fetch(query: Query): Executor.Result[ExtractionCluster[Extraction]]
 }
 
 object Fetch {
@@ -164,9 +166,9 @@ case object SolrSource extends FetchSource {
           for (result <- response.iterator.asScala if instanceSize < 20000) yield {
             // deserialize instances
             val bytes = result.getFieldValue("instances").asInstanceOf[Array[Byte]]
-            val (nsKryo, instances: List[Instance[ReVerbExtraction]]) = Timing.time {
+            val (nsKryo, instances: List[Extraction]) = Timing.time {
               kryo.invert(bytes)
-                .asInstanceOf[List[Instance[ReVerbExtraction]]]
+                .asInstanceOf[List[Extraction]]
                 // throw new IllegalArgumentException("Could not deserialize instances: " + bytes.toSeq.toString)
             }
             Logger.trace(s"Instances deserialized (${ Timing.Seconds.format(nsKryo) }) for (${ result.getFieldValue("text") }) from ${ bytes.size } bytes: ${ instances.size }")
@@ -199,11 +201,11 @@ case object SolrSource extends FetchSource {
             val arg1 = buildArgument("arg1")
             val arg2 = buildArgument("arg2")
 
-            ExtractionGroup[ReVerbExtraction](
+            ExtractionCluster[Extraction](
               arg1 = arg1,
               rel = rel,
               arg2 = arg2,
-              instances = instances.toSet)
+              instances = instances)
           }
         }.toList
       }

@@ -8,6 +8,8 @@ import edu.knowitall.common.enrich.Traversables._
 import edu.knowitall.common.enrich.Traversables.traversableOncePairIntTo
 import edu.knowitall.common.Timing
 import play.api.Logger
+import edu.knowitall.openie.models.ExtractionCluster
+import edu.knowitall.openie.models.Extraction
 
 /** An Answer can have multiple parts, each being linked to a different entity. */
 @SerialVersionUID(42L)
@@ -45,8 +47,8 @@ case class Content(strings: List[String], url: String, intervals: List[Interval]
 }
 
 object Answer {
-  def fromExtractionGroups(reg: Iterable[ExtractionGroup[ReVerbExtraction]],
-      group: ExtractionGroup[ReVerbExtraction]=>AnswerTitle,
+  def fromExtractionGroups(reg: Iterable[ExtractionCluster[Extraction]],
+      group: ExtractionCluster[Extraction]=>AnswerTitle,
       fullParts: List[ExtractionPart]): Seq[Answer] = {
 
     val groups = Timing.timeThen {
@@ -71,7 +73,7 @@ object Answer {
     }
 
     // organize extraction groups by a title (group by answer)
-    val collapsed: Seq[(AnswerTitle, Iterable[ExtractionGroup[ReVerbExtraction]])] =
+    val collapsed: Seq[(AnswerTitle, Iterable[ExtractionCluster[Extraction]])] =
       Timing.timeThen {
         groups.map {
           case (text, list) =>
@@ -148,13 +150,13 @@ object Answer {
           val instances = (contents flatMap (c => c.instances)).toList sortBy (-_.confidence)
           val list = instances.map {
             case instance =>
-              val sentence = instance.extraction.sentenceTokens.map(_.string)
-              val url = instance.extraction.sourceUrl
+              val sentence = instance.sentenceTokens.map(_.string)
+              val url = instance.source
               val intervals = List(
-                instance.extraction.arg1Interval,
+                instance.arg1Interval,
                 //instance.extraction.relInterval,
-                instance.extraction.arg2Interval)
-              Content(sentence.map(Query.clean)(collection.breakOut), url, intervals, instance.extraction.relText, instance.confidence, instance.corpus)
+                instance.arg2Interval)
+              Content(sentence.map(Query.clean)(collection.breakOut), url, intervals, instance.relText, instance.confidence, instance.corpus)
           }
 
           // The answer discards information about the extractions from the
@@ -171,7 +173,7 @@ object Answer {
               }
 
               // collapse entities with different scores together
-              // use the score from the best-linked entity 
+              // use the score from the best-linked entity
               val collapsedEntities = entities.groupBy(_._1.fbid).toList.map { case (fbid, entities) =>
                 // use the highest score entity for each entity
                 val entity = entities.maxBy{ case (entity, count) => entity.score }._1

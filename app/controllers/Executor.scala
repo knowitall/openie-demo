@@ -6,7 +6,6 @@ import edu.knowitall.openie.models.ExtractionGroup
 import edu.knowitall.openie.models.FreeBaseEntity
 import edu.knowitall.openie.models.FreeBaseType
 import edu.knowitall.openie.models.Instance
-import edu.knowitall.openie.models.InstanceDeduplicator
 import edu.knowitall.openie.models.ReVerbExtraction
 import edu.knowitall.openie.models.ReVerbExtractionGroup
 import edu.knowitall.browser.lucene
@@ -32,6 +31,8 @@ import models.TypeFilters.enrichFreeBaseType
 import play.api.Logger
 import edu.knowitall.openie.models.Extraction
 import models.TypeFilters
+import edu.knowitall.openie.models.util.ExtractionDeduplicator
+import edu.knowitall.openie.models.ExtractionCluster
 
 object Executor {
   type REG = ExtractionGroup[ReVerbExtraction]
@@ -61,27 +62,27 @@ object Executor {
   case class Limited[T](groups: Seq[T]) extends Result[T]
 
   def execute(query: Query, settings: ExecutionSettings = ExecutionSettings.default): Result[Answer] = {
-    def group: REG => AnswerTitle = {
-      def part(eg: REG, part: Symbol) = {
+    def group: ExtractionCluster[Extraction] => AnswerTitle = {
+      def part(eg: ExtractionCluster[Extraction], part: Symbol) = {
         part match {
-          case 'rel => AnswerTitlePart(eg.rel.norm, Relation, eg.instances.iterator.map(_.extraction.relText).map(Query.clean).toSeq, None, Set.empty)
-          case 'arg1 => AnswerTitlePart(eg.arg1.norm, Argument1, eg.instances.iterator.map(_.extraction.arg1Text).map(Query.clean).toSeq, eg.arg1.entity, eg.arg1.types.toSet)
-          case 'arg2 => AnswerTitlePart(eg.arg2.norm, Argument2, eg.instances.iterator.map(_.extraction.arg2Text).map(Query.clean).toSeq, eg.arg2.entity, eg.arg2.types.toSet)
+          case 'rel => AnswerTitlePart(eg.rel.norm, Relation, eg.instances.iterator.map(_.relText).map(Query.clean).toSeq, None, Set.empty)
+          case 'arg1 => AnswerTitlePart(eg.arg1.norm, Argument1, eg.instances.iterator.map(_.arg1Text).map(Query.clean).toSeq, eg.arg1.entity, eg.arg1.types.toSet)
+          case 'arg2 => AnswerTitlePart(eg.arg2.norm, Argument2, eg.instances.iterator.map(_.arg2Text).map(Query.clean).toSeq, eg.arg2.entity, eg.arg2.types.toSet)
         }
       }
       (query.arg1, query.rel, query.arg2) match {
-        case (Some(_: Fixed), Some(_: Fixed), Some(_: Fixed)) => (eg: REG) =>
+        case (Some(_: Fixed), Some(_: Fixed), Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) =>
           AnswerTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
 
-        case (Some(_: Fixed), Some(_: Fixed), _) => (eg: REG) => AnswerTitle("", Seq(part(eg, 'arg2)))
-        case (_, Some(_: Fixed), Some(_: Fixed)) => (eg: REG) => AnswerTitle("", Seq(part(eg, 'arg1)))
-        case (Some(_: Fixed), _, Some(_: Fixed)) => (eg: REG) => AnswerTitle("", Seq(part(eg, 'rel)))
+        case (Some(_: Fixed), Some(_: Fixed), _) => (eg: ExtractionCluster[Extraction]) => AnswerTitle("", Seq(part(eg, 'arg2)))
+        case (_, Some(_: Fixed), Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) => AnswerTitle("", Seq(part(eg, 'arg1)))
+        case (Some(_: Fixed), _, Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) => AnswerTitle("", Seq(part(eg, 'rel)))
 
-        case (Some(_: Fixed), _, _) => (eg: REG) => AnswerTitle(" ", Seq(part(eg, 'rel), part(eg, 'arg2)))
-        case (_, Some(_: Fixed), _) => (eg: REG) => AnswerTitle(", ", Seq(part(eg, 'arg1), part(eg, 'arg2)))
-        case (_, _, Some(_: Fixed)) => (eg: REG) => AnswerTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel)))
+        case (Some(_: Fixed), _, _) => (eg: ExtractionCluster[Extraction]) => AnswerTitle(" ", Seq(part(eg, 'rel), part(eg, 'arg2)))
+        case (_, Some(_: Fixed), _) => (eg: ExtractionCluster[Extraction]) => AnswerTitle(", ", Seq(part(eg, 'arg1), part(eg, 'arg2)))
+        case (_, _, Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) => AnswerTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel)))
 
-        case _ => (eg: REG) => AnswerTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
+        case _ => (eg: ExtractionCluster[Extraction]) => AnswerTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
       }
     }
 
@@ -98,9 +99,9 @@ object Executor {
     }
   }
 
-  def executeRaw(query: Query, settings: ExecutionSettings = ExecutionSettings.default): List[ExtractionGroup[ReVerbExtraction]] = executeHelper(query, settings)._2.sortBy(-_.instances.size)
+  def executeRaw(query: Query, settings: ExecutionSettings = ExecutionSettings.default): List[ExtractionCluster[Extraction]] = executeHelper(query, settings)._2.sortBy(-_.instances.size)
 
-  private def executeHelper(query: Query, settings: ExecutionSettings): (Result[ExtractionGroup[ReVerbExtraction]], List[ExtractionGroup[ReVerbExtraction]]) = {
+  private def executeHelper(query: Query, settings: ExecutionSettings): (Result[ExtractionCluster[Extraction]], List[ExtractionCluster[Extraction]]) = {
     def entityFilter(entity: FreeBaseEntity) =
       entity.score > settings.entityScoreThreshold
 
@@ -165,7 +166,7 @@ object Executor {
       case _ => true
     }
 
-    def filterRelation(relNorm: Option[String])(group: ExtractionGroup[ReVerbExtraction]) = relNorm match {
+    def filterRelation(relNorm: Option[String])(group: ExtractionCluster[Extraction]) = relNorm match {
       // if the query does not constrain rel, we can ignore this filter
       case Some(queryRelNorm) => {
         val filteredRelNormTokens = (queryRelNorm.toLowerCase.split(" ").filter { str => !(Postagger.prepositions contains str) }).toSet
@@ -174,14 +175,14 @@ object Executor {
       case None => true
     }
 
-    def filterRelationHelper(filteredRelNormTokens: Set[String], group: ExtractionGroup[ReVerbExtraction]): Boolean = {
+    def filterRelationHelper(filteredRelNormTokens: Set[String], group: ExtractionCluster[Extraction]): Boolean = {
       group.instances.headOption match {
         // it's possible that the group is empty already due to some other filter.
         // If it is, ignore (a different filter checks for this)
         case Some(group) => {
-          val extr = group.extraction
+          val extr = group
           def filterNonContent(tok: PostaggedToken): Boolean = nonContentTag.findFirstIn(tok.postag).isEmpty
-          val groupRelNormTokens = extr.normTokens(extr.relInterval) filter filterNonContent
+          val groupRelNormTokens = extr.stemmedTokens(extr.relTokens) filter filterNonContent
           val lastContentWord = groupRelNormTokens.last.string
           filteredRelNormTokens.contains(lastContentWord)
         }
@@ -191,11 +192,11 @@ object Executor {
 
 
 
-    def filterArg2DayOfWeek(group: ExtractionGroup[_ <: Extraction]): Boolean = {
+    def filterArg2DayOfWeek(group: ExtractionCluster[_ <: Extraction]): Boolean = {
       !daysOfWeek.contains(group.arg2.norm)
     }
 
-    def filterGroups(group: ExtractionGroup[_ <: Extraction]): Boolean = {
+    def filterGroups(group: ExtractionCluster[_ <: Extraction]): Boolean = {
       // if there are constraints, apply them to each part in case lucene messed up
       def filterPart(constraint: Option[Constraint], entity: Option[FreeBaseEntity], types: Iterable[FreeBaseType]) = {
         constraint.map {
@@ -222,22 +223,22 @@ object Executor {
     }
 
     // open up the retrieved case class
-    val (results) = result match {
-      case Success(results) => (results)
-      case Limited(results) => (results)
-      case Timeout(results) => (results)
+    val results = result match {
+      case Success(results) => results
+      case Limited(results) => results
+      case Timeout(results) => results
     }
     Logger.debug(query.toString + " searched with " + results.size + " groups (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsQuery))
 
     val (nsRegroup, regrouped) = Timing.time {
-      ReVerbExtractionGroup.indexGroupingToFrontendGrouping(results)
+      ExtractionCluster.indexGroupingToFrontendGrouping(results)
     }
     Logger.debug(query.toString + " regrouped with " + regrouped.size + " answers (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsRegroup))
 
     // apply backend deduplication
     // TODO: merge into index itself
     val (nsDeduped, deduped) = Timing.time {
-      regrouped map InstanceDeduplicator.deduplicate
+      regrouped map ExtractionDeduplicator.deduplicate
     }
     Logger.debug(query.toString + " deduped with " + deduped.size + " answers (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsDeduped))
 
@@ -248,7 +249,7 @@ object Executor {
 
     // // TODO: remove last need for QuerySpec
     val spec = QuerySpec(query.arg1StringField, query.relStringField, query.arg2StringField, query.arg1TypeField, query.arg2TypeField, query.corpusField)
-    val (nsFiltered, filtered: List[ExtractionGroup[ReVerbExtraction]]) =
+    val (nsFiltered, filtered: List[ExtractionCluster[Extraction]]) =
       Timing.time {
         deduped.iterator.map { reg =>
           // normalize fields and remove filtered entities/types

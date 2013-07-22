@@ -7,7 +7,7 @@ import org.joda.time.DateTime
 import edu.knowitall.common.Resource.using
 import edu.knowitall.common.Timing
 import edu.knowitall.openie.models.Extraction
-import edu.knowitall.openie.models.ExtractionGroupProtocol.listFormat
+import edu.knowitall.openie.models.ExtractionCluster
 import edu.knowitall.openie.models.FreeBaseType
 import edu.knowitall.openie.models.Instance
 import edu.knowitall.openie.models.InstanceProtocol.InstanceFormat
@@ -175,7 +175,7 @@ object Application extends Controller {
     val query = Query.fromStrings(arg1, rel, arg2, corpora)
     Logger.info("Json request: " + query)
 
-    import ExtractionGroupProtocol._
+    import ExtractionCluster.Protocol._
     Ok(tojson(Executor.executeRaw(query.toLowerCase).take(count)).toString.replaceAll("[\\p{C}]",""))
   }
 
