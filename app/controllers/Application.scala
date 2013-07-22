@@ -112,7 +112,7 @@ object Application extends Controller {
         val answers = scala.concurrent.future {
           searchGroups(query, settingsFromRequest(debug, request), debug)
         }
-        
+
         Async {
           answers.map { case (answers, message) =>
               val filtered = setupFilters(query, answers, "all", 0)._2
@@ -126,8 +126,8 @@ object Application extends Controller {
               }
 
               if(ambiguousEntities.size == 0){
-	            //when there is no entity that satisfy the cut-off filter above
-	            //i.e, when results number is too small, do the regular query search.
+                //when there is no entity that satisfy the cut-off filter above
+                //i.e, when results number is too small, do the regular query search.
                 doSearch(query, "all", 0, settingsFromRequest(debug, request), debug=debug)
               }else if(ambiguousEntities.size == 1){
                 //when there is only a single entity present after the filter
@@ -279,7 +279,7 @@ object Application extends Controller {
         if (log) {
           LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request).log()
         }
-
+        
         //if only the category of results is clicked, change the page's result content
         //else generate a header with the result content
         if (justResults) {
