@@ -158,7 +158,8 @@ object Answer {
           }
 
           // The answer discards information about the extractions from the
-          // full part of the query.  However,
+          // full part of the query.  However, this is needed for entity cards
+          // and entity disambiguation.
           val queryEntity: List[(FreeBaseEntity, Int)] = fullParts match {
             case part :: Nil =>
               val entities: Iterable[(FreeBaseEntity, Int)] = contents.flatMap { group =>
