@@ -128,13 +128,14 @@ object Application extends Controller {
               if(ambiguousEntities.size == 0){
                 //when there is no entity that satisfy the cut-off filter above
                 //i.e, when results number is too small, do the regular query search.
-                doSearch(query, "all", 0, settingsFromRequest(debug, request), debug=debug)
+                doSearch(query, "", "all", 0, settingsFromRequest(debug, request), debug=debug)
               }else if(ambiguousEntities.size == 1){
                 //when there is only a single entity present after the filter
                 //go directly to the linked entity query search
+                val entityName = ambiguousEntities(0)._1._1.name
                 query.arg2.map(_.toString) match {
-                  case Some(x) => doSearch(Query.fromStrings(query.arg1.map(_.toString), query.rel.map(_.toString), Option("entity:" + ambiguousEntities(0)._1._1.name), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug=debug)
-                  case None => doSearch(Query.fromStrings(Option("entity:" + ambiguousEntities(0)._1._1.name), query.rel.map(_.toString), query.arg2.map(_.toString), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug=debug)
+                  case Some(x) => doSearch(Query.fromStrings(query.arg1.map(_.toString), query.rel.map(_.toString), Option("entity:" + entityName), query.corpora.map(_.corpora)), query.arg2.map(_.toString).get, "all", 0, settingsFromRequest(debug, request), debug=debug)
+                  case None => doSearch(Query.fromStrings(Option("entity:" + entityName), query.rel.map(_.toString), query.arg2.map(_.toString), query.corpora.map(_.corpora)), query.arg1.map(_.toString).get, "all", 0, settingsFromRequest(debug, request), debug=debug)
                 }
               }else{
                 //if there are more than 1 entities that are ambiguous
@@ -168,7 +169,7 @@ object Application extends Controller {
   }
 
   def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean, corpora: Option[String]) = Action { implicit request =>
-    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
+    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), "", filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
   }
 
   def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int, corpora: Option[String]) = Action {
@@ -260,14 +261,14 @@ object Application extends Controller {
   }
 
   def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, justResults: Boolean, debug: Boolean = false, corpora: Option[String]) = Action { implicit request =>
-    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filterString, pageNumber, settingsFromRequest(debug, request), debug=debug, log=true, justResults=justResults)
+    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), "", filterString, pageNumber, settingsFromRequest(debug, request), debug=debug, log=true, justResults=justResults)
   }
 
-  def doSearch(query: Query, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
+  def doSearch(query: Query, queryString: String, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
     Logger.info("Search request: " + query)
 
     val maxQueryTime = 20 * 1000 /* ms */
-
+ 
     val answers = scala.concurrent.future {
       searchGroups(query, settings, debug)
     }
@@ -285,10 +286,17 @@ object Application extends Controller {
         if (justResults) {
           Ok(views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug))
         } else {
-          Ok(
-            views.html.frame.resultsframe(
-             searchForm, query, message, filter._3, filter._2.answerCount, filter._2.sentenceCount, true)(
-               views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+          if(queryString.startsWith("entity:")) {
+            Ok(
+              views.html.frame.resultsframe(
+               searchForm, query, message, filter._3, filter._2.answerCount, filter._2.sentenceCount, "", filterString, true)(
+                 views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+          } else {
+            Ok(
+              views.html.frame.resultsframe(
+               searchForm, query, message, filter._3, filter._2.answerCount, filter._2.sentenceCount, queryString, filterString, true)(
+                 views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+          }
         }
       }
     }
@@ -316,10 +324,29 @@ object Application extends Controller {
         val ambiguousEntitiesWithEntityCount = filter._2.queryEntities.zipWithIndex.filter{ 
           case ((fbe, entityCount), index)  => index < 7 && entityCount > 5 
         }  
-          
+        
+        //size of the largest entity count
+        val largestEntityCount = ambiguousEntitiesWithEntityCount.size match {
+          case 0 => 0
+          case _ => ambiguousEntitiesWithEntityCount(1)._1._2
+        }
+        //ambiguous entities with added filter, filter out results that have less than 10% answers
+        //than the largest entity count, and that don't contain the query arg's keywords
+        val additionallyFilteredAmbiguousEntitiesWithEntityCount = largestEntityCount match {
+          case 0 => ambiguousEntitiesWithEntityCount
+          case _ => query.arg1.map(_.toString).isEmpty match {
+            case true => ambiguousEntitiesWithEntityCount.filter{
+              case ((fbe, entityCount), index) => entityCount > largestEntityCount/10 || fbe.name.toLowerCase().contains(query.arg2.map(_.toString).get.toLowerCase())
+            }
+            case false => ambiguousEntitiesWithEntityCount.filter{
+              case ((fbe, entityCount), index) => entityCount > largestEntityCount/10 || fbe.name.toLowerCase().contains(query.arg1.map(_.toString).get.toLowerCase())
+            }
+          }
+        }
+        
         //get the ambiguous Entities with their index and answerCount
         val answer = filter._2.answers.flatMap(x => x.queryEntity)
-        val ambiguousEntitiesWithAnswerCount = for(((fbe, entityCount), index) <- ambiguousEntitiesWithEntityCount) yield {
+        val ambiguousEntitiesWithAnswerCount = for(((fbe, entityCount), index) <- additionallyFilteredAmbiguousEntitiesWithEntityCount) yield {
           val answerCount = answer.count(_._1.fbid == fbe.fbid)
           (fbe, answerCount)
         }
@@ -331,7 +358,7 @@ object Application extends Controller {
         //query card contents.
         Ok(
           views.html.frame.resultsframe(
-            searchForm, query, message, filter._2, filter._2.answerCount, filter._2.sentenceCount, false)(
+            searchForm, query, message, filter._2, filter._2.answerCount, filter._2.sentenceCount, "", filterString, false)(
               views.html.disambiguate(query, sortedAmbiguousEntitiesWithAnswerCount, filter._1.toSet, filterString, 0, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
       }
     }
