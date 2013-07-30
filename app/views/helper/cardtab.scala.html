@@ -12,7 +12,7 @@
 }
 
 @move(curPartIndex: Int, nextPartIndex: Int, forward: Boolean) = {
-	<a href="#@if(forward) { forward } else { back }" onclick="$('#L@index>#E@curPartIndex').hide(); $('#L@index>#E@nextPartIndex').show();"><i class="card-nav @if(forward) { icon-forward } else { icon-backward }"></i></a>
+	<a href="#@if(forward) {forward} else {back}" onclick="$('#L@index>#E@curPartIndex').hide(); $('#L@index>#E@nextPartIndex').show();"><i class="card-nav @if(forward) { icon-forward } else { icon-backward }"></i></a>
 }
 @next(i: Int) = {
 	@move(i, i + 1, true)
