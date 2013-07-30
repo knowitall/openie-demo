@@ -118,10 +118,10 @@ case object SolrSource extends FetchSource {
     // figure which fields we will query for
     // (fieldName, fieldValue)
     val parts = (Iterable(
-        "arg1", "rel", "arg2",
+        "arg1", "rel", "arg2", "corpora",
         "arg1_types", "arg2_types",
         "arg1_entity_name", "arg2_entity_name") zip Iterable(
-            spec.arg1StringField map normalizeOr, spec.relStringField map normalizeOr, spec.arg2StringField map normalizeOr,
+            spec.arg1StringField map normalizeOr, spec.relStringField map normalizeOr, spec.arg2StringField map normalizeOr, spec.corpusField map quote, 
             spec.arg1TypeField map quote, spec.arg2TypeField map quote,
             spec.arg1EntityField map quote, spec.arg2EntityField map quote)).flatMap {
       case (a, b) => if (b.isEmpty) {
