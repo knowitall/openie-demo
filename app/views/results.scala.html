@@ -81,21 +81,21 @@
   <div class="pagination" align="center">
     <ul>
     @if(pageno > 0) {
-      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno - 1, debug)}">Prev</a></li>
+      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno - 1, debug, false)}">Prev</a></li>
     }
 
     @for(i <- pageno-4 to pageno-1; if i >= 0) {
-      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i, debug)}">@i</a></li>
+      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i, debug, false)}">@i</a></li>
     }
 
       <li class="active"><a href="#">@pageno</a></li>
 
     @for(i <- pageno+1 to pageno+4; if i < pageCount) {
-      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i, debug)}">@i</a></li>
+      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, i, debug, false)}">@i</a></li>
     }
 
     @if(pageno + 1 < pageCount) {
-      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno + 1, debug)}">Next</a></li>
+      <li><a href="@{routes.Application.search(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), filterString, pageno + 1, debug, false)}">Next</a></li>
     }
     </ul>
   </div>
