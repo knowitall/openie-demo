@@ -101,8 +101,12 @@ object Executor {
   def executeRaw(query: Query, settings: ExecutionSettings = ExecutionSettings.default): List[ExtractionGroup[ReVerbExtraction]] = executeHelper(query, settings)._2.sortBy(-_.instances.size)
 
   private def executeHelper(query: Query, settings: ExecutionSettings): (Result[ExtractionGroup[ReVerbExtraction]], List[ExtractionGroup[ReVerbExtraction]]) = {
-    def entityFilter(entity: FreeBaseEntity) =
+    def entityFilter(otherArg: String)(entity: FreeBaseEntity) = {
+      // don't link when it makes the arg1 equal the arg2 text
+      !(entity.name.toLowerCase equalsIgnoreCase otherArg) &&
+      // ensure entity score is above threshold
       entity.score > settings.entityScoreThreshold
+    }
 
     def filterInstances(inst: Instance[ReVerbExtraction]): Boolean = {
       def clean(arg: String) = {
@@ -252,11 +256,11 @@ object Executor {
       Timing.time {
         deduped.iterator.map { reg =>
           // normalize fields and remove filtered entities/types
-          val arg1Entity = reg.arg1.entity filter entityFilter
+          val arg1Entity = reg.arg1.entity filter entityFilter(reg.instances.headOption.map(_.extraction.arg2Text).getOrElse(""))
           val arg1EntityRemoved = reg.arg1.entity.isDefined && arg1Entity.isEmpty
           val arg1Types = if (!arg1EntityRemoved) reg.arg1.types filter typeFilter else Set.empty[FreeBaseType]
 
-          val arg2Entity = reg.arg2.entity filter entityFilter
+          val arg2Entity = reg.arg2.entity filter entityFilter(reg.instances.headOption.map(_.extraction.arg1Text).getOrElse(""))
           val arg2EntityRemoved = reg.arg2.entity.isDefined && arg2Entity.isEmpty
           val arg2Types = if (!arg2EntityRemoved) reg.arg2.types filter typeFilter else Set.empty[FreeBaseType]
 
