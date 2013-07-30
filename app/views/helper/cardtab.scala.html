@@ -24,8 +24,9 @@
 @if(debug) {
     <h2>@answer.queryEntity</h2>
 }
+@defining(answer.title.parts.iterator.zipWithIndex.find(_._1.entity.isDefined).map(_._2).getOrElse(0)) { activePartIndex =>
 @for((part, i) <- answer.title.parts.zipWithIndex) {
-<div id="E@i" style="@if(i > 0) { display: none }">
+<div id="E@i" style="@if(i != activePartIndex) { display: none }">
 	<!-- title -->
 	<h2>
 		@if(i > 0) {@prev(i)}
@@ -34,7 +35,7 @@
 		}.mkString(answer.title.connector))}
 		@if(answer.title.parts.size > i+1){@next(i)}
 	</h2>
-	
+
 	<!-- if there is an entity, display its FreeBase URI -->
 	@defining(part.entity) { entityOpt =>
 		@entityOpt match{
@@ -90,6 +91,7 @@
 		</ul>
 	}
 </div>
+}
 }
 
 <!-- display sentences -->
