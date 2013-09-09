@@ -3,9 +3,6 @@ package models
 import java.io.{ ObjectInputStream, FileInputStream, File }
 import java.util.regex.Pattern
 import scala.Option.option2Iterable
-import edu.knowitall.openie.models._
-import edu.knowitall.browser.lucene
-import edu.knowitall.browser.lucene.{ Timeout, Success, Limited }
 import edu.knowitall.common.Resource.using
 import edu.knowitall.common.Timing
 import Query._
@@ -13,11 +10,10 @@ import akka.actor.{ TypedProps, TypedActor }
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import play.api.Logger
-import edu.knowitall.openie.models.InstanceDeduplicator
-import edu.knowitall.openie.models.ExtractionRelation
 import controllers.routes
 
 case class Query(
+
   arg1: Option[Query.Constraint],
   rel: Option[Query.Constraint],
   arg2: Option[Query.Constraint],
@@ -62,7 +58,6 @@ case class Query(
     case Some(CorporaConstraint(corpString)) => Some(corpString)
     case _ => None
   }
-
 
   def toLowerCase: Query = {
     val lowerCasedQuery = Query(arg1.map(_.toLowerCase), rel.map(_.toLowerCase), arg2.map(_.toLowerCase), corpora)
@@ -218,7 +213,6 @@ case class Query(
 }
 
 object Query {
-  type REG = ExtractionGroup[ReVerbExtraction]
 
   object Constraint {
     def parse(string: String) = {
@@ -284,19 +278,6 @@ object Query {
 
   def fromStrings(arg1: String, rel: String, arg2: String, corpora: String): Query =
     this.fromStrings(noneIfEmpty(arg1), noneIfEmpty(rel), noneIfEmpty(arg2), noneIfEmpty(corpora))
-
-  def fromFile(file: File) = {
-    using(new FileInputStream(file)) { fis =>
-      using(new ObjectInputStream(fis) {
-        override def resolveClass(desc: java.io.ObjectStreamClass): Class[_] = {
-          try { Class.forName(desc.getName, false, getClass.getClassLoader) }
-          catch { case ex: ClassNotFoundException => super.resolveClass(desc) }
-        }
-      }) { in =>
-        in.readObject().asInstanceOf[Iterable[ExtractionGroup[ReVerbExtraction]]]
-      }
-    }
-  }
 
   private final val stripExtraWS = Pattern.compile("\\s+")
   private final val stripChars = Pattern.compile("[^\\p{Graph}\\p{Cntrl} ]+")

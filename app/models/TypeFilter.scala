@@ -1,6 +1,5 @@
 package models
 
-import edu.knowitall.openie.models.FreeBaseType
 import edu.knowitall.common.enrich.Traversables.traversableOnceTo
 import edu.knowitall.common.Resource.using
 import scala.io.Source

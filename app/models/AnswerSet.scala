@@ -1,7 +1,6 @@
 package models
 
 import scala.collection.immutable
-import edu.knowitall.openie.models.FreeBaseEntity
 import edu.knowitall.common.enrich.Traversables._
 
 /** The Answer set is a collection of the answers.

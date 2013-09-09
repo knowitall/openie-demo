@@ -5,13 +5,6 @@
 <!-- spinner for tabs -->
 <div id="tab-spinner" style="display:none"></div>
 
-<!-- query string -->
-@if(debug) {
-  @defining(SolrSource.queryString(query)) { query =>
-    <p style="font-weight: bold">SOLR Query: <a href="@SolrSource.solrUrl/select?q=@helper.urlEncode(query)">@query</a></p>
-  }
-}
-
 <!-- suggestions -->
 @helper.suggestions(query, answers.answerCount)
 
@@ -60,7 +53,6 @@
     <ul class="nav nav-tabs">
       @for((answer, i) <- answers.answers.zipWithIndex) {
       <li class="hidden-phone"><a href="#L@{i}" class="answer" data-toggle="tab" data-fbid="@{answer.title.parts.map(_.entity.map(_.fbid).getOrElse("")).mkString(";")}">@helper.grouptitle(answer.title, debug) (@answer.contents.size)</a></li>
-      <li class="visible-phone"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), answer.title.text, debug)}" class="answer">@Html(answer.title.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", ")) (@answer.contents.size)</a></li>
       }
     </ul>
 

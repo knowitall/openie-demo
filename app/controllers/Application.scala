@@ -1,17 +1,13 @@
 package controllers
 
+import models.FreeBaseType
+
 import scala.annotation.implicitNotFound
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import edu.knowitall.common.Resource.using
 import edu.knowitall.common.Timing
-import edu.knowitall.openie.models.Extraction
-import edu.knowitall.openie.models.ExtractionGroupProtocol.listFormat
-import edu.knowitall.openie.models.FreeBaseType
-import edu.knowitall.openie.models.Instance
-import edu.knowitall.openie.models.InstanceProtocol.InstanceFormat
-import edu.knowitall.openie.models.serialize.Chill
 import models.AnswerSet
 import models.LogEntry
 import models.NegativeTypeFilter
@@ -31,10 +27,7 @@ import play.api.mvc.Result
 import play.api.mvc.Controller
 import play.api.mvc.RequestHeader
 import sjson.json.JsonSerialization.tojson
-import edu.knowitall.openie.models.ExtractionGroupProtocol
-import edu.knowitall.openie.models.InstanceProtocol
 import play.api.templates.Html
-import controllers.Executor.ExecutionSettings
 
 object Application extends Controller {
   final val PAGE_SIZE = 20
@@ -91,16 +84,6 @@ object Application extends Controller {
     Ok(views.html.index(searchForm, footer(reloadFooter)))
   }
 
-  private def settingsFromRequest(debug: Boolean, request: play.api.mvc.Request[play.api.mvc.AnyContent]) = {
-    var settings = Executor.ExecutionSettings.default
-    if (debug) {
-      val entityThresh: Option[Double] = request.queryString.get("entityThresh").flatMap(_.headOption.map(_.toDouble))
-
-      entityThresh.foreach(thresh => settings = settings.copy(entityScoreThreshold = thresh))
-    }
-    settings
-  }
-
   /**
     * Handle POST requests to search.
     */
@@ -110,7 +93,7 @@ object Application extends Controller {
       errors => BadRequest(views.html.index(errors, footer())),
       query => {
         val answers = scala.concurrent.future {
-          searchGroups(query, settingsFromRequest(debug, request), debug)
+          searchGroups(query, debug)
         }
 
         Async {
@@ -126,19 +109,19 @@ object Application extends Controller {
               if(ambiguousEntities.size == 0){
                 //when there is no entity that satisfy the cut-off filter above
                 //i.e, when results number is too small, do the regular query search.
-                doSearch(query, "", "all", 0, settingsFromRequest(debug, request), debug=debug)
+                doSearch(query, "", "all", 0, debug=debug)
               }else if(ambiguousEntities.size == 1){
                 //when there is only a single entity present after the filter
                 //go directly to the linked entity query search
                 val entityName = ambiguousEntities(0)._1._1.name
                 query.arg2.map(_.toString) match {
-                  case Some(x) => doSearch(Query.fromStrings(query.arg1.map(_.toString), query.rel.map(_.toString), Option("entity:" + entityName), query.corpora.map(_.corpora)), query.arg2.map(_.toString).get, "all", 0, settingsFromRequest(debug, request), debug=debug)
-                  case None => doSearch(Query.fromStrings(Option("entity:" + entityName), query.rel.map(_.toString), query.arg2.map(_.toString), query.corpora.map(_.corpora)), query.arg1.map(_.toString).get, "all", 0, settingsFromRequest(debug, request), debug=debug)
+                  case Some(x) => doSearch(Query.fromStrings(query.arg1.map(_.toString), query.rel.map(_.toString), Option("entity:" + entityName), query.corpora.map(_.corpora)), query.arg2.map(_.toString).get, "all", 0, debug=debug)
+                  case None => doSearch(Query.fromStrings(Option("entity:" + entityName), query.rel.map(_.toString), query.arg2.map(_.toString), query.corpora.map(_.corpora)), query.arg1.map(_.toString).get, "all", 0, debug=debug)
                 }
               }else{
                 //if there are more than 1 entities that are ambiguous
                 //direct to the disambiguation page and display an query-card for each
-                disambiguate(query, settingsFromRequest(debug, request), debug=debug)
+                disambiguate(query, debug=debug)
               }
           }
         }
@@ -167,43 +150,7 @@ object Application extends Controller {
   }
 
   def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean, corpora: Option[String]) = Action { implicit request =>
-    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), "", filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
-  }
-
-  def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int, corpora: Option[String]) = Action {
-    val query = Query.fromStrings(arg1, rel, arg2, corpora)
-    Logger.info("Json request: " + query)
-
-    import ExtractionGroupProtocol._
-    Ok(tojson(Executor.executeRaw(query.toLowerCase).take(count)).toString.replaceAll("[\\p{C}]",""))
-  }
-
-  def instancesJson() = Action { implicit request =>
-    Ok(Html("""<html><head><title>Instance Deserializer</title></head><body><h1>Instance Deserializer</h1><form method="POST"><textarea cols="80" rows="20" name="base64"></textarea><br /><input type="submit" /></body></html>"""))
-  }
-
-  case class InstanceInput(base64: String)
-  val instanceForm = Form((mapping("base64" -> text)(InstanceInput.apply)(InstanceInput.unapply)))
-  def instancesJsonSubmit() = Action { implicit request =>
-    val input = instanceForm.bindFromRequest().get
-    val base64 = input.base64
-
-    import InstanceProtocol._
-    val kryo = Chill.createBijection()
-    val bytes = Base64.decodeBase64(base64)
-    val instances = kryo.invert(bytes).asInstanceOf[List[Instance[Extraction]]]
-    Ok(tojson(instances.head).toString.replaceAll("[\\p{C}]",""))
-  }
-
-  def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean, corpora: Option[String]) = Action {
-    val query = Query.fromStrings(arg1, rel, arg2, corpora)
-    Logger.info("Sentences request for title '" + title + "' in: " + query)
-    val group = searchGroups(query, ExecutionSettings.default, debug)._1.answers.find(_.title.text == title) match {
-      case None => throw new IllegalArgumentException("could not find group title: " + title)
-      case Some(group) => group
-    }
-
-    Ok(views.html.sentences(group, debug))
+    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), "", filter, page, debug=debug, log=log)
   }
 
   def logsFromDate(date: DateTime = DateTime.now) =
@@ -215,7 +162,7 @@ object Application extends Controller {
     Ok(views.html.logs(LogEntry.logs(year, month, day), today))
   }
 
-  def searchGroups(query: Query, settings: ExecutionSettings, debug: Boolean) = {
+  def searchGroups(query: Query, debug: Boolean) = {
     Logger.debug("incoming " + query)
     Cache.getAs[AnswerSet](query.toString.toLowerCase) match {
       case Some(answers) if !debug =>
@@ -233,12 +180,12 @@ object Application extends Controller {
         Logger.debug("executing " + query + " in lucene")
 
         // cache miss
-        val (ns, result) = Timing.time(Executor.execute(query.toLowerCase, settings))
+        val (ns, result) = Timing.time(QAExecutor.execute(query.toLowerCase))
 
         val (groups, message) = result match {
-          case Executor.Success(groups) => (groups, None)
-          case Executor.Timeout(groups) => (groups, Some("timeout"))
-          case Executor.Limited(groups) => (groups, Some("results truncated"))
+          case QAExecutor.Success(groups) => (groups, None)
+          case QAExecutor.Timeout(groups) => (groups, Some("timeout"))
+          case QAExecutor.Limited(groups) => (groups, Some("results truncated"))
         }
 
         val answers = AnswerSet.from(query, groups, TypeFilters.fromGroups(query, groups, debug))
@@ -249,7 +196,7 @@ object Application extends Controller {
           " and " + groups.iterator.map(_.contents.size).sum + " sentences" + message.map(" (" + _ + ")").getOrElse(""))
 
         // cache unless we had a timeout
-        if (!result.isInstanceOf[Executor.Timeout[_]]) {
+        if (!result.isInstanceOf[QAExecutor.Timeout[_]]) {
           Logger.debug("Saving " + query.toString + " to cache.")
           Cache.set(query.toString.toLowerCase, answers, 60 * 10)
         }
@@ -259,7 +206,7 @@ object Application extends Controller {
   }
 
   def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, justResults: Boolean, debug: Boolean = false, corpora: Option[String]) = Action { implicit request =>
-    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), "", filterString, pageNumber, settingsFromRequest(debug, request), debug=debug, log=true, justResults=justResults)
+    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), "", filterString, pageNumber, debug=debug, log=true, justResults=justResults)
   }
 
   /**
@@ -267,18 +214,17 @@ object Application extends Controller {
    * @param queryString  the user input string for arg1 or arg2 when page is directed to entity linked results page
    * @param filterString  the filter string for different categories
    * @param pageNumber  the number of page that is being displayed on results page
-   * @param settings  the execution settings from request
    * @param debug  display the page in debug mode when true, which shows solr query and freeBaseEntities
    * @param log  log the query 
    * @param justResults  only refresh the results content of the results page when true, keep the query card unchanged
    */
-  def doSearch(query: Query, queryString: String, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
+  def doSearch(query: Query, queryString: String, filterString: String, pageNumber: Int, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
     Logger.info("Search request: " + query)
 
     val maxQueryTime = 20 * 1000 /* ms */
 
     val answers = scala.concurrent.future {
-      searchGroups(query, settings, debug)
+      searchGroups(query, debug)
     }
 
     Async {
@@ -311,11 +257,11 @@ object Application extends Controller {
     }
   }
 
-  def disambiguate(query: Query, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true)(implicit request: RequestHeader) = {
+  def disambiguate(query: Query, debug: Boolean = false, log: Boolean = true)(implicit request: RequestHeader) = {
     val maxQueryTime = 20 * 1000 /* ms */
 
     val answers = scala.concurrent.future {
-      searchGroups(query, settings, debug)
+      searchGroups(query, debug)
     }
 
     Async {

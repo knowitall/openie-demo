@@ -1,7 +1,6 @@
 @(query: Query, answer: Answer, index: Int, maxSentenceCount: Int, debug: Boolean)
 
 @import models.TypeFilters._
-@import edu.knowitall.openie.models.NellType.fbToNellType
 
 @titleLink(part: models.AnswerTitlePart, large: Boolean) = {
 	@if(part.extractionPart == Relation) {
@@ -50,12 +49,6 @@
 				<h3 class='types-title'>Types:</h3>
 				<ul class='types-body'>
 					@part.types.toSeq.sortBy(-_.weight).map{ fbType =>
-					<li>@{Html(fbToNellType.get(fbType).map( nellType =>
-						"<a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType.id+"' title='Nell type: "+nellType.name+"'>"+nellType.name+"</a> <span style='color: #888'>(Nell)</span>"
-						).getOrElse(""))
-						}</li>
-					}
-					@part.types.toSeq.sortBy(-_.weight).map{ fbType =>
 					<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a> <span style='color: #888'>(FreeBase)</span></li>
 					}
 				</ul>
@@ -66,12 +59,6 @@
 					<!-- Inferred Types (no linked entity) -->
 					<h3 class='types-title'>Inferred Types:</h3>
 					<ul class='types-body'>
-					@part.types.toSeq.sortBy(-_.weight).map{ fbType =>
-						<li>@{Html(fbToNellType.get(fbType).map( nellType =>
-						"<a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType.id+"' title='Nell type: "+nellType.name+"'>"+nellType.name+"</a> <span style='color: #888'>(Nell)</span>"
-						).getOrElse(""))
-						}</li>
-					}
 					@part.types.toSeq.sortBy(-_.weight).map{ fbType =>
 						<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a> <span style='color: #888'>(FreeBase)</span></li>
 					}
@@ -92,12 +79,4 @@
 	}
 </div>
 }
-}
-
-<!-- display sentences -->
-<h3>Extracted from these sentences:</h3>
-@helper.sentences(answer.copy(contents=answer.contents.take(maxSentenceCount)), debug)
-
-@if(answer.contents.size > maxSentenceCount) {
-    <p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), answer.title.text, debug)}">Show all sentences (@{answer.contents.size - maxSentenceCount} more)</a></p>
 }
