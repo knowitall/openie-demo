@@ -4,8 +4,6 @@ import java.io.{ ObjectInputStream, FileInputStream, File }
 import java.util.regex.Pattern
 import scala.Option.option2Iterable
 import edu.knowitall.openie.models._
-import edu.knowitall.browser.lucene
-import edu.knowitall.browser.lucene.{ Timeout, Success, Limited }
 import edu.knowitall.common.Resource.using
 import edu.knowitall.common.Timing
 import Query._

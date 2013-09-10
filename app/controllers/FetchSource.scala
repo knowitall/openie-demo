@@ -17,8 +17,6 @@ import edu.knowitall.openie.models.FreeBaseEntity
 import edu.knowitall.openie.models.FreeBaseType
 import edu.knowitall.openie.models.Instance
 import edu.knowitall.openie.models.ReVerbExtraction
-import edu.knowitall.browser.lucene
-import edu.knowitall.browser.lucene.QuerySpec
 import edu.knowitall.common.Resource.using
 import edu.knowitall.common.Timing
 import edu.knowitall.tool.stem.MorphaStemmer

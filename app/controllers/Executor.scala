@@ -8,9 +8,6 @@ import edu.knowitall.openie.models.FreeBaseType
 import edu.knowitall.openie.models.Instance
 import edu.knowitall.openie.models.ReVerbExtraction
 import edu.knowitall.openie.models.ReVerbExtractionGroup
-import edu.knowitall.browser.lucene
-import edu.knowitall.browser.lucene.QuerySpec
-import edu.knowitall.browser.lucene.ResultSet
 import edu.knowitall.common.Timing
 import edu.knowitall.tool.postag.PostaggedToken
 import edu.knowitall.tool.postag.Postagger
@@ -247,8 +244,6 @@ object Executor {
       typ.valid
     }
 
-    // // TODO: remove last need for QuerySpec
-    val spec = QuerySpec(query.arg1StringField, query.relStringField, query.arg2StringField, query.arg1TypeField, query.arg2TypeField, query.corpusField)
     val (nsFiltered, filtered: List[ExtractionCluster[Extraction]]) =
       Timing.time {
         deduped.iterator.map { reg =>
@@ -266,7 +261,7 @@ object Executor {
             arg1 = ExtractionArgument(Query.clean(reg.arg1.norm), arg1Entity, arg1Types),
             rel = reg.rel.copy(norm = Query.clean(reg.rel.norm)),
             arg2 = ExtractionArgument(Query.clean(reg.arg2.norm), arg2Entity, arg2Types))
-        }.toList filter filterGroups filter filterRelation(spec.relNorm) filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
+        }.toList filter filterGroups filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
       }
 
     Logger.debug(query.toString + " filtered with " + filtered.size + " answers in " + Timing.Seconds.format(nsFiltered))
