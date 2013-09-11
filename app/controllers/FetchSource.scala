@@ -33,7 +33,7 @@ import models.Query
 import edu.knowitall.openie.models.Extraction
 import edu.knowitall.openie.models.ExtractionCluster
 
-sealed abstract class FetchSource {
+abstract class FetchSource {
   // a fetcher returns a ResultSet contains extraction groups
   def fetch(query: Query): Executor.Result[ExtractionCluster[Extraction]]
 }
@@ -43,6 +43,17 @@ object Fetch {
     Timing.timeThen {
       new OpenNlpTokenizer()
     } { ns => Logger.info("Initialized OpenNlpTokenizer (" + Timing.Seconds.format(ns) + ")") }
+  }
+
+  // turn a string into a query string.  We don't use a normalized field in SOLR
+  // because extractions are grouped by lemmas--the actual text might be unique
+  // between the instances--which one to use?
+  def normalize(string: String) = {
+    val tokenized = tokenizer.synchronized {
+      Fetch.tokenizer.tokenize(string)
+    }
+
+    (tokenized.map(_.string) map MorphaStemmer.lemmatize).mkString(" ")
   }
 }
 
@@ -95,16 +106,7 @@ case object SolrSource extends FetchSource {
   def queryString(spec: Query) = {
     def quote(string: String) = "\"" + string + "\""
 
-    // turn a string into a query string.  We don't use a normalized field in SOLR
-    // because extractions are grouped by lemmas--the actual text might be unique
-    // between the instances--which one to use?
-    def normalize(string: String) = {
-      val tokenized = Fetch.tokenizer.synchronized {
-        Fetch.tokenizer.tokenize(string)
-      }
 
-      (tokenized.map(_.string) map MorphaStemmer.lemmatize).mkString(" ")
-    }
     def normalizeOr(string: String) = {
       val tokenized = Fetch.tokenizer.synchronized {
         Fetch.tokenizer.tokenize(string)
