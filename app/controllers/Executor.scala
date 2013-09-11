@@ -40,7 +40,7 @@ object Executor {
   val queryTimeout = 10000
 
   // where data is coming from
-  final val SOURCE: FetchSource = SolrSource
+  final val SOURCE: FetchSource = TriplestoreSource
 
   // minimum thresholds for extraction groups
   case class ExecutionSettings(
