@@ -17,12 +17,14 @@ import models.LogEntry
 import models.NegativeTypeFilter
 import models.PositiveTypeFilter
 import models.Query
+import models.QAQuery
 import models.TypeFilter
 import models.TypeFilters
 import play.api.Logger
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
+import play.api.data.Forms.tuple
 import play.api.data.Forms.mapping
 import play.api.data.Forms.optional
 import play.api.data.Forms.text
@@ -35,6 +37,8 @@ import edu.knowitall.openie.models.ExtractionGroupProtocol
 import edu.knowitall.openie.models.InstanceProtocol
 import play.api.templates.Html
 import controllers.Executor.ExecutionSettings
+import play.api.mvc.Request
+import play.api.mvc.AnyContent
 
 object Application extends Controller {
   final val PAGE_SIZE = 20
@@ -59,6 +63,17 @@ object Application extends Controller {
       )(Query.fromStrings)(unapply)).verifying("All search fields cannot be empty", { query =>
         query.arg1.isDefined || query.rel.isDefined || query.arg2.isDefined
       })
+    )
+  }
+  
+  // Form[(Question, Corpora)]
+  def qaForm: Form[(String, Option[String])] = {
+    Form(
+    // Defines a mapping that will handle Contact values
+      tuple (
+        "question" -> text,
+        "corpora" -> optional(text)
+      )
     )
   }
 
@@ -90,8 +105,12 @@ object Application extends Controller {
   def index(reloadFooter: Boolean) = Action {
     Ok(views.html.index(searchForm, footer(reloadFooter)))
   }
+  
+  def qa(reloadFooter: Boolean) = Action {
+    Ok(views.html.qa(qaForm, footer(reloadFooter)))
+  }
 
-  private def settingsFromRequest(debug: Boolean, request: play.api.mvc.Request[play.api.mvc.AnyContent]) = {
+  private def settingsFromRequest(debug: Boolean, request: Request[AnyContent]) = {
     var settings = Executor.ExecutionSettings.default
     if (debug) {
       val entityThresh: Option[Double] = request.queryString.get("entityThresh").flatMap(_.headOption.map(_.toDouble))
@@ -108,48 +127,63 @@ object Application extends Controller {
 
     searchForm.bindFromRequest.fold(
       errors => BadRequest(views.html.index(errors, footer())),
-      query => {
-        val answers = scala.concurrent.future {
-          searchGroups(query, settingsFromRequest(debug, request), debug)
-        }
+      query => submitHelper(query, debug)
+    )
+  }
+  
+  def submitQA(debug: Boolean = false) = Action { implicit request =>
 
-        Async {
-          answers.map { case (answers, message) =>
-              val filtered = setupFilters(query, answers, "all", 0)._2
-
-              LogEntry.fromRequest(query, "all", answers.answerCount, answers.sentenceCount, request).log()
-
-              //choose a cut-off to filter out the entities that have few
-              //results, and only display to a max of 7 entities
-              val ambiguousEntities = filtered.queryEntities.zipWithIndex.filter{
-                case ((fbe, entityCount), index)  => index < 7 && entityCount > 5
-              }
-
-              if(ambiguousEntities.size == 0){
-                //when there is no entity that satisfy the cut-off filter above
-                //i.e, when results number is too small, do the regular query search.
-                doSearch(query, "all", 0, settingsFromRequest(debug, request), debug=debug)
-              }else if(ambiguousEntities.size == 1){
-                //when there is only a single entity present after the filter
-                //go directly to the linked entity query search
-                query.arg2.map(_.toString) match {
-                  case Some(x) => doSearch(Query.fromStrings(query.arg1.map(_.toString), query.rel.map(_.toString), Option("entity:" + ambiguousEntities(0)._1._1.name), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug=debug)
-                  case None => doSearch(Query.fromStrings(Option("entity:" + ambiguousEntities(0)._1._1.name), query.rel.map(_.toString), query.arg2.map(_.toString), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug=debug)
-                }
-              }else{
-                //if there are more than 1 entities that are ambiguous
-                //direct to the disambiguation page and display an query-card for each
-                disambiguate(query, settingsFromRequest(debug, request), debug=debug)
-              }
-          }
-        }
+    qaForm.bindFromRequest.fold(
+      { errors => BadRequest(views.html.qa(errors, footer())) },
+      { case (question, corpora) =>
+        val query = QAQuery.fromQuestionForm(question, corpora)
+        submitHelper(query, debug) 
       }
     )
   }
 
+  private def submitHelper(query: Query, debug: Boolean)(implicit request: Request[AnyContent]) = {
+    
+    val answers = scala.concurrent.future {
+      searchGroups(query, settingsFromRequest(debug, request), debug)
+    }
+
+    Async {
+      answers.map {
+        case (answers, message) => {
+          val filtered = setupFilters(query, answers, "all", 0)._2
+
+          LogEntry.fromRequest(query, "all", answers.answerCount, answers.sentenceCount, request).log()
+
+          //choose a cut-off to filter out the entities that have few
+          //results, and only display to a max of 7 entities
+          val ambiguousEntities = filtered.queryEntities.zipWithIndex.filter {
+            case ((fbe, entityCount), index) => index < 7 && entityCount > 5
+          }
+
+          if (ambiguousEntities.size == 0) {
+            //when there is no entity that satisfy the cut-off filter above
+            //i.e, when results number is too small, do the regular query search.
+            doSearch(query, "all", 0, settingsFromRequest(debug, request), debug = debug)
+          } else if (ambiguousEntities.size == 1) {
+            //when there is only a single entity present after the filter
+            //go directly to the linked entity query search
+            query.arg2.map(_.toString) match {
+              case Some(x) => doSearch(Query.fromStrings(query.arg1.map(_.toString), query.rel.map(_.toString), Option("entity:" + ambiguousEntities(0)._1._1.name), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug = debug)
+              case None => doSearch(Query.fromStrings(Option("entity:" + ambiguousEntities(0)._1._1.name), query.rel.map(_.toString), query.arg2.map(_.toString), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug = debug)
+            }
+          } else {
+            //if there are more than 1 entities that are ambiguous
+            //direct to the disambiguation page and display an query-card for each
+            disambiguate(query, settingsFromRequest(debug, request), debug = debug)
+          }
+        }
+      }
+    }
+  }
+
   /**
    * Do the filtering of answers according to the query, answerSet and filterString.
-   *
    *
    * @return a tuple of (filters, filtered results, and single page of filtered results)
    */
