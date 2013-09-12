@@ -22,7 +22,6 @@ case class DemoQueryParser() extends QuestionParser {
   
   private val fields = List(arg1, arg1Entity, arg1Types, rel, arg2, arg2Entity, arg2Types, corpora)
   
-  
   private def tconjFromFields(
       name: String, 
       a1s: String, 
@@ -44,7 +43,13 @@ case class DemoQueryParser() extends QuestionParser {
   private val qpat = """\(?(.+),(.+),(.+),(.+),(.+),(.+),(.+),(.+)\)?""".r
   private def parseSingleConjunct(name: String, s: String): Option[TConjunct] = s match {
     case qpat(a1s, a1e, a1t, r, a2s, a2e, a2t, corpora) => 
-      Some(tconjFromFields(name, a1s, a1e, a1t, r, a2s, a2e, a2t, corpora))
+      val conj = tconjFromFields(name, a1s, a1e, a1t, r, a2s, a2e, a2t, corpora)
+      if (conj.values.values.forall(_.isInstanceOf[TVariable])) {
+        Logger.info("Rejecting query with no literals")
+        None
+      } else {
+        Some(conj)
+      }
     case _ => {
       Logger.error("Couldn't parse: " + s)
       None

@@ -18,6 +18,7 @@ import edu.knowitall.collection.immutable.Interval
 import edu.knowitall.openie.models.FreeBaseEntity
 import edu.knowitall.openie.models.FreeBaseType
 import Executor.Success
+import Executor.Limited
 import play.api.Logger
 
 /**
@@ -42,7 +43,7 @@ object TriplestoreSource extends FetchSource {
   /**
    * A temporary hack to turn a Query into input to FormalQuestionParser
    */
-  private def transformQuery(query: Query): String = {
+  private def transformQuery(query: Query): Option[String] = {
 
     def quote(s: String) = "\"%s\"" format s
     
@@ -58,19 +59,28 @@ object TriplestoreSource extends FetchSource {
     
     val mandatoryVars = Set("$a1s", "$rel", "$a2s")
     
-    val fieldStrings = fields.map { case (tvar, field) => (field.getOrElse(tvar)) }
-    
-    val usedMandatoryVars = fieldStrings.filter(mandatoryVars.contains)
-    
-    usedMandatoryVars.mkString(",") + " : " + fieldStrings.mkString(", ")
+    if (fields.forall(_._2.isEmpty)) {
+      Logger.info("Skipping query with no literals.")
+      None
+    }
+    else {
+      val fieldStrings = fields.map { case (tvar, field) => (field.getOrElse(tvar)) }
+      val usedMandatoryVars = fieldStrings.filter(mandatoryVars.contains)
+      Some(usedMandatoryVars.mkString(",") + " : " + fieldStrings.mkString(", "))
+    }
   }
-  
+
   def fetch(query: Query): Executor.Result[ExtractionCluster[Extraction]] = {
     val hackQueryString = transformQuery(query)
-    val scoredAnswers = qaSystem.answer(hackQueryString)
-    val tuples = scoredAnswers.flatMap(_.derivations.map(_.etuple.tuple))
-    val converted = tuples map converter.convert
-    Success(converted)
+    hackQueryString match {
+      case Some(qString) => {
+        val scoredAnswers = qaSystem.answer(qString)
+        val tuples = scoredAnswers.flatMap(_.derivations.map(_.etuple.tuple))
+        val converted = tuples map converter.convert
+        Success(converted)
+      }
+      case None => Limited(Nil)
+    }
   }
 }
 
