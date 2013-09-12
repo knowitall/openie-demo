@@ -18,7 +18,13 @@ import edu.knowitall.collection.immutable.Interval
 import edu.knowitall.openie.models.FreeBaseEntity
 import edu.knowitall.openie.models.FreeBaseType
 import Executor.Success
+import play.api.Logger
 
+/**
+ * A FetchSource backed by triplestore-qa that converts 
+ * ScoredAnswerGroups (returned by QASystem) to
+ * ExtractionClusters. 
+ */
 object TriplestoreSource extends FetchSource {
 
   private val solrUrl = "http://localhost:8983/solr/triplestore"
@@ -94,22 +100,27 @@ class ScoredAnswerConverter(val solrServer: SolrServer) {
     ReVerbExtraction(chunkedTokens.toIndexedSeq, arg1Interval, relInterval, arg2Interval, urlString)
   }
   
-  def convertSourceId(id: String): ReVerbExtraction = {
+  def convertSourceId(id: String): Option[ReVerbExtraction] = {
     
     // make the solr query
     val idQueryString = s"id:$id"
     val solrQuery = new SolrQuery(idQueryString)
     val response = solrServer.query(solrQuery)
     val docs = response.getResults()
-    require(docs.size() == 1, "Should only be one doc per metadata Id")
-    val doc = docs.get(0)
-    convertDoc(doc)
+    
+    if (docs.size == 0) {
+      Logger.error("Metadata doc not found for id: " + id)
+      None
+    } else {
+      if (docs.size > 1) Logger.warn("Should only be one metadata doc per id, found %d docs for id %s".format(docs.size, id))
+      Some(convertDoc(docs.get(0)))
+    }
   }
   
   def convert(tuple: Tuple): ExtractionCluster[Extraction] = {
     
     val sourceIds = tuple.get("r0.source_ids").get.asInstanceOf[List[String]]
-    val extractions = sourceIds map convertSourceId
+    val extractions = sourceIds flatMap convertSourceId
     
     def gs(s: String) = tuple.getString("r0."+s)
     
