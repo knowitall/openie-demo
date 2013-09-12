@@ -1,0 +1,110 @@
+@(searchForm: Form[(String, Option[String])], footer: String)
+
+@helper.main("Open Information Extraction QA", compact=false) {
+  <p />
+  <div id="query-well" class="row well">
+    <div class="row">
+      <div class="span4 offset2">
+          <b style="font-size:1.5em;">Example Queries: <a href="#" class="tooltiparea" rel="tooltip" title="Click an example question to see a sample relation search query."><i class="icon-question-sign"></i></a></b>
+          <table style="padding: 5 px;font-size:1em;">
+              <tr>
+                  <td><a href="#" class="example-link" onclick="javascript:$('#question').val('What kills bacteria?')">What kills bacteria?</a></td>
+              </tr>
+              <tr>
+                  <td><a href="#" class="example-link" onclick="javascript:$('#question').val('Who built the Pyramids?')">Who built the Pyramids?</a></td>
+              </tr>
+              <tr class="hidden-phone">
+                  <td><a href="#" class="example-link" onclick="javascript:$('#question').val('What did Thomas Edison invent?')">What did Thomas Edison invent?</a></td>
+              </tr>
+              <tr class="hidden-phone">
+                  <td><a href="#" class="example-link" onclick="javascript:$('#question').val('What contains antioxidants?')">What contains antioxidants?</a></td>
+              </tr>
+          </table>
+          <br />
+      </div>
+      <div class="span4">
+          <b style="font-size:1.5em;">Typed Example Queries: <a href="#" class="tooltiparea" rel="tooltip", title="Click an example question to see a sample relation search query.  These examples constrain one field to a FreeBase type."><i class="icon-question-sign"></i></a></b>
+          <table style="padding: 5 px;font-size:1em;">
+              <tr>
+                  <td><a href="#" class="example-link" onclick="javascript:$('#question').val('What countries are located in Africa?')">What countries are located in Africa?</a></td>
+              </tr>
+              <tr>
+                  <td><a href="#" class="example-link" onclick="javascript:$('#question').val('What actors starred in which films?')">What actors starred in which films?</a></td>
+              </tr>
+              <tr class="hidden-phone">
+                  <td><a href="#" class="example-link" onclick="javascript:$('#question').val('What is the symbol of which country?')">What is the symbol of which country?</a></td>
+              </tr>
+              <tr class="hidden-phone">
+                  <td><a href="#" class="example-link" onclick="javascript:$('#question').val('What foods are grown in which countries?')">What foods are grown in which countries?</a></td>
+              </tr>
+              <tr class="hidden-phone">
+                  <td><a href="#" class="example-link" onclick="javascript:$('#question').val('What drug ingredients has the FDA approved?')">What drug ingredients has the FDA approved?</a></td>
+              </tr>
+          </table>
+      </div>
+    </div>
+    <div class="row" style="margin-top:2em;">  
+      <div class="offset1">
+        @helper.form(action = routes.Application.submitQA(false)) {
+        <div class="search-question">
+        @helper.inputText(
+            searchForm("question"),
+            '_label -> "Question:",
+            'placeholder -> "ask a question",
+            'autocomplete -> "off",
+            'class -> "input-question")
+        </div>
+        <div class="search-arg narrow">
+        @helper.select(
+            searchForm("corpora"),
+            ("" -> "All") :: Corpus.corpora.map(c => (c.indexName, c.displayName)),
+            '_label -> "Corpus:")
+        </div>
+        <button id="search-button" class="btn btn-large"><i id="search-icon" class="icon-search"></i> Search</button> <div id="search-spinner" style="width: 35px;height: 35px;margin-left:10px;display:inline-block;position:relative;top:10px;"></div>
+        }
+      </div>
+    </div> 
+  </div>
+
+  <footer>
+      @Html(footer)
+  </footer>
+
+  <script type="text/javascript">
+    $(document).ready(function() {
+      $('.tooltiparea').tooltip()
+
+      $("#search-button").click(function() {
+        var opts = {
+          lines: 9, // The number of lines to draw
+          length: 0, // The length of each line
+          width: 4, // The line thickness
+          radius: 10, // The radius of the inner circle
+          rotate: 0, // The rotation offset
+          color: '#000', // #rgb or #rrggbb
+          speed: .95, // Rounds per second
+          trail: 60, // Afterglow percentage
+          shadow: false, // Whether to render a shadow
+          hwaccel: false, // Whether to use hardware acceleration
+          className: 'spinner', // The CSS class to assign to the spinner
+          zIndex: 2e9, // The z-index (defaults to 2000000000)
+          top: 'auto', // Top position relative to parent in px
+          left: 'auto' // Left position relative to parent in px
+        };
+
+        $("#search-spinner").spin(opts);
+      });
+
+      $('.example-link').click(function(event) {
+        $('#search-button').addClass('btn-primary');
+        $('#search-icon').addClass('icon-white');
+      });
+    });
+
+    function fillForm(arg1, rel, arg2) {
+      document.getElementById('arg1').value=arg1;
+      document.getElementById('rel').value=rel;
+      document.getElementById('arg2').value=arg2;
+    }
+  </script>
+}
