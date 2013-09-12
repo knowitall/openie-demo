@@ -28,7 +28,7 @@ import play.api.Logger
  */
 object TriplestoreSource extends FetchSource {
 
-  private val solrUrl = "http://localhost:8983/solr/triplestore"
+  private val solrUrl = "http://rv-n16.cs.washington.edu:10983/solr/triplestore"
   private val maxHits = 500
   private val solrClient = SolrClient(solrUrl, maxHits)
   private val solrServer = solrClient.server
@@ -76,7 +76,7 @@ object TriplestoreSource extends FetchSource {
       case Some(qString) => {
         val scoredAnswers = qaSystem.answer(qString)
         val tuples = scoredAnswers.flatMap(_.derivations.map(_.etuple.tuple))
-        val converted = tuples map converter.convert
+        val converted = tuples flatMap converter.convert
         Success(converted)
       }
       case None => Limited(Nil)
@@ -127,10 +127,7 @@ class ScoredAnswerConverter(val solrServer: SolrServer) {
     }
   }
   
-  def convert(tuple: Tuple): ExtractionCluster[Extraction] = {
-    
-    val sourceIds = tuple.get("r0.source_ids").get.asInstanceOf[List[String]]
-    val extractions = sourceIds flatMap convertSourceId
+  def convert(tuple: Tuple): Option[ExtractionCluster[Extraction]] = {
     
     def gs(s: String) = tuple.getString("r0."+s)
     
@@ -159,15 +156,22 @@ class ScoredAnswerConverter(val solrServer: SolrServer) {
       typeStrings.toSet.flatMap(FreeBaseType.parse)
     }
     
-    new ExtractionCluster(
-        arg1norm, 
-        relnorm, 
-        arg2norm, 
-        getLink("arg1"), 
-        getLink("arg2"), 
-        getTypes("arg1"), 
-        getTypes("arg2"), 
-        extractions)
+    val sourceIds = tuple.get("r0.source_ids").get.asInstanceOf[List[String]]
+    val extractions = sourceIds flatMap convertSourceId
+    
+    if (extractions.isEmpty) {
+      Logger.warn("Discarding empty ExtractionCluster, id: %s, tuple (%s, %s, %s)".format(gs("id"), arg1norm, relnorm, arg2norm))
+      None
+    } else Some(
+      new ExtractionCluster(
+        arg1norm,
+        relnorm,
+        arg2norm,
+        getLink("arg1"),
+        getLink("arg2"),
+        getTypes("arg1"),
+        getTypes("arg2"),
+        extractions))
   }
 }
 
