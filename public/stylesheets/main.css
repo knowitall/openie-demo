@@ -190,6 +190,13 @@ margin-left: 85px;
   margin: auto 1em;
 }
 
+.search-question {
+  display: inline-block;
+  margin: auto 1em;
+}
+
+.input-question { width: 40em }
+
 #corpora {
   width: 6em;
 }
