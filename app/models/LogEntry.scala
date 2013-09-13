@@ -14,7 +14,7 @@ import play.api.Logger
 import play.api.mvc.RequestHeader
 
 case class LogEntry (
-  query: Query,
+  query: TripleQuery,
   filter: String,
   answerCount: Int,
   sentenceCount: Int,
@@ -61,7 +61,7 @@ object LogEntry {
   private final val LOG_DIRECTORY_FILE = new File(System.getProperty("user.home") + "/openiedemo/logs")
   private final val dateFormatter = new SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss z")
 
-  def fromRequest(query: Query, filter: String, answerCount: Int, sentenceCount: Int, request: RequestHeader) = {
+  def fromRequest(query: TripleQuery, filter: String, answerCount: Int, sentenceCount: Int, request: RequestHeader) = {
     val remoteIp = request.remoteAddress
     val remoteHost = catching(classOf[UnknownHostException]) opt (InetAddress.getByName(remoteIp).getHostName)
 
@@ -97,6 +97,6 @@ object LogEntry {
   def fromRow(row: String) = {
     def noneIfEmpty(string: String) = if (string.isEmpty) None else Some(string)
     val Array(arg1, rel, arg2, filter, groupCount, resultCount, date, ip) = row.split("\t")
-    LogEntry(Query.fromStrings(arg1, rel, arg2, "unknownCorpora"), filter, groupCount.toInt, resultCount.toInt, ip, new Date(date.toLong))
+    LogEntry(TripleQuery.fromStrings(arg1, rel, arg2, "unknownCorpora"), filter, groupCount.toInt, resultCount.toInt, ip, new Date(date.toLong))
   }
 }

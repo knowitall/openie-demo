@@ -1,4 +1,4 @@
-@(query: Query, answerCount: Int)
+@(query: TripleQuery, answerCount: Int)
 
 @if(answerCount == 0) {
   <div id="suggestions">
@@ -22,7 +22,7 @@
     }
     <p>General suggestions:</p>
     <ul id="general-suggestions">
-    @for(suggestion <- Query.generalSuggestions) {
+    @for(suggestion <- TripleQuery.generalSuggestions) {
       <li>@Html(suggestion)</li>
     }
     </ul>

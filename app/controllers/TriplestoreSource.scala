@@ -7,6 +7,7 @@ import edu.knowitall.openie.models.Extraction
 import edu.knowitall.apps.QASystem
 import edu.knowitall.apps.Components
 import edu.knowitall.execution.IdentityExecutor
+import edu.knowitall.parsing.QuestionParser
 import edu.knowitall.execution.Tuple
 import edu.knowitall.scoring.ScoredAnswerGroup
 import edu.knowitall.triplestore.SolrClient
@@ -32,55 +33,18 @@ object TriplestoreSource extends FetchSource {
   private val maxHits = 500
   private val solrClient = SolrClient(solrUrl, maxHits)
   private val solrServer = solrClient.server
-  private val parser = DemoQueryParser()
   private val executor = IdentityExecutor(solrClient) // Need to be able to hang on to the solr server.
   private val grouper = Components.groupers("basic")
   private val scorer = Components.scorers("numDerivations")
   private val converter = new ScoredAnswerConverter(solrServer)
   
-  private val qaSystem = QASystem(parser, executor, grouper, scorer)
-  
-  /**
-   * A temporary hack to turn a Query into input to FormalQuestionParser
-   */
-  private def transformQuery(query: Query): Option[String] = {
-
-    def quote(s: String) = "\"%s\"" format s
-    
-    val fields = List(
-      ("$a1s", query.arg1StringField),
-      ("$a1e", query.arg1EntityField),
-      ("$a1t", query.arg1TypeField),
-      ("$rel", query.relStringField),
-      ("$a2s", query.arg2StringField),
-      ("$a2e", query.arg2EntityField),
-      ("$a2t", query.arg2TypeField),
-      ("$corp",query.corpusField))
-    
-    val mandatoryVars = Set("$a1s", "$rel", "$a2s")
-    
-    if (fields.forall(_._2.isEmpty)) {
-      Logger.info("Skipping query with no literals.")
-      None
-    }
-    else {
-      val fieldStrings = fields.map { case (tvar, field) => (field.getOrElse(tvar)) }
-      val usedMandatoryVars = fieldStrings.filter(mandatoryVars.contains)
-      Some(usedMandatoryVars.mkString(",") + " : " + fieldStrings.mkString(", "))
-    }
-  }
+  private def qaSystem(parser: QuestionParser) = QASystem(parser, executor, grouper, scorer)
 
   def fetch(query: Query): Executor.Result[ExtractionCluster[Extraction]] = {
-    val hackQueryString = transformQuery(query)
-    hackQueryString match {
-      case Some(qString) => {
-        val scoredAnswers = qaSystem.answer(qString)
-        val tuples = scoredAnswers.flatMap(_.derivations.map(_.etuple.tuple))
-        val converted = tuples flatMap converter.convert
-        Success(converted)
-      }
-      case None => Limited(Nil)
-    }
+    val scoredAnswers = qaSystem(query.parser).answer(query.question)
+    val tuples = scoredAnswers.flatMap(_.derivations.map(_.etuple.tuple))
+    val converted = tuples flatMap converter.convert
+    Success(converted)
   }
 }
 

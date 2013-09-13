@@ -16,7 +16,7 @@ import models.AnswerSet
 import models.LogEntry
 import models.NegativeTypeFilter
 import models.PositiveTypeFilter
-import models.Query
+import models.TripleQuery
 import models.QAQuery
 import models.TypeFilter
 import models.TypeFilters
@@ -49,8 +49,8 @@ object Application extends Controller {
   /**
     * The actual definition of the search form.
     */
-  def searchForm: Form[Query] = {
-    def unapply(query: Query): Option[(Option[String], Option[String], Option[String], Option[String])] = {
+  def searchForm: Form[TripleQuery] = {
+    def unapply(query: TripleQuery): Option[(Option[String], Option[String], Option[String], Option[String])] = {
       Some(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), query.corpora.map(_.toString))
     }
     Form(
@@ -60,7 +60,7 @@ object Application extends Controller {
         "rel" -> optional(text),
         "arg2" -> optional(text),
         "corpora" -> optional(text)
-      )(Query.fromStrings)(unapply)).verifying("All search fields cannot be empty", { query =>
+      )(TripleQuery.fromStrings)(unapply)).verifying("All search fields cannot be empty", { query =>
         query.arg1.isDefined || query.rel.isDefined || query.arg2.isDefined
       })
     )
@@ -142,7 +142,7 @@ object Application extends Controller {
     )
   }
 
-  private def submitHelper(query: Query, debug: Boolean)(implicit request: Request[AnyContent]) = {
+  private def submitHelper(query: TripleQuery, debug: Boolean)(implicit request: Request[AnyContent]) = {
     
     val answers = scala.concurrent.future {
       searchGroups(query, settingsFromRequest(debug, request), debug)
@@ -169,8 +169,8 @@ object Application extends Controller {
             //when there is only a single entity present after the filter
             //go directly to the linked entity query search
             query.arg2.map(_.toString) match {
-              case Some(x) => doSearch(Query.fromStrings(query.arg1.map(_.toString), query.rel.map(_.toString), Option("entity:" + ambiguousEntities(0)._1._1.name), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug = debug)
-              case None => doSearch(Query.fromStrings(Option("entity:" + ambiguousEntities(0)._1._1.name), query.rel.map(_.toString), query.arg2.map(_.toString), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug = debug)
+              case Some(x) => doSearch(TripleQuery.fromStrings(query.arg1.map(_.toString), query.rel.map(_.toString), Option("entity:" + ambiguousEntities(0)._1._1.name), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug = debug)
+              case None => doSearch(TripleQuery.fromStrings(Option("entity:" + ambiguousEntities(0)._1._1.name), query.rel.map(_.toString), query.arg2.map(_.toString), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug = debug)
             }
           } else {
             //if there are more than 1 entities that are ambiguous
@@ -187,7 +187,7 @@ object Application extends Controller {
    *
    * @return a tuple of (filters, filtered results, and single page of filtered results)
    */
-  private def setupFilters(query: Query, answers: AnswerSet, filterString: String, pageNumber : Int) = {
+  private def setupFilters(query: TripleQuery, answers: AnswerSet, filterString: String, pageNumber : Int) = {
       val filters: Set[TypeFilter] = filterString match {
         case "" | "all" => Set()
         case "misc" => answers.filters.map(_.filter).collect { case filter: PositiveTypeFilter => filter } .map(filter => NegativeTypeFilter(filter.typ, query.freeParts)).toSet
@@ -202,11 +202,11 @@ object Application extends Controller {
   }
 
   def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean, corpora: Option[String]) = Action { implicit request =>
-    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
+    doSearch(TripleQuery.fromStrings(arg1, rel, arg2, corpora), filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
   }
 
   def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int, corpora: Option[String]) = Action {
-    val query = Query.fromStrings(arg1, rel, arg2, corpora)
+    val query = TripleQuery.fromStrings(arg1, rel, arg2, corpora)
     Logger.info("Json request: " + query)
 
     import ExtractionCluster.Protocol._
@@ -231,7 +231,7 @@ object Application extends Controller {
   }
 
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean, corpora: Option[String]) = Action {
-    val query = Query.fromStrings(arg1, rel, arg2, corpora)
+    val query = TripleQuery.fromStrings(arg1, rel, arg2, corpora)
     Logger.info("Sentences request for title '" + title + "' in: " + query)
     val group = searchGroups(query, ExecutionSettings.default, debug)._1.answers.find(_.title.text == title) match {
       case None => throw new IllegalArgumentException("could not find group title: " + title)
@@ -250,7 +250,7 @@ object Application extends Controller {
     Ok(views.html.logs(LogEntry.logs(year, month, day), today))
   }
 
-  def searchGroups(query: Query, settings: ExecutionSettings, debug: Boolean) = {
+  def searchGroups(query: TripleQuery, settings: ExecutionSettings, debug: Boolean) = {
     Logger.debug("incoming " + query)
     Cache.getAs[AnswerSet](query.toString.toLowerCase) match {
       case Some(answers) if !debug =>
@@ -294,10 +294,10 @@ object Application extends Controller {
   }
 
   def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, justResults: Boolean, debug: Boolean = false, corpora: Option[String]) = Action { implicit request =>
-    doSearch(Query.fromStrings(arg1, rel, arg2, corpora), filterString, pageNumber, settingsFromRequest(debug, request), debug=debug, log=true, justResults=justResults)
+    doSearch(TripleQuery.fromStrings(arg1, rel, arg2, corpora), filterString, pageNumber, settingsFromRequest(debug, request), debug=debug, log=true, justResults=justResults)
   }
 
-  def doSearch(query: Query, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
+  def doSearch(query: TripleQuery, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
     Logger.info("Search request: " + query)
 
     val maxQueryTime = 20 * 1000 /* ms */
@@ -328,7 +328,7 @@ object Application extends Controller {
     }
   }
 
-  def disambiguate(query: Query, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true)(implicit request: RequestHeader) = {
+  def disambiguate(query: TripleQuery, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true)(implicit request: RequestHeader) = {
     val maxQueryTime = 20 * 1000 /* ms */
 
     val answers = scala.concurrent.future {

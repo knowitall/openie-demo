@@ -25,7 +25,7 @@ case class AnswerSet(answers: Seq[Answer], filters: immutable.SortedSet[TypeFilt
 }
 
 object AnswerSet {
-  def from(query: Query, answers: Seq[Answer], filters: Seq[TypeFilter]) = {
+  def from(query: TripleQuery, answers: Seq[Answer], filters: Seq[TypeFilter]) = {
     val filteredGroups = answers filter (answer => query.filters forall (filter => filter(answer.title)))
     val filterTabs = immutable.SortedSet.empty[TypeFilterTab] ++ filters.map(filter => TypeFilterTab(filter, answers.count(answer => filter(answer.title))))
 

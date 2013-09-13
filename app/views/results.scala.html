@@ -1,16 +1,9 @@
-@(query: Query, answers: AnswerSet, filters: Set[TypeFilter], filterString: String, pageno: Int, pageCount: Int, maxSentenceCount: Int, debug: Boolean)
+@(query: TripleQuery, answers: AnswerSet, filters: Set[TypeFilter], filterString: String, pageno: Int, pageCount: Int, maxSentenceCount: Int, debug: Boolean)
 
 @import helper.twitterBootstrap._
 
 <!-- spinner for tabs -->
 <div id="tab-spinner" style="display:none"></div>
-
-<!-- query string -->
-@if(debug) {
-  @defining(SolrSource.queryString(query)) { query =>
-    <p style="font-weight: bold">SOLR Query: <a href="@SolrSource.solrUrl/select?q=@helper.urlEncode(query)">@query</a></p>
-  }
-}
 
 <!-- suggestions -->
 @helper.suggestions(query, answers.answerCount)

@@ -74,7 +74,7 @@ object TypeFilters {
 
   implicit def enrichFreeBaseType(fb: FreeBaseType) = new EnrichedFreeBaseType(fb)
 
-  def fromGroups(query: Query, groups: Iterable[Answer], debug: Boolean): Seq[TypeFilter] = {
+  def fromGroups(query: TripleQuery, groups: Iterable[Answer], debug: Boolean): Seq[TypeFilter] = {
     if (query.full) List.empty
     else {
       // build all possible filters

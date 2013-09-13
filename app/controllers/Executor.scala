@@ -16,13 +16,13 @@ import models.AnswerTitle
 import models.AnswerTitlePart
 import models.Argument1
 import models.Argument2
-import models.Query
-import models.Query.Constraint
-import models.Query.CorporaConstraint
-import models.Query.EntityConstraint
-import models.Query.Fixed
-import models.Query.TermConstraint
-import models.Query.TypeConstraint
+import models.TripleQuery
+import models.TripleQuery.Constraint
+import models.TripleQuery.CorporaConstraint
+import models.TripleQuery.EntityConstraint
+import models.TripleQuery.Fixed
+import models.TripleQuery.TermConstraint
+import models.TripleQuery.TypeConstraint
 import models.Relation
 import models.TypeFilters.enrichFreeBaseType
 import play.api.Logger
@@ -58,13 +58,13 @@ object Executor {
   case class Timeout[T](groups: Seq[T]) extends Result[T]
   case class Limited[T](groups: Seq[T]) extends Result[T]
 
-  def execute(query: Query, settings: ExecutionSettings = ExecutionSettings.default): Result[Answer] = {
+  def execute(query: TripleQuery, settings: ExecutionSettings = ExecutionSettings.default): Result[Answer] = {
     def group: ExtractionCluster[Extraction] => AnswerTitle = {
       def part(eg: ExtractionCluster[Extraction], part: Symbol) = {
         part match {
-          case 'rel => AnswerTitlePart(eg.rel.norm, Relation, eg.instances.iterator.map(_.relText).map(Query.clean).toSeq, None, Set.empty)
-          case 'arg1 => AnswerTitlePart(eg.arg1.norm, Argument1, eg.instances.iterator.map(_.arg1Text).map(Query.clean).toSeq, eg.arg1.entity, eg.arg1.types.toSet)
-          case 'arg2 => AnswerTitlePart(eg.arg2.norm, Argument2, eg.instances.iterator.map(_.arg2Text).map(Query.clean).toSeq, eg.arg2.entity, eg.arg2.types.toSet)
+          case 'rel => AnswerTitlePart(eg.rel.norm, Relation, eg.instances.iterator.map(_.relText).map(TripleQuery.clean).toSeq, None, Set.empty)
+          case 'arg1 => AnswerTitlePart(eg.arg1.norm, Argument1, eg.instances.iterator.map(_.arg1Text).map(TripleQuery.clean).toSeq, eg.arg1.entity, eg.arg1.types.toSet)
+          case 'arg2 => AnswerTitlePart(eg.arg2.norm, Argument2, eg.instances.iterator.map(_.arg2Text).map(TripleQuery.clean).toSeq, eg.arg2.entity, eg.arg2.types.toSet)
         }
       }
       (query.arg1, query.rel, query.arg2) match {
@@ -96,15 +96,15 @@ object Executor {
     }
   }
 
-  def executeRaw(query: Query, settings: ExecutionSettings = ExecutionSettings.default): List[ExtractionCluster[Extraction]] = executeHelper(query, settings)._2.sortBy(-_.instances.size)
+  def executeRaw(query: TripleQuery, settings: ExecutionSettings = ExecutionSettings.default): List[ExtractionCluster[Extraction]] = executeHelper(query, settings)._2.sortBy(-_.instances.size)
 
-  private def executeHelper(query: Query, settings: ExecutionSettings): (Result[ExtractionCluster[Extraction]], List[ExtractionCluster[Extraction]]) = {
+  private def executeHelper(query: TripleQuery, settings: ExecutionSettings): (Result[ExtractionCluster[Extraction]], List[ExtractionCluster[Extraction]]) = {
     def entityFilter(entity: FreeBaseEntity) =
       entity.score > settings.entityScoreThreshold
 
     def filterInstances(inst: Instance[ReVerbExtraction]): Boolean = {
       def clean(arg: String) = {
-        var clean = Query.clean(arg.trim)
+        var clean = TripleQuery.clean(arg.trim)
 
         clean = leadingArticle.matcher(clean).replaceAll("");
 
@@ -258,9 +258,9 @@ object Executor {
 
           reg.copy(
             instances = reg.instances,// filter filterCorpora filter filterInstances,
-            arg1 = ExtractionArgument(Query.clean(reg.arg1.norm), arg1Entity, arg1Types),
-            rel = reg.rel.copy(norm = Query.clean(reg.rel.norm)),
-            arg2 = ExtractionArgument(Query.clean(reg.arg2.norm), arg2Entity, arg2Types))
+            arg1 = ExtractionArgument(TripleQuery.clean(reg.arg1.norm), arg1Entity, arg1Types),
+            rel = reg.rel.copy(norm = TripleQuery.clean(reg.rel.norm)),
+            arg2 = ExtractionArgument(TripleQuery.clean(reg.arg2.norm), arg2Entity, arg2Types))
         }.toList filter filterGroups filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
       }
 

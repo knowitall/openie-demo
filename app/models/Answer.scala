@@ -156,7 +156,7 @@ object Answer {
                 instance.arg1Interval,
                 //instance.extraction.relInterval,
                 instance.arg2Interval)
-              Content(sentence.map(Query.clean)(collection.breakOut), url, intervals, instance.relText, instance.confidence, instance.corpus)
+              Content(sentence.map(TripleQuery.clean)(collection.breakOut), url, intervals, instance.relText, instance.confidence, instance.corpus)
           }
 
           // The answer discards information about the extractions from the

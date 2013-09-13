@@ -15,11 +15,11 @@ object QAQuery {
 
   private val regexParser = RegexQuestionParser()
   
-  def fromQuestionForm(question: String, corpora: Option[String]): Query = {
+  def fromQuestionForm(question: String, corpora: Option[String]): TripleQuery = {
     fromQuestion(question, corpora.getOrElse(""))
   }
   
-  def fromQuestion(question: String, corpora: String): Query = {
+  def fromQuestion(question: String, corpora: String): TripleQuery = {
     
     // try to parse the question
     val uqueries = regexParser.parse(question)
@@ -28,12 +28,12 @@ object QAQuery {
     // get just the first one with a single conjunct
     conjunctiveQueries.find(_.conjuncts.size == 1).map(_.conjuncts.head) match {
       case Some(conjunct) => fromConjunct(conjunct, corpora)
-      case None => Query.fromStrings("", "", "", corpora)
+      case None => TripleQuery.fromStrings("", "", "", corpora)
     }
     
   }
   
-  private def fromConjunct(conjunct: TConjunct, corpora: String): Query = {
+  private def fromConjunct(conjunct: TConjunct, corpora: String): TripleQuery = {
     
     def getLiteral(tval: TVal): String = tval match {
       case v: TVariable => ""
@@ -52,6 +52,6 @@ object QAQuery {
     val fields = Set(arg1, rel, arg2)
     val tvals = fields.map(f => (f, conjunct.values(f))).toMap // conjunct is required to have arg1, rel, arg2
     val literals = tvals.map { case (f, v) => (f, getLiteral(v)) }
-    Query.fromStrings(literals(arg1), literals(rel), literals(arg2), corpora)
+    TripleQuery.fromStrings(literals(arg1), literals(rel), literals(arg2), corpora)
   }
 }
