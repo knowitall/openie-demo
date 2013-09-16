@@ -1,8 +1,8 @@
-@(title: AnswerTitle, debug: Boolean)
+@(parts: Seq[AnswerPart], debug: Boolean)
 
 @import models.TypeFilters._
 
-@Html(title.parts.map(part=>
+@Html(parts.map(part=>
 
 	part.entity match {
 		// always display a card
@@ -46,4 +46,4 @@
 				{part.text}
 			</span>
 	}
-).mkString(title.connector))
+).mkString(", "))

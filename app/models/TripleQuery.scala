@@ -82,8 +82,8 @@ case class TripleQuery(
 
   def full = arg1.isDefined && rel.isDefined && arg2.isDefined
 
-  def freeParts: List[ExtractionPart] = {
-    Iterable((arg1, Argument1), (rel, Relation), (arg2, Argument2)).filter {
+  def freeParts: List[String] = {
+    Iterable((arg1, "r0.arg1"), (rel, "r0.rel"), (arg2, "r0.arg2")).filter {
       case (constraint, part) =>
         constraint match {
           case None => true
@@ -92,11 +92,11 @@ case class TripleQuery(
     }.map(_._2)(scala.collection.breakOut)
   }
 
-  def fullParts: List[ExtractionPart] = {
-    Iterable((arg1, Argument1), (rel, Relation), (arg2, Argument2)).filter {
+  def fullParts: List[String] = {
+    Iterable((arg1, "r0.arg1"), (rel, "r0.rel"), (arg2, "r0.arg2")).filter {
       case (constraint, part) =>
         constraint match {
-          case None => false
+          case None => true
           case Some(constraint) => !constraint.free
         }
     }.map(_._2)(scala.collection.breakOut)
@@ -105,14 +105,14 @@ case class TripleQuery(
   def filters: Seq[TypeFilter] = {
     var seq = Seq.empty[TypeFilter]
 
-    def filtersFor(part: ExtractionPart, constraint: Constraint) = constraint match {
+    def filtersFor(part: String, constraint: Constraint) = constraint match {
       case constraint: TypeConstraint => Some(PositiveStringTypeFilter(constraint.typ, List(part)))
       case _ => None
     }
 
-    seq ++= this.arg1.flatMap(constraint => filtersFor(Argument1, constraint))
-    seq ++= this.rel.flatMap(constraint => filtersFor(Relation, constraint))
-    seq ++= this.arg2.flatMap(constraint => filtersFor(Argument2, constraint))
+    seq ++= this.arg1.flatMap(constraint => filtersFor("r0.arg1", constraint))
+    seq ++= this.rel.flatMap(constraint => filtersFor("r0.rel", constraint))
+    seq ++= this.arg2.flatMap(constraint => filtersFor("r0.arg2", constraint))
 
     seq
   }

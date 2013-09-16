@@ -13,7 +13,7 @@ import edu.knowitall.openie.models.Extraction
 
 /** An Answer can have multiple parts, each being linked to a different entity. */
 @SerialVersionUID(42L)
-case class AnswerTitlePart(lemma: String, extractionPart: ExtractionPart, synonyms: Seq[String], entity: Option[FreeBaseEntity], types: Set[FreeBaseType]) {
+case class AnswerPart(lemma: String, extractionPart: String, synonyms: Seq[String], entity: Option[FreeBaseEntity], types: Set[FreeBaseType]) {
   def text = entity match {
     case Some(entity) => entity.name
     case None => synonyms.headOption.getOrElse(lemma)
@@ -23,12 +23,6 @@ case class AnswerTitlePart(lemma: String, extractionPart: ExtractionPart, synony
   def otherSynonyms = synonyms filterNot (_ equalsIgnoreCase text)
 }
 
-/** The AnswerTitle class represents the title of an Answer. */
-@SerialVersionUID(43L)
-case class AnswerTitle(connector: String, parts: Seq[AnswerTitlePart]) {
-  def text: String = parts.iterator.map(_.text).mkString(connector)
-}
-
 /** The Answer class represents a result in the Answer pane.
   *
   * @param  title  the title of this answer
@@ -36,7 +30,10 @@ case class AnswerTitle(connector: String, parts: Seq[AnswerTitlePart]) {
   * @param  queryEntity  the entity for these extractions in the singular full section of the query
   */
 @SerialVersionUID(44L)
-case class Answer(title: AnswerTitle, contents: List[Content], queryEntity: List[(FreeBaseEntity, Int)]) {
+case class Answer(parts: Seq[AnswerPart], contents: List[Content], queryEntity: List[(FreeBaseEntity, Int)]) {
+  
+  def title = parts.map(_.text).mkString(", ")
+  
   def contentsByRelation = contents.groupBy(_.rel).toList.sortBy{ case (r, cs) => -cs.size }
 }
 
@@ -48,18 +45,18 @@ case class Content(strings: List[String], url: String, intervals: List[Interval]
 
 object Answer {
   def fromExtractionGroups(reg: Iterable[ExtractionCluster[Extraction]],
-      group: ExtractionCluster[Extraction]=>AnswerTitle,
-      fullParts: List[ExtractionPart]): Seq[Answer] = {
+      group: ExtractionCluster[Extraction]=>Seq[AnswerPart],
+      fullParts: List[String]): Seq[Answer] = {
 
     val groups = Timing.timeThen {
-      ((reg.iterator map (reg => ((group(reg), reg.instances.size), reg))).toList.groupBy { case ((title, size), reg) =>
-        def partText(part: AnswerTitlePart) = part.entity match {
+      ((reg.iterator map (reg => ((group(reg), reg.instances.size), reg))).toList.groupBy { case ((parts, size), reg) =>
+        def partText(part: AnswerPart) = part.entity match {
           case Some(entity) => entity.name
           case None => part.lemma
         }
 
         // hack: remove trailing 's'
-        val text = title.parts.iterator.map(partText).mkString(title.connector).toLowerCase.trim
+        val text = parts.iterator.map(partText).mkString(", ").toLowerCase.trim
         if (text.endsWith("s")) text.dropRight(1)
         else if (text.endsWith("es")) text.dropRight(2)
         else text
@@ -73,14 +70,14 @@ object Answer {
     }
 
     // organize extraction groups by a title (group by answer)
-    val collapsed: Seq[(AnswerTitle, Iterable[ExtractionCluster[Extraction]])] =
+    val collapsed: Seq[(Seq[AnswerPart], Iterable[ExtractionCluster[Extraction]])] =
       Timing.timeThen {
         groups.map {
           case (text, list) =>
-            val ((headTitle, headTitleSize), _) = list.head
+            val ((headParts, _), _) = list.head
 
             // safe because of our groupBy
-            val length = headTitle.parts.length
+            val length = headParts.length
             var synonyms: Array[Seq[String]] = Array.fill(length)(Seq.empty)
             var entities: Array[Option[FreeBaseEntity]] = Array.fill(length)(None)
             var types: Array[Seq[FreeBaseType]] = Array.fill(length)(Seq.empty)
@@ -88,13 +85,13 @@ object Answer {
             val parts = for (i <- 0 until length) yield {
               // get all synonyms for the groups in this answer
               val synonyms: Seq[String] =
-                list.flatMap(_._1._1.parts(i).synonyms)(scala.collection.breakOut)
+                list.flatMap(_._1._1(i).synonyms)(scala.collection.breakOut)
 
               // find the largest entity from the groups in this answer
               val entities: Option[FreeBaseEntity] = list.flatMap {
-                case ((title, size), _) =>
+                case ((parts, size), _) =>
                   // turn the entities into a tuple with the groups' size
-                  title.parts(i).entity.map((_, size))
+                  parts(i).entity.map((_, size))
               } match {
                 case Nil => None
                 // group like entities and add their sizes.  We might have multiple
@@ -107,20 +104,20 @@ object Answer {
               // and use the types from that group.
               val linkedTypes: Set[FreeBaseType] =
                 entities.flatMap(entity => list.find {
-                  case ((title, size), _) =>
-                    title.parts(i).entity == Some(entity)
+                  case ((parts, size), _) =>
+                    parts(i).entity == Some(entity)
                 }).map {
-                  case ((title, size), _) =>
-                    title.parts(i).types
+                  case ((parts, size), _) =>
+                    parts(i).types
                 }.getOrElse(Set.empty)
 
               // for unlinkable type predictions, take types from the first group that wasn't linked but had types
               def unlinkableTypes = list.find({
-                case ((title, size), _) =>
-                  title.parts(i).entity.isEmpty && !title.parts(i).types.isEmpty
+                case ((parts, size), _) =>
+                  parts(i).entity.isEmpty && !parts(i).types.isEmpty
               }).map {
-                case ((title, size), _) =>
-                  title.parts(i).types
+                case ((parts, size), _) =>
+                  parts(i).types
               }.getOrElse(Set.empty)
 
               // combine and remove base and user types
@@ -133,13 +130,12 @@ object Answer {
                     (synonyms.head, synonyms.size)
                 }.sortBy(-_._2).map(_._1)
 
-              AnswerTitlePart(headTitle.parts(i).lemma.replaceAll("\t", " ").replaceAll("[\\p{C}]", ""),
-                headTitle.parts(i).extractionPart,
+              AnswerPart(headParts(i).lemma.replaceAll("\t", " ").replaceAll("[\\p{C}]", ""),
+                headParts(i).extractionPart,
                 sortedUniqueSynonyms, entities, types)
             }
 
-            val title = AnswerTitle(headTitle.connector, parts)
-            (title, list.map(_._2))
+            (parts, list.map(_._2))
         }
     } { ns => Logger.debug("Collapsing groups in: " + Timing.Seconds.format(ns))}
 
@@ -166,9 +162,9 @@ object Answer {
               val entities: Iterable[(FreeBaseEntity, Int)] = contents.flatMap { group =>
                 part match {
                   // map each option[entity] to option[entity, # of its entity]
-                  case Argument1 => group.arg1.entity.map((_, group.instances.size))
-                  case Argument2 => group.arg2.entity.map((_, group.instances.size))
-                  case Relation => group.rel.entity.map((_, group.instances.size))
+                  case "r0.arg1" => group.arg1.entity.map((_, group.instances.size))
+                  case "r0.rel" => group.arg2.entity.map((_, group.instances.size))
+                  case "r0.arg2" => group.rel.entity.map((_, group.instances.size))
                 }
               }
 

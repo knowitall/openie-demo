@@ -20,14 +20,14 @@ case class AnswerSet(answers: Seq[Answer], filters: immutable.SortedSet[TypeFilt
   def filter(filters: Iterable[TypeFilter]) = {
     if (filters.isEmpty) this
     else this.copy(answers = answers filter (group =>
-      filters.forall(filter => filter(group.title))
+      filters.forall(filter => filter(group))
   ))}
 }
 
 object AnswerSet {
   def from(query: TripleQuery, answers: Seq[Answer], filters: Seq[TypeFilter]) = {
-    val filteredGroups = answers filter (answer => query.filters forall (filter => filter(answer.title)))
-    val filterTabs = immutable.SortedSet.empty[TypeFilterTab] ++ filters.map(filter => TypeFilterTab(filter, answers.count(answer => filter(answer.title))))
+    val filteredGroups = answers filter (answer => query.filters forall (filter => filter(answer)))
+    val filterTabs = immutable.SortedSet.empty[TypeFilterTab] ++ filters.map(filter => TypeFilterTab(filter, answers.count(answer => filter(answer))))
 
     // all the queryEntities from answer
     def queryEntities() = answers.flatMap(_.queryEntity).

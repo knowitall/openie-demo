@@ -8,35 +8,35 @@ import scala.io.Source
 sealed abstract trait TypeFilter {
   def name: String
   def displayName: String
-  def parts: List[ExtractionPart]
-  def apply(answer: AnswerTitle): Boolean
+  def parts: List[String]
+  def apply(answer: Answer): Boolean
 }
 
-case class PositiveTypeFilter(val typ: FreeBaseType, override val parts: List[ExtractionPart]) extends TypeFilter {
+case class PositiveTypeFilter(val typ: FreeBaseType, override val parts: List[String]) extends TypeFilter {
   def name = typ.name
   def displayName = typ.typ.replaceAll("_", " ")
 
-  def apply(answer: AnswerTitle): Boolean =
+  def apply(answer: Answer): Boolean =
     answer.parts exists (part => (parts contains part.extractionPart) &&
       part.types.contains(this.typ)
     )
 }
 
-case class PositiveStringTypeFilter(val string: String, override val parts: List[ExtractionPart]) extends TypeFilter {
+case class PositiveStringTypeFilter(val string: String, override val parts: List[String]) extends TypeFilter {
   def name = string
   def displayName = string.replaceAll("_", " ")
 
-  def apply(answer: AnswerTitle): Boolean =
+  def apply(answer: Answer): Boolean =
     answer.parts exists (part => (parts contains part.extractionPart) &&
       part.types.exists(_.typ equalsIgnoreCase this.string)
     )
 }
 
-case class NegativeTypeFilter(val typ: FreeBaseType, override val parts: List[ExtractionPart]) extends TypeFilter {
+case class NegativeTypeFilter(val typ: FreeBaseType, override val parts: List[String]) extends TypeFilter {
   def name = typ.name
   def displayName = typ.typ.replaceAll("_", " ")
 
-  def apply(answer: AnswerTitle): Boolean =
+  def apply(answer: Answer): Boolean =
     answer.parts forall (part => (parts contains part.extractionPart) &&
       !part.types.contains(this.typ)
     )
@@ -82,7 +82,7 @@ object TypeFilters {
         group <- groups
 
         // only use filters for "free" parts
-        part <- group.title.parts
+        part <- group.parts
         if (query.freeParts.contains(part.extractionPart))
 
         // avoid user-submitted type categories
@@ -100,7 +100,7 @@ object TypeFilters {
       else {
         val grouped = ordered.take(MAXIMUM_FILTER_COUNT).map(filter =>
           (filter, groups.toSet filter
-            (group => filter(group.title))))
+            (group => filter(group))))
 
         // remove groups that are a proper subset of another
         val filtered = grouped filter { case (filter, groups) =>

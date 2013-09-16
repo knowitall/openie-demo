@@ -12,10 +12,7 @@ import edu.knowitall.common.Timing
 import edu.knowitall.tool.postag.PostaggedToken
 import edu.knowitall.tool.postag.Postagger
 import models.Answer
-import models.AnswerTitle
-import models.AnswerTitlePart
-import models.Argument1
-import models.Argument2
+import models.AnswerPart
 import models.TripleQuery
 import models.TripleQuery.Constraint
 import models.TripleQuery.CorporaConstraint
@@ -23,7 +20,6 @@ import models.TripleQuery.EntityConstraint
 import models.TripleQuery.Fixed
 import models.TripleQuery.TermConstraint
 import models.TripleQuery.TypeConstraint
-import models.Relation
 import models.TypeFilters.enrichFreeBaseType
 import play.api.Logger
 import edu.knowitall.openie.models.Extraction
@@ -59,33 +55,33 @@ object Executor {
   case class Limited[T](groups: Seq[T]) extends Result[T]
 
   def execute(query: TripleQuery, settings: ExecutionSettings = ExecutionSettings.default): Result[Answer] = {
-    def group: ExtractionCluster[Extraction] => AnswerTitle = {
+    def group: ExtractionCluster[Extraction] => Seq[AnswerPart] = {
       def part(eg: ExtractionCluster[Extraction], part: Symbol) = {
         part match {
-          case 'rel => AnswerTitlePart(eg.rel.norm, Relation, eg.instances.iterator.map(_.relText).map(TripleQuery.clean).toSeq, None, Set.empty)
-          case 'arg1 => AnswerTitlePart(eg.arg1.norm, Argument1, eg.instances.iterator.map(_.arg1Text).map(TripleQuery.clean).toSeq, eg.arg1.entity, eg.arg1.types.toSet)
-          case 'arg2 => AnswerTitlePart(eg.arg2.norm, Argument2, eg.instances.iterator.map(_.arg2Text).map(TripleQuery.clean).toSeq, eg.arg2.entity, eg.arg2.types.toSet)
+          case 'rel => AnswerPart(eg.rel.norm, "r0.rel", eg.instances.iterator.map(_.relText).map(TripleQuery.clean).toSeq, None, Set.empty)
+          case 'arg1 => AnswerPart(eg.arg1.norm, "r0.arg1", eg.instances.iterator.map(_.arg1Text).map(TripleQuery.clean).toSeq, eg.arg1.entity, eg.arg1.types.toSet)
+          case 'arg2 => AnswerPart(eg.arg2.norm, "r0.arg2", eg.instances.iterator.map(_.arg2Text).map(TripleQuery.clean).toSeq, eg.arg2.entity, eg.arg2.types.toSet)
         }
       }
       (query.arg1, query.rel, query.arg2) match {
         case (Some(_: Fixed), Some(_: Fixed), Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) =>
-          AnswerTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
+          Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2))
 
-        case (Some(_: Fixed), Some(_: Fixed), _) => (eg: ExtractionCluster[Extraction]) => AnswerTitle("", Seq(part(eg, 'arg2)))
-        case (_, Some(_: Fixed), Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) => AnswerTitle("", Seq(part(eg, 'arg1)))
-        case (Some(_: Fixed), _, Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) => AnswerTitle("", Seq(part(eg, 'rel)))
+        case (Some(_: Fixed), Some(_: Fixed), _) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'arg2))
+        case (_, Some(_: Fixed), Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'arg1))
+        case (Some(_: Fixed), _, Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'rel))
 
-        case (Some(_: Fixed), _, _) => (eg: ExtractionCluster[Extraction]) => AnswerTitle(" ", Seq(part(eg, 'rel), part(eg, 'arg2)))
-        case (_, Some(_: Fixed), _) => (eg: ExtractionCluster[Extraction]) => AnswerTitle(", ", Seq(part(eg, 'arg1), part(eg, 'arg2)))
-        case (_, _, Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) => AnswerTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel)))
+        case (Some(_: Fixed), _, _) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'rel), part(eg, 'arg2))
+        case (_, Some(_: Fixed), _) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'arg1), part(eg, 'arg2))
+        case (_, _, Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'arg1), part(eg, 'rel))
 
-        case _ => (eg: ExtractionCluster[Extraction]) => AnswerTitle(" ", Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2)))
+        case _ => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2))
       }
     }
 
     val (result, converted) = executeHelper(query, settings)
 
-    val (nsGroups, groups) = Timing.time { Answer.fromExtractionGroups(converted.toList, group, query.fullParts).filter(!_.title.text.trim.isEmpty) }
+    val (nsGroups, groups) = Timing.time { Answer.fromExtractionGroups(converted.toList, group, query.fullParts).filter(!_.title.trim.isEmpty) }
 
     Logger.debug("Converted to %d answers in %s".format(groups.size, Timing.Seconds.format(nsGroups)))
 
