@@ -1,7 +1,7 @@
 package controllers
 
 import edu.knowitall.openie.models.{FreeBaseEntity, FreeBaseType}
-import edu.knowitall.execution.Search.{Field, arg1, arg2}
+import edu.knowitall.execution.Search.{Field, arg1, rel, arg2}
 import edu.knowitall.execution.Tuple
 import edu.knowitall.execution.AnswerDerivation
 import edu.knowitall.scoring.ScoredAnswerGroup
@@ -99,13 +99,14 @@ object AnswerConverter {
     }
   }
    
-  private val attrRegex = """(\w+)\.(arg1|arg2)""".r
+  private val attrRegex = """(\w+)\.(arg1|rel|arg2)""".r
    
-  private def getPrefixAndField(attr: String): (String, Field) = {
+  private def getPrefixAndField(attr: String): Option[(String, Field)] = {
     attr match {
       case attrRegex(prefix, fieldString) => fieldString match {
-        case "arg1" => (prefix, arg1)
-        case "arg2" => (prefix, arg2)
+        case "arg1" => Some((prefix, arg1))
+        case "arg2" => Some((prefix, arg2))
+        case "rel"  => None
         case _ => throw new RuntimeException("Unknown link field: "+fieldString)
       }
       case _ => throw new RuntimeException("Unknown attr string: "+attr)
@@ -155,9 +156,12 @@ object AnswerConverter {
      */
     val attrGroups = derivs.groupBy(_.attrs(part))
     attrGroups.toSeq.flatMap { case (attr, ds) =>
-      val (prefix, field) = getPrefixAndField(attr)
       val tuples = ds.map(_.etuple.tuple)
-      tuples.flatMap(t => getLink(prefix, field, t))
+      tuples.flatMap { t =>
+        getPrefixAndField(attr).flatMap { case (prefix, field) =>
+          getLink(prefix, field, t) 
+        }
+      }
     }
   }
   
