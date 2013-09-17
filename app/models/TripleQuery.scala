@@ -22,7 +22,7 @@ case class TripleQuery(
   import edu.knowitall.tool.postag.PostaggedToken
 
   override val question = toDemoQueryString(this)
-  override val parser = TripleQuery.parser
+  override val parserName = "demo-triple"
   
   def arg1String = arg1.getOrElse("").toString
   def relString = rel.getOrElse("").toString

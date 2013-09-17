@@ -14,7 +14,8 @@ import play.api.Logger
 import play.api.mvc.RequestHeader
 
 case class LogEntry (
-  query: TripleQuery,
+  question: String,
+  parserName: String,
   filter: String,
   answerCount: Int,
   sentenceCount: Int,
@@ -26,9 +27,8 @@ case class LogEntry (
 
   def toRow = {
     Iterable(
-        query.arg1String,
-        query.relString,
-        query.arg2String,
+        question,
+        parserName,
         filter,
         answerCount.toString,
         sentenceCount.toString,
@@ -61,7 +61,7 @@ object LogEntry {
   private final val LOG_DIRECTORY_FILE = new File(System.getProperty("user.home") + "/openiedemo/logs")
   private final val dateFormatter = new SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss z")
 
-  def fromRequest(query: TripleQuery, filter: String, answerCount: Int, sentenceCount: Int, request: RequestHeader) = {
+  def fromRequest(query: Query, filter: String, answerCount: Int, sentenceCount: Int, request: RequestHeader) = {
     val remoteIp = request.remoteAddress
     val remoteHost = catching(classOf[UnknownHostException]) opt (InetAddress.getByName(remoteIp).getHostName)
 
@@ -70,7 +70,7 @@ object LogEntry {
       case _ => remoteIp
     }
 
-    LogEntry(query, filter, answerCount, sentenceCount, address)
+    LogEntry(query.question, query.parserName, filter, answerCount, sentenceCount, address)
   }
 
   def logFile(): File = {
@@ -96,7 +96,7 @@ object LogEntry {
 
   def fromRow(row: String) = {
     def noneIfEmpty(string: String) = if (string.isEmpty) None else Some(string)
-    val Array(arg1, rel, arg2, filter, groupCount, resultCount, date, ip) = row.split("\t")
-    LogEntry(TripleQuery.fromStrings(arg1, rel, arg2, "unknownCorpora"), filter, groupCount.toInt, resultCount.toInt, ip, new Date(date.toLong))
+    val Array(question, parserName, filter, groupCount, resultCount, date, ip) = row.split("\t")
+    LogEntry(question, parserName, filter, groupCount.toInt, resultCount.toInt, ip, new Date(date.toLong))
   }
 }
