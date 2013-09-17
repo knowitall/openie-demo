@@ -78,20 +78,20 @@ case class TripleQuery(
     }.map(_._2).toSet
   }
 
-  def filters: Seq[TypeFilter] = {
-    var seq = Seq.empty[TypeFilter]
-
-    def filtersFor(part: String, constraint: Constraint) = constraint match {
-      case constraint: TypeConstraint => Some(PositiveStringTypeFilter(constraint.typ, Set(part)))
-      case _ => None
-    }
-
-    seq ++= this.arg1.flatMap(constraint => filtersFor("r0.arg1", constraint))
-    seq ++= this.rel.flatMap(constraint => filtersFor("r0.rel", constraint))
-    seq ++= this.arg2.flatMap(constraint => filtersFor("r0.arg2", constraint))
-
-    seq
-  }
+//  def filters: Seq[TypeFilter] = {
+//    var seq = Seq.empty[TypeFilter]
+//
+//    def filtersFor(part: String, constraint: Constraint) = constraint match {
+//      case constraint: TypeConstraint => Some(PositiveStringTypeFilter(constraint.typ, Set(part)))
+//      case _ => None
+//    }
+//
+//    seq ++= this.arg1.flatMap(constraint => filtersFor("r0.arg1", constraint))
+//    seq ++= this.rel.flatMap(constraint => filtersFor("r0.rel", constraint))
+//    seq ++= this.arg2.flatMap(constraint => filtersFor("r0.arg2", constraint))
+//
+//    seq
+//  }
 
   /**
    * Checks if the query matches specific conditions and returns a list of

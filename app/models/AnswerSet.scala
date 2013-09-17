@@ -25,12 +25,11 @@ case class AnswerSet(answers: Seq[Answer], filters: immutable.SortedSet[TypeFilt
 }
 
 object AnswerSet {
-  def from(query: TripleQuery, answers: Seq[Answer], filters: Seq[TypeFilter]) = {
-    val filteredGroups = answers filter (answer => query.filters forall (filter => filter(answer)))
+  def from(answers: Seq[Answer], filters: Seq[TypeFilter]) = {
     val filterTabs = immutable.SortedSet.empty[TypeFilterTab] ++ filters.map(filter => TypeFilterTab(filter, answers.count(answer => filter(answer))))
 
     // all the queryEntities from answer
-    def queryEntities() = answers.flatMap(_.queryEntity).
+    val queryEntities = answers.flatMap(_.queryEntity).
       // sum the counts of the same entities
       mergeHistograms.
       // group by fbid to avoid different confidence links
@@ -42,12 +41,12 @@ object AnswerSet {
       // (entity, total size)
       sortBy(_._2)(Ordering[Int].reverse)
 
-    this(
+    AnswerSet(
       // we need to re-apply the query filters because some entities may have been
       // unlinked due to a low confidence.
-      filteredGroups,
+      answers,
       filterTabs,
-      queryEntities())
+      queryEntities)
   }
 }
 

@@ -13,6 +13,7 @@ import models.NegativeTypeFilter
 import models.PositiveTypeFilter
 import models.TripleQuery
 import models.QAQuery
+import models.Query
 import models.TypeFilter
 import models.TypeFilters
 import play.api.Logger
@@ -217,7 +218,7 @@ object Application extends Controller {
     Ok(views.html.logs(LogEntry.logs(year, month, day), today))
   }
 
-  def searchGroups(query: TripleQuery, settings: ExecutionSettings, debug: Boolean) = {
+  def searchGroups(query: Query, settings: ExecutionSettings, debug: Boolean) = {
     Logger.debug("incoming " + query)
     Cache.getAs[AnswerSet](query.toString.toLowerCase) match {
       case Some(answers) if !debug =>
@@ -243,7 +244,7 @@ object Application extends Controller {
           case Executor.Limited(groups) => (groups, Some("results truncated"))
         }
 
-        val answers = AnswerSet.from(query, groups, TypeFilters.fromGroups(groups, debug))
+        val answers = AnswerSet.from(groups, TypeFilters.fromGroups(groups, debug))
 
         Logger.info(query.toString +
           " executed in " + Timing.Seconds.format(ns) +

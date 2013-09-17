@@ -8,6 +8,7 @@ import edu.knowitall.tool.postag.PostaggedToken
 import edu.knowitall.tool.postag.Postagger
 import models.Answer
 import models.AnswerPart
+import models.Query
 import models.TripleQuery
 import models.TripleQuery.Constraint
 import models.TripleQuery.CorporaConstraint
@@ -45,7 +46,7 @@ object Executor {
   case class Timeout[T](groups: Seq[T]) extends Result[T]
   case class Limited[T](groups: Seq[T]) extends Result[T]
 
-  def execute(query: TripleQuery, settings: ExecutionSettings = ExecutionSettings.default): Result[Answer] = {
+  def execute(query: Query, settings: ExecutionSettings = ExecutionSettings.default): Result[Answer] = {
 
     SOURCE.fetch(query)
   }
