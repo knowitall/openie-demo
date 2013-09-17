@@ -6,12 +6,7 @@ import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import edu.knowitall.common.Resource.using
 import edu.knowitall.common.Timing
-import edu.knowitall.openie.models.Extraction
-import edu.knowitall.openie.models.ExtractionCluster
 import edu.knowitall.openie.models.FreeBaseType
-import edu.knowitall.openie.models.Instance
-import edu.knowitall.openie.models.InstanceProtocol.InstanceFormat
-import edu.knowitall.openie.models.serialize.Chill
 import models.AnswerSet
 import models.LogEntry
 import models.NegativeTypeFilter
@@ -32,9 +27,6 @@ import play.api.mvc.Action
 import play.api.mvc.Result
 import play.api.mvc.Controller
 import play.api.mvc.RequestHeader
-import sjson.json.JsonSerialization.tojson
-import edu.knowitall.openie.models.ExtractionGroupProtocol
-import edu.knowitall.openie.models.InstanceProtocol
 import play.api.templates.Html
 import controllers.Executor.ExecutionSettings
 import play.api.mvc.Request
@@ -203,31 +195,6 @@ object Application extends Controller {
 
   def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean, corpora: Option[String]) = Action { implicit request =>
     doSearch(TripleQuery.fromStrings(arg1, rel, arg2, corpora), filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
-  }
-
-//  def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int, corpora: Option[String]) = Action {
-//    val query = TripleQuery.fromStrings(arg1, rel, arg2, corpora)
-//    Logger.info("Json request: " + query)
-//
-//    import ExtractionCluster.Protocol._
-//    Ok(tojson(Executor.executeRaw(query.toLowerCase).take(count)).toString.replaceAll("[\\p{C}]",""))
-//  }
-
-  def instancesJson() = Action { implicit request =>
-    Ok(Html("""<html><head><title>Instance Deserializer</title></head><body><h1>Instance Deserializer</h1><form method="POST"><textarea cols="80" rows="20" name="base64"></textarea><br /><input type="submit" /></body></html>"""))
-  }
-
-  case class InstanceInput(base64: String)
-  val instanceForm = Form((mapping("base64" -> text)(InstanceInput.apply)(InstanceInput.unapply)))
-  def instancesJsonSubmit() = Action { implicit request =>
-    val input = instanceForm.bindFromRequest().get
-    val base64 = input.base64
-
-    import InstanceProtocol._
-    val kryo = Chill.createBijection()
-    val bytes = Base64.decodeBase64(base64)
-    val instances = kryo.invert(bytes).asInstanceOf[List[Instance[Extraction]]]
-    Ok(tojson(instances.head).toString.replaceAll("[\\p{C}]",""))
   }
 
   def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean, corpora: Option[String]) = Action {

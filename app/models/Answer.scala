@@ -8,8 +8,6 @@ import edu.knowitall.common.enrich.Traversables._
 import edu.knowitall.common.enrich.Traversables.traversableOncePairIntTo
 import edu.knowitall.common.Timing
 import play.api.Logger
-import edu.knowitall.openie.models.ExtractionCluster
-import edu.knowitall.openie.models.Extraction
 
 /** An Answer can have multiple parts, each being linked to a different entity. */
 @SerialVersionUID(42L)
@@ -46,15 +44,6 @@ case class Answer(parts: Seq[AnswerPart], contents: List[Content], queryEntity: 
 /** The Content class stores source information for a particular Answer. */
 @SerialVersionUID(45L)
 case class Content(strings: List[String], url: String, intervals: List[Interval], rel: String, confidence: Double, corpus: String) {
-  
-  def this(extr: Extraction) = {
-    this(extr.sentenceTokens.toList map (_.string) map TripleQuery.clean,
-         extr.source,
-         List(extr.arg1Interval, extr.arg2Interval),
-         extr.relText,
-         extr.confidence,
-         extr.corpus)
-  }
   
   def sentence = strings.mkString(" ")
 }

@@ -1,13 +1,8 @@
 package controllers
 
 import java.util.regex.Pattern
-import edu.knowitall.openie.models.ExtractionArgument
-import edu.knowitall.openie.models.ExtractionGroup
 import edu.knowitall.openie.models.FreeBaseEntity
 import edu.knowitall.openie.models.FreeBaseType
-import edu.knowitall.openie.models.Instance
-import edu.knowitall.openie.models.ReVerbExtraction
-import edu.knowitall.openie.models.ReVerbExtractionGroup
 import edu.knowitall.common.Timing
 import edu.knowitall.tool.postag.PostaggedToken
 import edu.knowitall.tool.postag.Postagger
@@ -22,13 +17,9 @@ import models.TripleQuery.TermConstraint
 import models.TripleQuery.TypeConstraint
 import models.TypeFilters.enrichFreeBaseType
 import play.api.Logger
-import edu.knowitall.openie.models.Extraction
 import models.TypeFilters
-import edu.knowitall.openie.models.util.ExtractionDeduplicator
-import edu.knowitall.openie.models.ExtractionCluster
 
 object Executor {
-  type REG = ExtractionGroup[ReVerbExtraction]
 
   // parameters determining how deep to search
   val maxSearchGroups = 20000
