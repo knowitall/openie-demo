@@ -3,7 +3,7 @@ package models
 import java.io.{ ObjectInputStream, FileInputStream, File }
 import java.util.regex.Pattern
 import scala.Option.option2Iterable
-import edu.knowitall.openie.models._
+import edu.knowitall.openie.models.{ExtractionGroup, ReVerbExtraction}
 import edu.knowitall.common.Resource.using
 import edu.knowitall.common.Timing
 import akka.actor.{ TypedProps, TypedActor }

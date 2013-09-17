@@ -1,15 +1,12 @@
 package controllers
 
-import scala.annotation.implicitNotFound
 import scala.concurrent.ExecutionContext.Implicits.global
-import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import edu.knowitall.common.Resource.using
 import edu.knowitall.common.Timing
 import edu.knowitall.openie.models.FreeBaseType
 import models.AnswerSet
 import models.LogEntry
-import models.NegativeTypeFilter
 import models.PositiveTypeFilter
 import models.TripleQuery
 import models.QAQuery
@@ -25,10 +22,8 @@ import play.api.data.Forms.mapping
 import play.api.data.Forms.optional
 import play.api.data.Forms.text
 import play.api.mvc.Action
-import play.api.mvc.Result
 import play.api.mvc.Controller
 import play.api.mvc.RequestHeader
-import play.api.templates.Html
 import controllers.Executor.ExecutionSettings
 import play.api.mvc.Request
 import play.api.mvc.AnyContent
@@ -184,7 +179,9 @@ object Application extends Controller {
       val filters: Set[TypeFilter] = filterString match {
         case "" | "all" => Set()
         case "misc" => answers.filters.map(_.filter).collect { case filter: PositiveTypeFilter => filter.negate }
-        case s => Set(PositiveTypeFilter(FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string: " + s)), answers.attrs))
+        case s => 
+          val typ = FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string: " + s))
+          Set(PositiveTypeFilter(typ, answers.attrs))
       }
 
       val filtered = answers filter filters

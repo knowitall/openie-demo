@@ -2,7 +2,7 @@ package models
 
 import scala.util.control.Exception
 import scala.Option.option2Iterable
-import edu.knowitall.openie.models.{ReVerbExtraction, FreeBaseType, FreeBaseEntity, ExtractionGroup}
+import edu.knowitall.openie.models.{FreeBaseType, FreeBaseEntity}
 import edu.knowitall.collection.immutable.Interval
 import edu.knowitall.common.enrich.Traversables._
 import edu.knowitall.common.enrich.Traversables.traversableOncePairIntTo

@@ -1,24 +1,8 @@
 package controllers
 
 import java.util.regex.Pattern
-import edu.knowitall.openie.models.FreeBaseEntity
-import edu.knowitall.openie.models.FreeBaseType
-import edu.knowitall.common.Timing
-import edu.knowitall.tool.postag.PostaggedToken
-import edu.knowitall.tool.postag.Postagger
 import models.Answer
-import models.AnswerPart
 import models.Query
-import models.TripleQuery
-import models.TripleQuery.Constraint
-import models.TripleQuery.CorporaConstraint
-import models.TripleQuery.EntityConstraint
-import models.TripleQuery.Fixed
-import models.TripleQuery.TermConstraint
-import models.TripleQuery.TypeConstraint
-import models.TypeFilters.enrichFreeBaseType
-import play.api.Logger
-import models.TypeFilters
 
 object Executor {
 
