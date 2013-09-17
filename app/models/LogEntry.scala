@@ -23,6 +23,9 @@ case class LogEntry (
   date: Date = new Date) {
   import LogEntry._
 
+  // hacks
+  def query = TripleQuery.fromStrings("This", "isn't", "Implemented", "")
+  
   def dateString = LogEntry.dateFormatter.format(date)
 
   def toRow = {

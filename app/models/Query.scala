@@ -14,8 +14,9 @@ trait Query {
 
   def question: String
   def parserName: String
-  
-  require(DemoComponents.parsers.contains(parserName), parserName + " is not a valid parser name.")
-  
-  val parser = DemoComponents.parsers(parserName)
+
+  def parser = {
+    require(DemoComponents.parsers.contains(parserName), parserName + " is not a valid parser name.")
+    DemoComponents.parsers(parserName)
+  }
 }
