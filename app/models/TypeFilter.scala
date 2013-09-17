@@ -20,6 +20,8 @@ case class PositiveTypeFilter(val typ: FreeBaseType, override val attrs: Set[Str
     answer.parts.exists(part => (attrs.exists(part.attrs.contains)) &&
       part.types.contains(this.typ)
     )
+    
+  def negate = NegativeTypeFilter(typ, attrs)
 }
 
 case class PositiveStringTypeFilter(val string: String, override val attrs: Set[String]) extends TypeFilter {

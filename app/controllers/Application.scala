@@ -144,7 +144,7 @@ object Application extends Controller {
     Async {
       answers.map {
         case (answers, message) => {
-          val filtered = setupFilters(query, answers, "all", 0)._2
+          val filtered = setupFilters(answers, "all", 0)._2
 
           LogEntry.fromRequest(query, "all", answers.answerCount, answers.sentenceCount, request).log()
 
@@ -180,15 +180,15 @@ object Application extends Controller {
    *
    * @return a tuple of (filters, filtered results, and single page of filtered results)
    */
-  private def setupFilters(query: TripleQuery, answers: AnswerSet, filterString: String, pageNumber : Int) = {
+  private def setupFilters(answers: AnswerSet, filterString: String, pageNumber : Int) = {
       val filters: Set[TypeFilter] = filterString match {
         case "" | "all" => Set()
-        case "misc" => answers.filters.map(_.filter).collect { case filter: PositiveTypeFilter => filter } .map(filter => NegativeTypeFilter(filter.typ, query.freeParts)).toSet
-        case s => Set(PositiveTypeFilter(FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string: " + s)), query.freeParts))
+        case "misc" => answers.filters.map(_.filter).collect { case filter: PositiveTypeFilter => filter.negate }
+        case s => Set(PositiveTypeFilter(FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string: " + s)), answers.attrs))
       }
 
       val filtered = answers filter filters
-      Logger.info(query + " with " + filters + " has " + filtered.answerCount + " answers " + filtered.sentenceCount + " results")
+      Logger.info("Query with " + filters + " has " + filtered.answerCount + " answers " + filtered.sentenceCount + " results")
       val page = filtered.page(pageNumber, PAGE_SIZE)
 
       (filters, filtered, page)
@@ -276,7 +276,7 @@ object Application extends Controller {
 
     Async {
       answers.map { case (answers, message) =>
-        val filter = setupFilters(query, answers, filterString, pageNumber)
+        val filter = setupFilters(answers, filterString, pageNumber)
 
         if (log) {
           LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request).log()
@@ -307,7 +307,7 @@ object Application extends Controller {
       val filterString = "all"
 
       answers.map { case (answers, message) =>
-        val filter = setupFilters(query, answers, filterString, 0)
+        val filter = setupFilters(answers, filterString, 0)
 
         if (log) {
           LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request).log()

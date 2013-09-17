@@ -68,15 +68,15 @@ case class TripleQuery(
 
   def full = arg1.isDefined && rel.isDefined && arg2.isDefined
 
-  def freeParts: Set[String] = {
-    Iterable((arg1, "r0.arg1"), (rel, "r0.rel"), (arg2, "r0.arg2")).filter {
-      case (constraint, part) =>
-        constraint match {
-          case None => true
-          case Some(constraint) => constraint.free
-        }
-    }.map(_._2).toSet
-  }
+//  def freeParts: Set[String] = {
+//    Iterable((arg1, "r0.arg1"), (rel, "r0.rel"), (arg2, "r0.arg2")).filter {
+//      case (constraint, part) =>
+//        constraint match {
+//          case None => true
+//          case Some(constraint) => constraint.free
+//        }
+//    }.map(_._2).toSet
+//  }
 
 //  def filters: Seq[TypeFilter] = {
 //    var seq = Seq.empty[TypeFilter]
