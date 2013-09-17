@@ -47,28 +47,7 @@ object Executor {
 
   def execute(query: TripleQuery, settings: ExecutionSettings = ExecutionSettings.default): Result[Answer] = {
 
-    val (result, converted) = executeHelper(query, settings)
-
-    result
-  }
-
-  def executeRaw(query: TripleQuery, settings: ExecutionSettings = ExecutionSettings.default): List[Answer] = executeHelper(query, settings)._2.sortBy(-_.contents.size)
-
-  private def executeHelper(query: TripleQuery, settings: ExecutionSettings): (Result[Answer], List[Answer]) = {
-
-    // execute the query
-    val (nsQuery, result) = Timing.time {
-      SOURCE.fetch(query)
-    }
-
-    // open up the retrieved case class
-    val results = result match {
-      case Success(results) => results
-      case Limited(results) => results
-      case Timeout(results) => results
-    }
-
-    (result, results.toList)
+    SOURCE.fetch(query)
   }
 
   private val nonContentTag = "IN|TO|RB?".r
