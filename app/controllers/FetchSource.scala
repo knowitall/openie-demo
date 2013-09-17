@@ -30,12 +30,13 @@ import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.TimeUnit
 import models.Query
+import models.Answer
 import edu.knowitall.openie.models.Extraction
 import edu.knowitall.openie.models.ExtractionCluster
 
 abstract class FetchSource {
-  // a fetcher returns a ResultSet contains extraction groups
-  def fetch(query: Query): Executor.Result[ExtractionCluster[Extraction]]
+  
+  def fetch(query: Query): Executor.Result[Answer]
 }
 
 object Fetch {

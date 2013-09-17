@@ -205,13 +205,13 @@ object Application extends Controller {
     doSearch(TripleQuery.fromStrings(arg1, rel, arg2, corpora), filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
   }
 
-  def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int, corpora: Option[String]) = Action {
-    val query = TripleQuery.fromStrings(arg1, rel, arg2, corpora)
-    Logger.info("Json request: " + query)
-
-    import ExtractionCluster.Protocol._
-    Ok(tojson(Executor.executeRaw(query.toLowerCase).take(count)).toString.replaceAll("[\\p{C}]",""))
-  }
+//  def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int, corpora: Option[String]) = Action {
+//    val query = TripleQuery.fromStrings(arg1, rel, arg2, corpora)
+//    Logger.info("Json request: " + query)
+//
+//    import ExtractionCluster.Protocol._
+//    Ok(tojson(Executor.executeRaw(query.toLowerCase).take(count)).toString.replaceAll("[\\p{C}]",""))
+//  }
 
   def instancesJson() = Action { implicit request =>
     Ok(Html("""<html><head><title>Instance Deserializer</title></head><body><h1>Instance Deserializer</h1><form method="POST"><textarea cols="80" rows="20" name="base64"></textarea><br /><input type="submit" /></body></html>"""))

@@ -13,14 +13,20 @@ import edu.knowitall.openie.models.Extraction
 
 /** An Answer can have multiple parts, each being linked to a different entity. */
 @SerialVersionUID(42L)
-case class AnswerPart(lemma: String, extractionPart: String, synonyms: Seq[String], entity: Option[FreeBaseEntity], types: Set[FreeBaseType]) {
-  def text = entity match {
-    case Some(entity) => entity.name
-    case None => synonyms.headOption.getOrElse(lemma)
-  }
+case class AnswerPart(lemma: String, attrs: Set[String], synonyms: Seq[String], entity: Option[FreeBaseEntity], types: Set[FreeBaseType]) {
+  // The entity name if linked, else the first synonym if available, else the lemma
+  // (Although there should probably always be a synonym)
+  def text = entity.map(_.name).getOrElse(synonyms.headOption.getOrElse(lemma))
+  
+  // The entity id, if linked, else the lemma
+  def groupKey = entity.map(_.fbid).getOrElse(lemma).toLowerCase.trim
 
   /** Show synonyms other than the text of this part */
   def otherSynonyms = synonyms filterNot (_ equalsIgnoreCase text)
+  
+  def comesFromArg: Boolean = attrs.exists(_.contains("arg"))
+  
+  def comesFromRel: Boolean = attrs.exists(_.contains("rel"))
 }
 
 /** The Answer class represents a result in the Answer pane.
@@ -40,31 +46,41 @@ case class Answer(parts: Seq[AnswerPart], contents: List[Content], queryEntity: 
 /** The Content class stores source information for a particular Answer. */
 @SerialVersionUID(45L)
 case class Content(strings: List[String], url: String, intervals: List[Interval], rel: String, confidence: Double, corpus: String) {
+  
+  def this(extr: Extraction) = {
+    this(extr.sentenceTokens.toList map (_.string) map TripleQuery.clean,
+         extr.source,
+         List(extr.arg1Interval, extr.arg2Interval),
+         extr.relText,
+         extr.confidence,
+         extr.corpus)
+  }
+  
   def sentence = strings.mkString(" ")
 }
 
 object Answer {
-  def fromExtractionGroups(reg: Iterable[ExtractionCluster[Extraction]],
+  
+  def fromExtractionGroups(regs: Iterable[ExtractionCluster[Extraction]],
       group: ExtractionCluster[Extraction]=>Seq[AnswerPart],
-      fullParts: List[String]): Seq[Answer] = {
+      fullParts: Set[String]): Seq[Answer] = {
 
     val groups = Timing.timeThen {
-      ((reg.iterator map (reg => ((group(reg), reg.instances.size), reg))).toList.groupBy { case ((parts, size), reg) =>
-        def partText(part: AnswerPart) = part.entity match {
-          case Some(entity) => entity.name
-          case None => part.lemma
-        }
+      val splitUp = regs.iterator map (reg => ((group(reg), reg.instances.size), reg))
+      val grouped = splitUp.toList.groupBy { case ((parts, size), reg) =>
 
         // hack: remove trailing 's'
-        val text = parts.iterator.map(partText).mkString(", ").toLowerCase.trim
+        val text = parts.iterator.map(_.groupKey).mkString(", ")
         if (text.endsWith("s")) text.dropRight(1)
         else if (text.endsWith("es")) text.dropRight(2)
         else text
-      }).toList.sortBy { case (text, list) =>
+      }
+      
+      grouped.toList.sortBy { case (text, list) =>
         -list.iterator.map { case (title, reg) =>
           reg.instances.size
         }.sum
-      }
+      }.map(_._2)
     } { ns =>
       Logger.debug("Group by lemmas in: " + Timing.Seconds.format(ns))
     }
@@ -72,15 +88,14 @@ object Answer {
     // organize extraction groups by a title (group by answer)
     val collapsed: Seq[(Seq[AnswerPart], Iterable[ExtractionCluster[Extraction]])] =
       Timing.timeThen {
-        groups.map {
-          case (text, list) =>
+        groups.map { list =>
             val ((headParts, _), _) = list.head
 
             // safe because of our groupBy
             val length = headParts.length
-            var synonyms: Array[Seq[String]] = Array.fill(length)(Seq.empty)
-            var entities: Array[Option[FreeBaseEntity]] = Array.fill(length)(None)
-            var types: Array[Seq[FreeBaseType]] = Array.fill(length)(Seq.empty)
+            val synonyms: Array[Seq[String]] = Array.fill(length)(Seq.empty)
+            val entities: Array[Option[FreeBaseEntity]] = Array.fill(length)(None)
+            val types: Array[Seq[FreeBaseType]] = Array.fill(length)(Seq.empty)
 
             val parts = for (i <- 0 until length) yield {
               // get all synonyms for the groups in this answer
@@ -131,7 +146,7 @@ object Answer {
                 }.sortBy(-_._2).map(_._1)
 
               AnswerPart(headParts(i).lemma.replaceAll("\t", " ").replaceAll("[\\p{C}]", ""),
-                headParts(i).extractionPart,
+                headParts(i).attrs,
                 sortedUniqueSynonyms, entities, types)
             }
 
@@ -142,24 +157,15 @@ object Answer {
     // convert to Content
     Timing.timeThen {
       collapsed.map {
-        case (title, contents) =>
-          val instances = (contents flatMap (c => c.instances)).toList sortBy (-_.confidence)
-          val list = instances.map {
-            case instance =>
-              val sentence = instance.sentenceTokens.map(_.string)
-              val url = instance.source
-              val intervals = List(
-                instance.arg1Interval,
-                //instance.extraction.relInterval,
-                instance.arg2Interval)
-              Content(sentence.map(TripleQuery.clean)(collection.breakOut), url, intervals, instance.relText, instance.confidence, instance.corpus)
-          }
+        case (title, regs) =>
+          val extractions = (regs flatMap (c => c.instances)).toList sortBy (-_.confidence)
+          val list = extractions.map(e => new Content(e))
 
           // The answer discards information about the extractions from the
           // full part of the query.  However,
-          val queryEntity: List[(FreeBaseEntity, Int)] = fullParts match {
+          val queryEntity: List[(FreeBaseEntity, Int)] = fullParts.toList match {
             case part :: Nil =>
-              val entities: Iterable[(FreeBaseEntity, Int)] = contents.flatMap { group =>
+              val entities: Iterable[(FreeBaseEntity, Int)] = regs.flatMap { group =>
                 part match {
                   // map each option[entity] to option[entity, # of its entity]
                   case "r0.arg1" => group.arg1.entity.map((_, group.instances.size))

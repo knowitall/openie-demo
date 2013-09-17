@@ -4,7 +4,7 @@
 @import edu.knowitall.openie.models.NellType.fbToNellType
 
 @titleLink(part: models.AnswerPart, large: Boolean) = {
-	@if(part.extractionPart == "r0.rel") {
+	@if(part.comesFromRel) {
 		@part.text
 	} else {
 		<a href='@routes.Application.search(Some(part.text),None,None),"all",0,debug)' class="@if(large) {entity-link-focused} else {entity-link}">@part.text</a>

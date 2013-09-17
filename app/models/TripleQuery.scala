@@ -82,31 +82,31 @@ case class TripleQuery(
 
   def full = arg1.isDefined && rel.isDefined && arg2.isDefined
 
-  def freeParts: List[String] = {
+  def freeParts: Set[String] = {
     Iterable((arg1, "r0.arg1"), (rel, "r0.rel"), (arg2, "r0.arg2")).filter {
       case (constraint, part) =>
         constraint match {
           case None => true
           case Some(constraint) => constraint.free
         }
-    }.map(_._2)(scala.collection.breakOut)
+    }.map(_._2).toSet
   }
 
-  def fullParts: List[String] = {
+  def fullParts: Set[String] = {
     Iterable((arg1, "r0.arg1"), (rel, "r0.rel"), (arg2, "r0.arg2")).filter {
       case (constraint, part) =>
         constraint match {
           case None => true
           case Some(constraint) => !constraint.free
         }
-    }.map(_._2)(scala.collection.breakOut)
+    }.map(_._2).toSet
   }
 
   def filters: Seq[TypeFilter] = {
     var seq = Seq.empty[TypeFilter]
 
     def filtersFor(part: String, constraint: Constraint) = constraint match {
-      case constraint: TypeConstraint => Some(PositiveStringTypeFilter(constraint.typ, List(part)))
+      case constraint: TypeConstraint => Some(PositiveStringTypeFilter(constraint.typ, Set(part)))
       case _ => None
     }
 

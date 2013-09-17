@@ -55,46 +55,47 @@ object Executor {
   case class Limited[T](groups: Seq[T]) extends Result[T]
 
   def execute(query: TripleQuery, settings: ExecutionSettings = ExecutionSettings.default): Result[Answer] = {
-    def group: ExtractionCluster[Extraction] => Seq[AnswerPart] = {
-      def part(eg: ExtractionCluster[Extraction], part: Symbol) = {
-        part match {
-          case 'rel => AnswerPart(eg.rel.norm, "r0.rel", eg.instances.iterator.map(_.relText).map(TripleQuery.clean).toSeq, None, Set.empty)
-          case 'arg1 => AnswerPart(eg.arg1.norm, "r0.arg1", eg.instances.iterator.map(_.arg1Text).map(TripleQuery.clean).toSeq, eg.arg1.entity, eg.arg1.types.toSet)
-          case 'arg2 => AnswerPart(eg.arg2.norm, "r0.arg2", eg.instances.iterator.map(_.arg2Text).map(TripleQuery.clean).toSeq, eg.arg2.entity, eg.arg2.types.toSet)
-        }
-      }
-      (query.arg1, query.rel, query.arg2) match {
-        case (Some(_: Fixed), Some(_: Fixed), Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) =>
-          Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2))
-
-        case (Some(_: Fixed), Some(_: Fixed), _) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'arg2))
-        case (_, Some(_: Fixed), Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'arg1))
-        case (Some(_: Fixed), _, Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'rel))
-
-        case (Some(_: Fixed), _, _) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'rel), part(eg, 'arg2))
-        case (_, Some(_: Fixed), _) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'arg1), part(eg, 'arg2))
-        case (_, _, Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'arg1), part(eg, 'rel))
-
-        case _ => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2))
-      }
-    }
+//    def group: ExtractionCluster[Extraction] => Seq[AnswerPart] = {
+//      def part(eg: ExtractionCluster[Extraction], part: Symbol) = {
+//        part match {
+//          case 'rel => AnswerPart(eg.rel.norm, Set("r0.rel"), eg.instances.iterator.map(_.relText).map(TripleQuery.clean).toSeq, None, Set.empty)
+//          case 'arg1 => AnswerPart(eg.arg1.norm, Set("r0.arg1"), eg.instances.iterator.map(_.arg1Text).map(TripleQuery.clean).toSeq, eg.arg1.entity, eg.arg1.types.toSet)
+//          case 'arg2 => AnswerPart(eg.arg2.norm, Set("r0.arg2"), eg.instances.iterator.map(_.arg2Text).map(TripleQuery.clean).toSeq, eg.arg2.entity, eg.arg2.types.toSet)
+//        }
+//      }
+//      (query.arg1, query.rel, query.arg2) match {
+//        case (Some(_: Fixed), Some(_: Fixed), Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) =>
+//          Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2))
+//
+//        case (Some(_: Fixed), Some(_: Fixed), _) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'arg2))
+//        case (_, Some(_: Fixed), Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'arg1))
+//        case (Some(_: Fixed), _, Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'rel))
+//
+//        case (Some(_: Fixed), _, _) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'rel), part(eg, 'arg2))
+//        case (_, Some(_: Fixed), _) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'arg1), part(eg, 'arg2))
+//        case (_, _, Some(_: Fixed)) => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'arg1), part(eg, 'rel))
+//
+//        case _ => (eg: ExtractionCluster[Extraction]) => Seq(part(eg, 'arg1), part(eg, 'rel), part(eg, 'arg2))
+//      }
+//    }
 
     val (result, converted) = executeHelper(query, settings)
 
-    val (nsGroups, groups) = Timing.time { Answer.fromExtractionGroups(converted.toList, group, query.fullParts).filter(!_.title.trim.isEmpty) }
-
-    Logger.debug("Converted to %d answers in %s".format(groups.size, Timing.Seconds.format(nsGroups)))
-
-    result match {
-      case Success(results) => Success(groups)
-      case Limited(results) => Limited(groups)
-      case Timeout(results) => Timeout(groups)
-    }
+//    val (nsGroups, groups) = Timing.time { Answer.fromExtractionGroups(converted.toList, group, query.fullParts).filter(!_.title.trim.isEmpty) }
+//
+//    Logger.debug("Converted to %d answers in %s".format(groups.size, Timing.Seconds.format(nsGroups)))
+//
+//    result match {
+//      case Success(results) => Success(groups)
+//      case Limited(results) => Limited(groups)
+//      case Timeout(results) => Timeout(groups)
+//    }
+    result
   }
 
-  def executeRaw(query: TripleQuery, settings: ExecutionSettings = ExecutionSettings.default): List[ExtractionCluster[Extraction]] = executeHelper(query, settings)._2.sortBy(-_.instances.size)
+  def executeRaw(query: TripleQuery, settings: ExecutionSettings = ExecutionSettings.default): List[Answer] = executeHelper(query, settings)._2
 
-  private def executeHelper(query: TripleQuery, settings: ExecutionSettings): (Result[ExtractionCluster[Extraction]], List[ExtractionCluster[Extraction]]) = {
+  private def executeHelper(query: TripleQuery, settings: ExecutionSettings): (Result[Answer], List[Answer]) = {
     def entityFilter(entity: FreeBaseEntity) =
       entity.score > settings.entityScoreThreshold
 
@@ -221,48 +222,48 @@ object Executor {
       case Limited(results) => results
       case Timeout(results) => results
     }
-    Logger.debug(query.toString + " searched with " + results.size + " groups (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsQuery))
+//    Logger.debug(query.toString + " searched with " + results.size + " groups (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsQuery))
+//
+//    val (nsRegroup, regrouped) = Timing.time {
+//      ExtractionCluster.indexGroupingToFrontendGrouping(results)
+//    }
+//    Logger.debug(query.toString + " regrouped with " + regrouped.size + " answers (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsRegroup))
+//
+//    // apply backend deduplication
+//    // TODO: merge into index itself
+//    val (nsDeduped, deduped) = Timing.time {
+//      regrouped map ExtractionDeduplicator.deduplicate
+//    }
+//    Logger.debug(query.toString + " deduped with " + deduped.size + " answers (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsDeduped))
+//
+//    def typeFilter(typ: FreeBaseType) = {
+//      import TypeFilters._
+//      typ.valid
+//    }
+//
+//    val (nsFiltered, filtered: List[ExtractionCluster[Extraction]]) =
+//      Timing.time {
+//        deduped.iterator.map { reg =>
+//          // normalize fields and remove filtered entities/types
+//          val arg1Entity = reg.arg1.entity filter entityFilter
+//          val arg1EntityRemoved = reg.arg1.entity.isDefined && arg1Entity.isEmpty
+//          val arg1Types = if (!arg1EntityRemoved) reg.arg1.types filter typeFilter else Set.empty[FreeBaseType]
+//
+//          val arg2Entity = reg.arg2.entity filter entityFilter
+//          val arg2EntityRemoved = reg.arg2.entity.isDefined && arg2Entity.isEmpty
+//          val arg2Types = if (!arg2EntityRemoved) reg.arg2.types filter typeFilter else Set.empty[FreeBaseType]
+//
+//          reg.copy(
+//            instances = reg.instances,// filter filterCorpora filter filterInstances,
+//            arg1 = ExtractionArgument(TripleQuery.clean(reg.arg1.norm), arg1Entity, arg1Types),
+//            rel = reg.rel.copy(norm = TripleQuery.clean(reg.rel.norm)),
+//            arg2 = ExtractionArgument(TripleQuery.clean(reg.arg2.norm), arg2Entity, arg2Types))
+//        }.toList filter filterGroups filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
+//      }
+//
+//    Logger.debug(query.toString + " filtered with " + filtered.size + " answers in " + Timing.Seconds.format(nsFiltered))
 
-    val (nsRegroup, regrouped) = Timing.time {
-      ExtractionCluster.indexGroupingToFrontendGrouping(results)
-    }
-    Logger.debug(query.toString + " regrouped with " + regrouped.size + " answers (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsRegroup))
-
-    // apply backend deduplication
-    // TODO: merge into index itself
-    val (nsDeduped, deduped) = Timing.time {
-      regrouped map ExtractionDeduplicator.deduplicate
-    }
-    Logger.debug(query.toString + " deduped with " + deduped.size + " answers (" + result.getClass.getSimpleName + ") in " + Timing.Seconds.format(nsDeduped))
-
-    def typeFilter(typ: FreeBaseType) = {
-      import TypeFilters._
-      typ.valid
-    }
-
-    val (nsFiltered, filtered: List[ExtractionCluster[Extraction]]) =
-      Timing.time {
-        deduped.iterator.map { reg =>
-          // normalize fields and remove filtered entities/types
-          val arg1Entity = reg.arg1.entity filter entityFilter
-          val arg1EntityRemoved = reg.arg1.entity.isDefined && arg1Entity.isEmpty
-          val arg1Types = if (!arg1EntityRemoved) reg.arg1.types filter typeFilter else Set.empty[FreeBaseType]
-
-          val arg2Entity = reg.arg2.entity filter entityFilter
-          val arg2EntityRemoved = reg.arg2.entity.isDefined && arg2Entity.isEmpty
-          val arg2Types = if (!arg2EntityRemoved) reg.arg2.types filter typeFilter else Set.empty[FreeBaseType]
-
-          reg.copy(
-            instances = reg.instances,// filter filterCorpora filter filterInstances,
-            arg1 = ExtractionArgument(TripleQuery.clean(reg.arg1.norm), arg1Entity, arg1Types),
-            rel = reg.rel.copy(norm = TripleQuery.clean(reg.rel.norm)),
-            arg2 = ExtractionArgument(TripleQuery.clean(reg.arg2.norm), arg2Entity, arg2Types))
-        }.toList filter filterGroups filter (_.instances.size > 0) filter filterArg2DayOfWeek toList
-      }
-
-    Logger.debug(query.toString + " filtered with " + filtered.size + " answers in " + Timing.Seconds.format(nsFiltered))
-
-    (result, filtered)
+    (result, results.toList)
   }
 
   private val nonContentTag = "IN|TO|RB?".r

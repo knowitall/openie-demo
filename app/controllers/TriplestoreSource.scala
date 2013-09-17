@@ -18,6 +18,7 @@ import edu.knowitall.tool.chunk.ChunkedToken
 import edu.knowitall.collection.immutable.Interval
 import edu.knowitall.openie.models.FreeBaseEntity
 import edu.knowitall.openie.models.FreeBaseType
+import models.Answer
 import Executor.Success
 import Executor.Limited
 import play.api.Logger
@@ -36,18 +37,19 @@ object TriplestoreSource extends FetchSource {
   private val executor = IdentityExecutor(solrClient) // Need to be able to hang on to the solr server.
   private val grouper = Components.groupers("basic")
   private val scorer = Components.scorers("numDerivations")
-  private val converter = new ScoredAnswerConverter(solrServer)
+  private val converter = new ScoredAnswerConverter(solrServer) // TODO DELETE THIS
+  private val answerConverter = new AnswerConverter(solrServer)
   
   private def qaSystem(parser: QuestionParser) = QASystem(parser, executor, grouper, scorer)
 
-  def fetch(query: Query): Executor.Result[ExtractionCluster[Extraction]] = {
+  def fetch(query: Query): Executor.Result[Answer] = {
     val scoredAnswers = qaSystem(query.parser).answer(query.question)
-    val tuples = scoredAnswers.flatMap(_.derivations.map(_.etuple.tuple))
-    val converted = tuples flatMap converter.convert
-    Success(converted)
+    val answers = scoredAnswers map answerConverter.getAnswer
+    Success(answers)
   }
 }
 
+// TODO DELETE THIS
 class ScoredAnswerConverter(val solrServer: SolrServer) {
   
   private val wsSplit = "\\s".r
@@ -91,7 +93,7 @@ class ScoredAnswerConverter(val solrServer: SolrServer) {
     }
   }
   
-  def convert(tuple: Tuple): Option[ExtractionCluster[Extraction]] = {
+  def convertTuple(tuple: Tuple): Option[ExtractionCluster[Extraction]] = {
     
     def gs(s: String) = tuple.getString("r0."+s)
     

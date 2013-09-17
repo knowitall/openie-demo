@@ -8,36 +8,36 @@ import scala.io.Source
 sealed abstract trait TypeFilter {
   def name: String
   def displayName: String
-  def parts: List[String]
+  def attrs: Set[String]
   def apply(answer: Answer): Boolean
 }
 
-case class PositiveTypeFilter(val typ: FreeBaseType, override val parts: List[String]) extends TypeFilter {
+case class PositiveTypeFilter(val typ: FreeBaseType, override val attrs: Set[String]) extends TypeFilter {
   def name = typ.name
   def displayName = typ.typ.replaceAll("_", " ")
 
   def apply(answer: Answer): Boolean =
-    answer.parts exists (part => (parts contains part.extractionPart) &&
+    answer.parts.exists(part => (attrs.exists(part.attrs.contains)) &&
       part.types.contains(this.typ)
     )
 }
 
-case class PositiveStringTypeFilter(val string: String, override val parts: List[String]) extends TypeFilter {
+case class PositiveStringTypeFilter(val string: String, override val attrs: Set[String]) extends TypeFilter {
   def name = string
   def displayName = string.replaceAll("_", " ")
 
   def apply(answer: Answer): Boolean =
-    answer.parts exists (part => (parts contains part.extractionPart) &&
+    answer.parts.exists(part => (attrs.exists(part.attrs.contains)) &&
       part.types.exists(_.typ equalsIgnoreCase this.string)
     )
 }
 
-case class NegativeTypeFilter(val typ: FreeBaseType, override val parts: List[String]) extends TypeFilter {
+case class NegativeTypeFilter(val typ: FreeBaseType, override val attrs: Set[String]) extends TypeFilter {
   def name = typ.name
   def displayName = typ.typ.replaceAll("_", " ")
 
   def apply(answer: Answer): Boolean =
-    answer.parts forall (part => (parts contains part.extractionPart) &&
+    answer.parts.exists(part => (attrs.exists(part.attrs.contains)) &&
       !part.types.contains(this.typ)
     )
 }
@@ -83,7 +83,7 @@ object TypeFilters {
 
         // only use filters for "free" parts
         part <- group.parts
-        if (query.freeParts.contains(part.extractionPart))
+        if (query.freeParts.exists(part.attrs.contains))
 
         // avoid user-submitted type categories
         typ <- part.types
