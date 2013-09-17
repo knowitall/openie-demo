@@ -10,8 +10,6 @@ import akka.actor.{ TypedProps, TypedActor }
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import play.api.Logger
-import edu.knowitall.openie.models.InstanceDeduplicator
-import edu.knowitall.openie.models.ExtractionRelation
 import controllers.routes
 
 case class TripleQuery(
