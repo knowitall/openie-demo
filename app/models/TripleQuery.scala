@@ -61,22 +61,10 @@ case class TripleQuery(
     case _ => None
   }
 
-
-  def toLowerCase: TripleQuery = {
-    val lowerCasedQuery = TripleQuery(arg1.map(_.toLowerCase), rel.map(_.toLowerCase), arg2.map(_.toLowerCase), corpora)
-    Logger.debug("Lowercasing query to %s from %s".format(lowerCasedQuery.toString, this.toString))
-    lowerCasedQuery
-  }
-
   override def toString = "(" + arg1String + ", " +
     relString + ", " +
     arg2String +
     corpora.map(c => ", " + c.toString).getOrElse("") + ")"
-
-  def humanString = "a query with " + Iterable(
-    arg1.map("Argument 1 containing '" + _ + "'"),
-    rel.map("Relation containing '" + _ + "'"),
-    arg2.map("Argument 2 containing '" + _ + "'")).flatten.mkString(" and ")
 
   def full = arg1.isDefined && rel.isDefined && arg2.isDefined
 
@@ -86,16 +74,6 @@ case class TripleQuery(
         constraint match {
           case None => true
           case Some(constraint) => constraint.free
-        }
-    }.map(_._2).toSet
-  }
-
-  def fullParts: Set[String] = {
-    Iterable((arg1, "r0.arg1"), (rel, "r0.rel"), (arg2, "r0.arg2")).filter {
-      case (constraint, part) =>
-        constraint match {
-          case None => true
-          case Some(constraint) => !constraint.free
         }
     }.map(_._2).toSet
   }

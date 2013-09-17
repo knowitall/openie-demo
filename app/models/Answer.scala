@@ -22,7 +22,9 @@ case class AnswerPart(lemma: String, attrs: Set[String], synonyms: Seq[String], 
   /** Show synonyms other than the text of this part */
   def otherSynonyms = synonyms filterNot (_ equalsIgnoreCase text)
   
-  def comesFromArg: Boolean = attrs.exists(_.contains("arg"))
+  def comesFromArg1: Boolean = attrs.exists(_.contains("arg1"))
+  
+  def comesFromArg2: Boolean = attrs.exists(_.contains("arg2"))
   
   def comesFromRel: Boolean = attrs.exists(_.contains("rel"))
 }
@@ -37,6 +39,12 @@ case class AnswerPart(lemma: String, attrs: Set[String], synonyms: Seq[String], 
 case class Answer(parts: Seq[AnswerPart], contents: List[Content], queryEntity: List[(FreeBaseEntity, Int)]) {
   
   def title = parts.map(_.text).mkString(", ")
+  
+  def arg1Full = parts.forall(_.comesFromArg1)
+  def relFull  = parts.forall(_.comesFromRel)
+  def arg2Full = parts.forall(_.comesFromArg2)
+  
+  val attrs = parts.flatMap(_.attrs).toSet
   
   def contentsByRelation = contents.groupBy(_.rel).toList.sortBy{ case (r, cs) => -cs.size }
 }

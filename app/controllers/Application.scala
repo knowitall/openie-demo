@@ -235,7 +235,7 @@ object Application extends Controller {
         Logger.debug("executing " + query + " in lucene")
 
         // cache miss
-        val (ns, result) = Timing.time(Executor.execute(query.toLowerCase, settings))
+        val (ns, result) = Timing.time(Executor.execute(query, settings))
 
         val (groups, message) = result match {
           case Executor.Success(groups) => (groups, None)
@@ -243,7 +243,7 @@ object Application extends Controller {
           case Executor.Limited(groups) => (groups, Some("results truncated"))
         }
 
-        val answers = AnswerSet.from(query, groups, TypeFilters.fromGroups(query, groups, debug))
+        val answers = AnswerSet.from(query, groups, TypeFilters.fromGroups(groups, debug))
 
         Logger.info(query.toString +
           " executed in " + Timing.Seconds.format(ns) +

@@ -74,21 +74,22 @@ object TypeFilters {
 
   implicit def enrichFreeBaseType(fb: FreeBaseType) = new EnrichedFreeBaseType(fb)
 
-  def fromGroups(query: TripleQuery, groups: Iterable[Answer], debug: Boolean): Seq[TypeFilter] = {
-    if (query.full) List.empty
+  def fromGroups(groups: Iterable[Answer], debug: Boolean): Seq[TypeFilter] = {
+    
+    val freeParts = groups.flatMap(_.attrs).toSet
+    
+    if (freeParts.isEmpty) List.empty
     else {
       // build all possible filters
       val it = for {
         group <- groups
-
         // only use filters for "free" parts
         part <- group.parts
-        if (query.freeParts.exists(part.attrs.contains))
-
+        if (freeParts.exists(part.attrs.contains))
         // avoid user-submitted type categories
         typ <- part.types
         if typ.valid
-      } yield (PositiveTypeFilter(typ, query.freeParts))
+      } yield (PositiveTypeFilter(typ, freeParts))
 
       // order the filters and take the top few
       val ordered = it.histogram.filter {
