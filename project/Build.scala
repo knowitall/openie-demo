@@ -21,5 +21,5 @@ object ApplicationBuild extends Build {
           "internal snapshot" at "http://knowitall.cs.washington.edu/maven2-snapshot/",
           "internal release" at "http://knowitall.cs.washington.edu/maven2/"
         )
-    )
+    ).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
 }
