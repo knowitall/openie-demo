@@ -67,7 +67,9 @@ class AnswerConverter(solr: SolrServer) {
     val urlString = getString("url")
     val tokens  = getString("sentence_text").split(" ").toList
     val rel = relInterval.map(i => tokens(i)).mkString(" ")
-    Content(tokens, urlString, List(arg1Interval, arg2Interval), rel, 0.0, "none")
+    val confidence = doc.getFieldValue("confidence").asInstanceOf[Double]
+    val corpus = getString("corpus")
+    Content(tokens, urlString, List(arg1Interval, arg2Interval), rel, 0.0, corpus)
   }
 }
 
