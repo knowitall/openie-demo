@@ -3,7 +3,6 @@ package models
 import java.io.{ ObjectInputStream, FileInputStream, File }
 import java.util.regex.Pattern
 import scala.Option.option2Iterable
-import edu.knowitall.openie.models.{ExtractionGroup, ReVerbExtraction}
 import edu.knowitall.common.Resource.using
 import edu.knowitall.common.Timing
 import akka.actor.{ TypedProps, TypedActor }
@@ -172,7 +171,6 @@ case class TripleQuery(
 }
 
 object TripleQuery {
-  type REG = ExtractionGroup[ReVerbExtraction]
 
   val parser = controllers.DemoQueryParser()
 
@@ -295,19 +293,6 @@ object TripleQuery {
 
   def fromStrings(arg1: String, rel: String, arg2: String, corpora: String): TripleQuery =
     this.fromStrings(noneIfEmpty(arg1), noneIfEmpty(rel), noneIfEmpty(arg2), noneIfEmpty(corpora))
-
-//  def fromFile(file: File) = {
-//    using(new FileInputStream(file)) { fis =>
-//      using(new ObjectInputStream(fis) {
-//        override def resolveClass(desc: java.io.ObjectStreamClass): Class[_] = {
-//          try { Class.forName(desc.getName, false, getClass.getClassLoader) }
-//          catch { case ex: ClassNotFoundException => super.resolveClass(desc) }
-//        }
-//      }) { in =>
-//        in.readObject().asInstanceOf[Iterable[ExtractionGroup[ReVerbExtraction]]]
-//      }
-//    }
-//  }
 
   private final val stripExtraWS = Pattern.compile("\\s+")
   private final val stripChars = Pattern.compile("[^\\p{Graph}\\p{Cntrl} ]+")

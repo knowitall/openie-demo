@@ -1,7 +1,6 @@
 package models
 
 import scala.collection.immutable
-import edu.knowitall.openie.models.FreeBaseEntity
 import edu.knowitall.common.enrich.Traversables._
 
 /** The Answer set is a collection of the answers.
@@ -15,7 +14,7 @@ case class AnswerSet(answers: Seq[Answer], filters: immutable.SortedSet[TypeFilt
   def sentenceCount = answers.iterator.map(_.contents.size).sum
 
   val attrs = answers.flatMap(_.attrs).toSet
-  
+
   def page(pageNumber: Int, pageSize: Int): AnswerSet =
     this.copy(answers=this.answers.drop(pageNumber * pageSize).take(pageSize))
 

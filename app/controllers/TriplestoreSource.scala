@@ -1,9 +1,6 @@
 package controllers
 
 import models.Query
-import edu.knowitall.openie.models.ExtractionCluster
-import edu.knowitall.openie.models.ReVerbExtraction
-import edu.knowitall.openie.models.Extraction
 import edu.knowitall.apps.QASystem
 import edu.knowitall.apps.Components
 import edu.knowitall.execution.IdentityExecutor
@@ -16,17 +13,15 @@ import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.common.SolrDocument
 import edu.knowitall.tool.chunk.ChunkedToken
 import edu.knowitall.collection.immutable.Interval
-import edu.knowitall.openie.models.FreeBaseEntity
-import edu.knowitall.openie.models.FreeBaseType
 import models.Answer
 import Executor.Success
 import Executor.Limited
 import play.api.Logger
 
 /**
- * A FetchSource backed by triplestore-qa that converts 
+ * A FetchSource backed by triplestore-qa that converts
  * ScoredAnswerGroups (returned by QASystem) to
- * ExtractionClusters. 
+ * ExtractionClusters.
  */
 object TriplestoreSource extends FetchSource {
 
@@ -38,7 +33,7 @@ object TriplestoreSource extends FetchSource {
   private val grouper = Components.groupers("basic")
   private val scorer = Components.scorers("numDerivations")
   private val answerConverter = new AnswerConverter(solrServer)
-  
+
   private def qaSystem(parser: QuestionParser) = QASystem(parser, executor, grouper, scorer)
 
   def fetch(query: Query): Executor.Result[Answer] = {

@@ -1,7 +1,7 @@
 @(query: Query, answer: Answer, index: Int, maxSentenceCount: Int, debug: Boolean)
 
 @import models.TypeFilters._
-@import edu.knowitall.openie.models.NellType.fbToNellType
+@import models.NellType.fbToNellType
 
 @titleLink(part: models.AnswerPart, large: Boolean) = {
 	@if(part.comesFromRel) {

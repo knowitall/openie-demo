@@ -4,7 +4,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import org.joda.time.DateTime
 import edu.knowitall.common.Resource.using
 import edu.knowitall.common.Timing
-import edu.knowitall.openie.models.FreeBaseType
+import models.FreeBaseType
 import models.AnswerSet
 import models.LogEntry
 import models.PositiveTypeFilter
@@ -47,7 +47,7 @@ object Application extends Controller {
       )(Query.apply)(Query.unapply))
     )
   }
-  
+
   // Form[(Question, Corpora)]
   def qaForm: Form[(String, Option[String])] = {
     Form(
@@ -87,7 +87,7 @@ object Application extends Controller {
   def index(reloadFooter: Boolean) = Action {
     Ok(views.html.index(searchForm, footer(reloadFooter)))
   }
-  
+
   def qa(reloadFooter: Boolean) = Action {
     Ok(views.html.qa(qaForm, footer(reloadFooter)))
   }
@@ -112,20 +112,20 @@ object Application extends Controller {
       query => submitHelper(query, debug)
     )
   }
-  
+
   def submitQA(debug: Boolean = false) = Action { implicit request =>
 
     qaForm.bindFromRequest.fold(
       { errors => BadRequest(views.html.qa(errors, footer())) },
       { case (question, corpora) =>
         val query = QAQuery.fromQuestionForm(question, corpora)
-        submitHelper(query, debug) 
+        submitHelper(query, debug)
       }
     )
   }
 
   private def submitHelper(query: Query, debug: Boolean)(implicit request: Request[AnyContent]) = {
-    
+
     val answers = scala.concurrent.future {
       searchGroups(query, settingsFromRequest(debug, request), debug)
     }
@@ -144,12 +144,12 @@ object Application extends Controller {
 //          }
 
           doSearch(query, "all", 0, settingsFromRequest(debug, request), debug = debug)
-          
+
 //          if (ambiguousEntities.size == 0) {
 //            //when there is no entity that satisfy the cut-off filter above
 //            //i.e, when results number is too small, do the regular query search.
 //            doSearch(query, "all", 0, settingsFromRequest(debug, request), debug = debug)
-//            
+//
 //            // not sure what to do about disambiguation yet...
 ////          } else if (ambiguousEntities.size == 1) {
 ////            //when there is only a single entity present after the filter
@@ -177,7 +177,7 @@ object Application extends Controller {
       val filters: Set[TypeFilter] = filterString match {
         case "" | "all" => Set()
         case "misc" => answers.filters.map(_.filter).collect { case filter: PositiveTypeFilter => filter.negate }
-        case s => 
+        case s =>
           val typ = FreeBaseType.parse(s).getOrElse(throw new IllegalArgumentException("invalid type string: " + s))
           Set(PositiveTypeFilter(typ, answers.attrs))
       }
@@ -310,20 +310,20 @@ object Application extends Controller {
 //
 //        //choose a cut-off to filter out the entities that have few
 //        //results, and only display to a max of 7 entities
-//        val ambiguousEntitiesWithEntityCount = filter._2.queryEntities.zipWithIndex.filter{ 
-//          case ((fbe, entityCount), index)  => index < 7 && entityCount > 5 
-//        }  
-//          
+//        val ambiguousEntitiesWithEntityCount = filter._2.queryEntities.zipWithIndex.filter{
+//          case ((fbe, entityCount), index)  => index < 7 && entityCount > 5
+//        }
+//
 //        //get the ambiguous Entities with their index and answerCount
 //        val answer = filter._2.answers.flatMap(x => x.queryEntity)
 //        val ambiguousEntitiesWithAnswerCount = for(((fbe, entityCount), index) <- ambiguousEntitiesWithEntityCount) yield {
 //          val answerCount = answer.count(_._1.fbid == fbe.fbid)
 //          (fbe, answerCount)
 //        }
-//          
+//
 //        //sort the ambiguous entities according to the answer count in decreasing order.
 //        val sortedAmbiguousEntitiesWithAnswerCount = ambiguousEntitiesWithAnswerCount.sortBy(-_._2)
-//        
+//
 //        //direct to disambiguate page with a resultsFrame header, and disambiguate
 //        //query card contents.
 //        Ok(

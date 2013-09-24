@@ -1,6 +1,5 @@
 package models
 
-import edu.knowitall.openie.models.FreeBaseType
 import edu.knowitall.common.enrich.Traversables.traversableOnceTo
 import edu.knowitall.common.Resource.using
 import scala.io.Source
@@ -20,7 +19,7 @@ case class PositiveTypeFilter(val typ: FreeBaseType, override val attrs: Set[Str
     answer.parts.exists(part => (attrs.exists(part.attrs.contains)) &&
       part.types.contains(this.typ)
     )
-    
+
   def negate = NegativeTypeFilter(typ, attrs)
 }
 
@@ -77,9 +76,9 @@ object TypeFilters {
   implicit def enrichFreeBaseType(fb: FreeBaseType) = new EnrichedFreeBaseType(fb)
 
   def fromGroups(groups: Iterable[Answer], debug: Boolean): Seq[TypeFilter] = {
-    
+
     val freeParts = groups.flatMap(_.attrs).toSet
-    
+
     if (freeParts.isEmpty) List.empty
     else {
       // build all possible filters

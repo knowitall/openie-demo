@@ -1,0 +1,119 @@
+academicField	/education/field_of_study	academic field
+actor	/film/actor	actor
+airport	/aviation/airport	airport
+animal	/biology/animal	animal
+architect	/architecture/architect	architect
+artery	/medicine/artery	artery
+astronaut	/spaceflight/astronaut	astronaut
+athlete	/sports/pro_athlete	athlete
+attraction	/travel/tourist_attraction	attraction
+automobileEngine	/automotive/engine	automobile engine
+automobileMaker	/automotive/company	automobile maker
+automobileModel	/automotive/model	automobile model
+awardTrophyTournament	/sports/sports_championship	tournament award
+beverage	/food/beverage	beverage
+blog	/internet/blog	blog
+bodyPart	/medicine/anatomical_structure	body part
+bone	/medicine/bone	bone
+book	/book/book	book
+brainTissue	/medicine/brain_structure	brain tissue
+bridge	/transportation/bridge	bridge
+building	/architecture/building	building
+buildingMaterial	/architecture/lighthouse_construction_material	building material
+cardGame	/games/playing_card_game	card game
+celebrity	/celebrities/celebrity	celebrity
+cheese	/food/cheese	cheese
+chef	/dining/chef	chef
+chemical	/chemistry/chemical_compound /chemistry/chemical_element	chemical
+city	/location/citytown	city
+clothing	/fashion/garment	clothing
+color	/visual_art/color	color
+company	/business/business_operation	company
+conference	/conferences/conference_series	conference
+country	/location/country	country
+county	/location/us_county	county
+currency	/finance/currency	currency
+dateLiteral	/type/datetime	literal date
+dayOfWeek	/time/day_of_week	day of the week
+disease	/medicine/disease	disease
+drug	/medicine/drug	drug
+economicSector	/business/industry	economic sector
+election	/government/election	election
+ethnicGroup	/people/ethnicity	ethnic group
+event	/time/event	event
+filmFestival	/film/film_festival	film festival
+food	/food/food	food
+governmentOrganization	/government/government_agency	government organization
+hobby	/interests/hobby	hobby
+hospital	/medicine/hospital	hospital
+hotel	/travel/accommodation	hotel
+island	/geography/island	island
+lake	/geography/lake	lake
+landscapeFeatures	/geography/geographical_feature	landscape features
+language	/language/human_language	language
+llCoordinate	/location/geocode	latitude longitude coordinate
+location	/location/location	location
+magazine	/book/magazine	magazine
+medicalProcedure	/medicine/medical_treatment	medical procedure
+militaryConflict	/military/military_conflict	military conflict
+monarch	/royalty/monarch	monarch
+month	/time/month	month
+monument	/protected_sites/protected_site	monument
+mountain	/geography/mountain	mountain
+mountainRange	/geography/mountain_range	mountain range
+movie	/film/film	movie
+muscle	/medicine/muscle	muscle
+museum	/architecture/museum	museum
+musicAlbum	/music/album	music album
+musicArtist	/music/artist	musical artist
+musicFestival	/music/festival	music festival
+musicGenre	/music/genre	music genre
+musician	/music/group_member	musician
+musicInstrument	/music/instrument	musical instrument
+musicSong	/music/composition	song
+nerve	/medicine/nerve	nerve
+newspaper	/book/newspaper	newspaper
+nonProfitOrganization	/organization/non_profit_organization	non profit organization
+organization	/organization/organization	organization
+park	/protected_sites/protected_site	park
+person	/people/person	person
+planet	/astronomy/planet	planet
+poem	/book/poem	poem
+politicalOffice	/government/government_office_or_title	political office
+politicalParty	/government/political_party	political party
+politician	/government/politician	politician
+product	/business/consumer_product	product
+profession	/people/profession	profession
+programmingLanguage	/computer/programming_language	programming language
+protein	/biology/protein	protein
+radioStation	/broadcast/radio_station	radio station
+recipe	/food/recipe	recipe
+recordLabel	/music/record_label	record label
+religion	/religion/religion	religion
+restaurant	/dining/restaurant	restaurant
+river	/geography/river	river
+school	/education/educational_institution	school
+shoppingMall	/business/shopping_center	shopping mall
+skyscraper	/architecture/skyscraper	skyscraper
+sport	/sports/sport	sport
+sportsEquipment	/sports/sports_equipment	sports equipment
+sportsLeague	/sports/sports_league	sports league
+sportsTeam	/sports/sports_team	sports team
+stadiumOrEventVenue	/sports/sports_facility	sports facility
+televisionNetwork	/tv/tv_network	television network
+televisionShow	/tv/tv_program	television show
+televisionStation	/broadcast/tv_station	television station
+tradeUnion	/business/trade_union	trade union
+traditionalGame	/games/game	traditional game
+transportation	/travel/transportation_mode	transportation
+university	/education/university	university
+vein	/medicine/vein	vein
+videoGame	/cvg/computer_videogame	video game
+videoGameSystem	/cvg/cvg_platform	video game
+visualArtForm	/visual_art/visual_art_form	visual art form
+visualArtist	/visual_art/visual_artist	visual artist
+visualArtMovement	/visual_art/art_period_movement	visual art movement
+website	/internet/website	website
+wine	/wine/wine_type	wine
+winery	/wine/wine_producer	winery
+writer	/book/author	writer
