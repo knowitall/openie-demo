@@ -37,20 +37,14 @@ object Application extends Controller {
   /**
     * The actual definition of the search form.
     */
-  def searchForm: Form[TripleQuery] = {
-    def unapply(query: TripleQuery): Option[(Option[String], Option[String], Option[String], Option[String])] = {
-      Some(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), query.corpora.map(_.toString))
-    }
+  def searchForm: Form[Query] = {
+
     Form(
     // Defines a mapping that will handle Contact values
       (mapping (
-        "arg1" -> optional(text),
-        "rel" -> optional(text),
-        "arg2" -> optional(text),
-        "corpora" -> optional(text)
-      )(TripleQuery.fromStrings)(unapply)).verifying("All search fields cannot be empty", { query =>
-        query.arg1.isDefined || query.rel.isDefined || query.arg2.isDefined
-      })
+        "question" -> text,
+        "parser" -> text
+      )(Query.apply)(Query.unapply))
     )
   }
   
@@ -130,7 +124,7 @@ object Application extends Controller {
     )
   }
 
-  private def submitHelper(query: TripleQuery, debug: Boolean)(implicit request: Request[AnyContent]) = {
+  private def submitHelper(query: Query, debug: Boolean)(implicit request: Request[AnyContent]) = {
     
     val answers = scala.concurrent.future {
       searchGroups(query, settingsFromRequest(debug, request), debug)
@@ -145,26 +139,30 @@ object Application extends Controller {
 
           //choose a cut-off to filter out the entities that have few
           //results, and only display to a max of 7 entities
-          val ambiguousEntities = filtered.queryEntities.zipWithIndex.filter {
-            case ((fbe, entityCount), index) => index < 7 && entityCount > 5
-          }
+//          val ambiguousEntities = filtered.queryEntities.zipWithIndex.filter {
+//            case ((fbe, entityCount), index) => index < 7 && entityCount > 5
+//          }
 
-          if (ambiguousEntities.size == 0) {
-            //when there is no entity that satisfy the cut-off filter above
-            //i.e, when results number is too small, do the regular query search.
-            doSearch(query, "all", 0, settingsFromRequest(debug, request), debug = debug)
-          } else if (ambiguousEntities.size == 1) {
-            //when there is only a single entity present after the filter
-            //go directly to the linked entity query search
-            query.arg2.map(_.toString) match {
-              case Some(x) => doSearch(TripleQuery.fromStrings(query.arg1.map(_.toString), query.rel.map(_.toString), Option("entity:" + ambiguousEntities(0)._1._1.name), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug = debug)
-              case None => doSearch(TripleQuery.fromStrings(Option("entity:" + ambiguousEntities(0)._1._1.name), query.rel.map(_.toString), query.arg2.map(_.toString), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug = debug)
-            }
-          } else {
-            //if there are more than 1 entities that are ambiguous
-            //direct to the disambiguation page and display an query-card for each
-            disambiguate(query, settingsFromRequest(debug, request), debug = debug)
-          }
+          doSearch(query, "all", 0, settingsFromRequest(debug, request), debug = debug)
+          
+//          if (ambiguousEntities.size == 0) {
+//            //when there is no entity that satisfy the cut-off filter above
+//            //i.e, when results number is too small, do the regular query search.
+//            doSearch(query, "all", 0, settingsFromRequest(debug, request), debug = debug)
+//            
+//            // not sure what to do about disambiguation yet...
+////          } else if (ambiguousEntities.size == 1) {
+////            //when there is only a single entity present after the filter
+////            //go directly to the linked entity query search
+////            query.arg2.map(_.toString) match {
+////              case Some(x) => doSearch(TripleQuery.fromStrings(query.arg1.map(_.toString), query.rel.map(_.toString), Option("entity:" + ambiguousEntities(0)._1._1.name), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug = debug)
+////              case None    => doSearch(TripleQuery.fromStrings(Option("entity:" + ambiguousEntities(0)._1._1.name), query.rel.map(_.toString), query.arg2.map(_.toString), query.corpora.map(_.toString)), "all", 0, settingsFromRequest(debug, request), debug = debug)
+////            }
+//          } else {
+//            //if there are more than 1 entities that are ambiguous
+//            //direct to the disambiguation page and display an query-card for each
+//            disambiguate(query, settingsFromRequest(debug, request), debug = debug)
+//          }
         }
       }
     }
@@ -191,12 +189,12 @@ object Application extends Controller {
       (filters, filtered, page)
   }
 
-  def search(arg1: Option[String], rel: Option[String], arg2: Option[String], filter: String, page: Int, debug: Boolean, log: Boolean, corpora: Option[String]) = Action { implicit request =>
-    doSearch(TripleQuery.fromStrings(arg1, rel, arg2, corpora), filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
+  def search(question: String, parser: String, filter: String, page: Int, debug: Boolean, log: Boolean) = Action { implicit request =>
+    doSearch(new Query(question, parser), filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
   }
 
-  def sentences(arg1: Option[String], rel: Option[String], arg2: Option[String], title: String, debug: Boolean, corpora: Option[String]) = Action {
-    val query = TripleQuery.fromStrings(arg1, rel, arg2, corpora)
+  def sentences(question: String, parser: String, title: String, debug: Boolean) = Action {
+    val query = new Query(question, parser)
     Logger.info("Sentences request for title '" + title + "' in: " + query)
     val group = searchGroups(query, ExecutionSettings.default, debug)._1.answers.find(_.title == title) match {
       case None => throw new IllegalArgumentException("could not find group title: " + title)
@@ -258,11 +256,11 @@ object Application extends Controller {
     }
   }
 
-  def results(arg1: Option[String], rel: Option[String], arg2: Option[String], filterString: String, pageNumber: Int, justResults: Boolean, debug: Boolean = false, corpora: Option[String]) = Action { implicit request =>
-    doSearch(TripleQuery.fromStrings(arg1, rel, arg2, corpora), filterString, pageNumber, settingsFromRequest(debug, request), debug=debug, log=true, justResults=justResults)
+  def results(question: String, parser: String, filterString: String, pageNumber: Int, justResults: Boolean, debug: Boolean = false) = Action { implicit request =>
+    doSearch(new Query(question, parser), filterString, pageNumber, settingsFromRequest(debug, request), debug=debug, log=true, justResults=justResults)
   }
 
-  def doSearch(query: TripleQuery, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
+  def doSearch(query: Query, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
     Logger.info("Search request: " + query)
 
     val maxQueryTime = 20 * 1000 /* ms */
@@ -293,46 +291,46 @@ object Application extends Controller {
     }
   }
 
-  def disambiguate(query: TripleQuery, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true)(implicit request: RequestHeader) = {
-    val maxQueryTime = 20 * 1000 /* ms */
-
-    val answers = scala.concurrent.future {
-      searchGroups(query, settings, debug)
-    }
-
-    Async {
-      val filterString = "all"
-
-      answers.map { case (answers, message) =>
-        val filter = setupFilters(answers, filterString, 0)
-
-        if (log) {
-          LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request).log()
-        }
-
-        //choose a cut-off to filter out the entities that have few
-        //results, and only display to a max of 7 entities
-        val ambiguousEntitiesWithEntityCount = filter._2.queryEntities.zipWithIndex.filter{ 
-          case ((fbe, entityCount), index)  => index < 7 && entityCount > 5 
-        }  
-          
-        //get the ambiguous Entities with their index and answerCount
-        val answer = filter._2.answers.flatMap(x => x.queryEntity)
-        val ambiguousEntitiesWithAnswerCount = for(((fbe, entityCount), index) <- ambiguousEntitiesWithEntityCount) yield {
-          val answerCount = answer.count(_._1.fbid == fbe.fbid)
-          (fbe, answerCount)
-        }
-          
-        //sort the ambiguous entities according to the answer count in decreasing order.
-        val sortedAmbiguousEntitiesWithAnswerCount = ambiguousEntitiesWithAnswerCount.sortBy(-_._2)
-        
-        //direct to disambiguate page with a resultsFrame header, and disambiguate
-        //query card contents.
-        Ok(
-          views.html.frame.resultsframe(
-            searchForm, query, message, filter._2, filter._2.answerCount, filter._2.sentenceCount, false)(
-              views.html.disambiguate(query, sortedAmbiguousEntitiesWithAnswerCount, filter._1.toSet, filterString, 0, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
-      }
-    }
-  }
+//  def disambiguate(query: Query, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true)(implicit request: RequestHeader) = {
+//    val maxQueryTime = 20 * 1000 /* ms */
+//
+//    val answers = scala.concurrent.future {
+//      searchGroups(query, settings, debug)
+//    }
+//
+//    Async {
+//      val filterString = "all"
+//
+//      answers.map { case (answers, message) =>
+//        val filter = setupFilters(answers, filterString, 0)
+//
+//        if (log) {
+//          LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request).log()
+//        }
+//
+//        //choose a cut-off to filter out the entities that have few
+//        //results, and only display to a max of 7 entities
+//        val ambiguousEntitiesWithEntityCount = filter._2.queryEntities.zipWithIndex.filter{ 
+//          case ((fbe, entityCount), index)  => index < 7 && entityCount > 5 
+//        }  
+//          
+//        //get the ambiguous Entities with their index and answerCount
+//        val answer = filter._2.answers.flatMap(x => x.queryEntity)
+//        val ambiguousEntitiesWithAnswerCount = for(((fbe, entityCount), index) <- ambiguousEntitiesWithEntityCount) yield {
+//          val answerCount = answer.count(_._1.fbid == fbe.fbid)
+//          (fbe, answerCount)
+//        }
+//          
+//        //sort the ambiguous entities according to the answer count in decreasing order.
+//        val sortedAmbiguousEntitiesWithAnswerCount = ambiguousEntitiesWithAnswerCount.sortBy(-_._2)
+//        
+//        //direct to disambiguate page with a resultsFrame header, and disambiguate
+//        //query card contents.
+//        Ok(
+//          views.html.frame.resultsframe(
+//            searchForm, query, message, filter._2, filter._2.answerCount, filter._2.sentenceCount, false)(
+//              views.html.disambiguate(query, sortedAmbiguousEntitiesWithAnswerCount, filter._1.toSet, filterString, 0, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+//      }
+//    }
+//  }
 }

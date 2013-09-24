@@ -10,13 +10,18 @@ import controllers.DemoComponents
  * For easy serialization, the parser is represented by its name as a
  * key in the components mapping.
  */
-trait Query {
-
-  def question: String
-  def parserName: String
+class Query(val question: String, val parserName: String) {
 
   def parser = {
     require(DemoComponents.parsers.contains(parserName), parserName + " is not a valid parser name.")
     DemoComponents.parsers(parserName)
   }
+}
+
+object Query {
+  
+  
+  def unapply(query: Query): Option[(String, String)] = Some(query.question, query.parserName)
+  
+  def apply(q: String, p: String) = new Query(q, p)
 }

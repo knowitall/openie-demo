@@ -1,41 +1,21 @@
-@(searchForm: Form[TripleQuery], query: TripleQuery, message: Option[String], answers: AnswerSet, totalAnswerCount: Int, totalSentenceCount: Int, isResults : Boolean)(content: Html)
+@(searchForm: Form[Query], query: Query, message: Option[String], answers: AnswerSet, totalAnswerCount: Int, totalSentenceCount: Int, isResults : Boolean)(content: Html)
 
 @import helper.twitterBootstrap._
 
 @helper.main("Open Information Extraction", compact=true) {
   @helper.form(action = routes.Application.submit(false), 'class -> "well form-inline hidden-phone") {
     <div class="results-form">
-      <label for="arg1">Argument 1:</label>
+      <label for="question">Question:</label>
       <span class="input">
-          <input type="text" id="arg1" name="arg1" value="@query.arg1" >
+          <input type="text" id="question" name="question" value="@query.question" >
           <span class="help-inline"></span>
       </span>
     </div>
 
     <div class="results-form">
-      <label for="rel">Relation:</label>
+      <label for="parser">Parser:</label>
       <span class="input">
-          <input type="text" id="rel" name="rel" value="@query.rel" >
-          <span class="help-inline"></span>
-      </span>
-    </div>
-
-    <div class="results-form">
-      <label for="arg2">Argument 2:</label>
-      <span class="input">
-          <input type="text" id="arg2" name="arg2" value="@query.arg2" >
-          <span class="help-inline"></span>
-      </span>
-    </div>
-
-    <div class="results-form">
-      <span class="input">
-          <select id="corpora" name="corpora">
-              <option value="">All</option>
-            @for(Corpus(displayName, indexName) <- Corpus.corpora) {
-              <option value="@indexName" @if(query.corpora.map(_.corpora) == Some(indexName)){SELECTED}>@displayName</option>
-            }
-          </select>
+          <input type="text" id="parser" name="parser" value="@query.parserName" >
           <span class="help-inline"></span>
       </span>
     </div>

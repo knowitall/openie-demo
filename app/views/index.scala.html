@@ -1,4 +1,4 @@
-@(searchForm: Form[TripleQuery], footer: String)
+@(searchForm: Form[Query], footer: String)
 
 @helper.main("Open Information Extraction", compact=false) {
   <p />
@@ -8,16 +8,16 @@
           <b style="font-size:1.5em;">Example Queries: <a href="#" class="tooltiparea" rel="tooltip" title="Click an example question to see a sample relation search query."><i class="icon-question-sign"></i></a></b>
           <table style="padding: 5 px;font-size:1em;">
               <tr>
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('','kills','bacteria')">What kills bacteria?</a></td>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('?','kills','bacteria')">What kills bacteria?</a></td>
               </tr>
               <tr>
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('','built','pyramids')">Who built the Pyramids?</a></td>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('?','built','pyramids')">Who built the Pyramids?</a></td>
               </tr>
               <tr class="hidden-phone">
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Thomas Edison','invent','')">What did Thomas Edison invent?</a></td>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Thomas Edison','invent','?')">What did Thomas Edison invent?</a></td>
               </tr>
               <tr class="hidden-phone">
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('','contains','antioxidant')">What contains antioxidants?</a></td>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('?','contains','antioxidant')">What contains antioxidants?</a></td>
               </tr>
           </table>
           <br />
@@ -32,7 +32,7 @@
                   <td><a href="#" class="example-link" onclick="javascript:fillForm('type:Actor','starred in','type:Film')">What actors starred in which films?</a></td>
               </tr>
               <tr class="hidden-phone">
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('','symbol of','type:Country')">What is the symbol of which country?</a></td>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('?','symbol of','type:Country')">What is the symbol of which country?</a></td>
               </tr>
               <tr class="hidden-phone">
                   <td><a href="#" class="example-link" onclick="javascript:fillForm('type:Food','grown in','type:Country')">What foods are grown in which countries?</a></td>
@@ -48,29 +48,16 @@
         @helper.form(action = routes.Application.submit(false)) {
         <div class="search-arg">
         @helper.inputText(
-            searchForm("arg1"),
-            '_label -> "Argument 1:",
-            'placeholder -> "what/who",
+            searchForm("question"),
+            '_label -> "Question:",
+            'placeholder -> "question",
             'autocomplete -> "off")
         </div>
         <div class="search-arg">
         @helper.inputText(
-            searchForm("rel"),
-            '_label -> "Relation:",
-            'placeholder -> "verb phrase")
-        </div>
-        <div class="search-arg">
-        @helper.inputText(
-            searchForm("arg2"),
-            '_label -> "Argument 2:",
-            'placeholder -> "what/who",
-            'autocomplete -> "off")
-        </div>
-        <div class="search-arg narrow">
-        @helper.select(
-            searchForm("corpora"),
-            ("" -> "All") :: Corpus.corpora.map(c => (c.indexName, c.displayName)),
-            '_label -> "Corpus:")
+            searchForm("parser"),
+            '_label -> "Parser:",
+            'placeholder -> "regex")
         </div>
         <button id="search-button" class="btn btn-large"><i id="search-icon" class="icon-search"></i> Search</button> <div id="search-spinner" style="width: 35px;height: 35px;margin-left:10px;display:inline-block;position:relative;top:10px;"></div>
         }
@@ -114,9 +101,8 @@
     });
 
     function fillForm(arg1, rel, arg2) {
-      document.getElementById('arg1').value=arg1;
-      document.getElementById('rel').value=rel;
-      document.getElementById('arg2').value=arg2;
+      document.getElementById('question').value="("+arg1+", "+rel+", "+arg2+")";
+      document.getElementById('parser').value="demo-triple";
     }
   </script>
 }

@@ -16,50 +16,28 @@ case class TripleQuery(
   arg1: Option[TripleQuery.Constraint],
   rel: Option[TripleQuery.Constraint],
   arg2: Option[TripleQuery.Constraint],
-  corpora: Option[TripleQuery.CorporaConstraint]) extends Query {
+  corpora: Option[TripleQuery.CorporaConstraint])
+  extends Query(TripleQuery.toDemoQueryString(arg1, rel, arg2, corpora), "demo-triple") {
 
   import TripleQuery._
   import edu.knowitall.tool.postag.PostaggedToken
 
-  override val question = toDemoQueryString(this)
-  override val parserName = "demo-triple"
-  
   def arg1String = arg1.getOrElse("").toString
   def relString = rel.getOrElse("").toString
   def arg2String = arg2.getOrElse("").toString
 
-  def arg1StringField: Option[String] = arg1 match {
-    case Some(TermConstraint(term)) => Some(term)
-    case _ => None
-  }
-  def relStringField: Option[String] = rel match {
-    case Some(TermConstraint(term)) => Some(term)
-    case _ => None
-  }
-  def arg2StringField: Option[String] = arg2 match {
-    case Some(TermConstraint(term)) => Some(term)
-    case _ => None
-  }
-  def arg1TypeField: Option[String] = arg1 match {
-    case Some(TypeConstraint(typ)) => Some(typ)
-    case _ => None
-  }
-  def arg2TypeField: Option[String] = arg2 match {
-    case Some(TypeConstraint(typ)) => Some(typ)
-    case _ => None
-  }
-  def arg1EntityField: Option[String] = arg1 match {
-    case Some(EntityConstraint(entity)) => Some(entity)
-    case _ => None
-  }
-  def arg2EntityField: Option[String] = arg2 match {
-    case Some(EntityConstraint(entity)) => Some(entity)
-    case _ => None
-  }
-  def corpusField: Option[String] = corpora match {
-    case Some(CorporaConstraint(corpString)) => Some(corpString)
-    case _ => None
-  }
+  val termStr: PartialFunction[Constraint, String] = { case TermConstraint(term) => term }
+  val typeStr: PartialFunction[Constraint, String] = { case TypeConstraint(typ) => typ }
+  val entStr:  PartialFunction[Constraint, String] =  { case EntityConstraint(ent) => ent }
+
+  def arg1StringField: Option[String] = arg1 collect termStr
+  def relStringField:  Option[String] = rel  collect termStr
+  def arg2StringField: Option[String] = arg2 collect termStr
+  def arg1TypeField:   Option[String] = arg1 collect typeStr
+  def arg2TypeField:   Option[String] = arg2 collect typeStr
+  def arg1EntityField: Option[String] = arg1 collect entStr
+  def arg2EntityField: Option[String] = arg2 collect entStr
+  def corpusField:     Option[String] = corpora.map(_.corpora)
 
   override def toString = "(" + arg1String + ", " +
     relString + ", " +
@@ -195,16 +173,14 @@ case class TripleQuery(
 
 object TripleQuery {
   type REG = ExtractionGroup[ReVerbExtraction]
-  
+
   val parser = controllers.DemoQueryParser()
-  
-    /**
-   * A hack to turn a Query into input to FormalQuestionParser
-   */
+
+
   def toDemoQueryString(query: TripleQuery): String = {
 
     def quote(s: String) = "\"%s\"" format s
-    
+
     val fields = List(
       ("$a1s", query.arg1StringField),
       ("$a1e", query.arg1EntityField),
@@ -214,15 +190,46 @@ object TripleQuery {
       ("$a2e", query.arg2EntityField),
       ("$a2t", query.arg2TypeField),
       ("$corp",query.corpusField))
-    
+
     val mandatoryVars = Set("$a1s", "$rel", "$a2s")
-    
+
     val fieldStrings = fields.map { case (tvar, field) => (field.getOrElse(tvar)) }
     val usedMandatoryVars = fieldStrings.filter(mandatoryVars.contains)
     usedMandatoryVars.mkString(",") + " : " + fieldStrings.mkString(", ")
   }
-  
-  
+
+  /**
+   * A hack for turning a Query into input to FormalQuestionParser
+   */
+  def toDemoQueryString(arg1: Option[TripleQuery.Constraint],
+    rel: Option[TripleQuery.Constraint],
+    arg2: Option[TripleQuery.Constraint],
+    corpora: Option[TripleQuery.CorporaConstraint]): String = {
+
+    def quote(s: String) = "\"%s\"" format s
+
+    val termStr: PartialFunction[Constraint, String] = { case TermConstraint(term) => term }
+    val typeStr: PartialFunction[Constraint, String] = { case TypeConstraint(typ)  => typ  }
+    val entStr:  PartialFunction[Constraint, String] = { case EntityConstraint(ent) => ent }
+
+    val fields = List(
+      ("$a1s", arg1 collect termStr),
+      ("$a1e", arg1 collect entStr),
+      ("$a1t", arg1 collect typeStr),
+      ("$rel", rel collect termStr),
+      ("$a2s", arg2 collect termStr),
+      ("$a2e", arg2 collect entStr),
+      ("$a2t", arg2 collect typeStr),
+      ("$corp",corpora.map(_.corpora)))
+
+    val mandatoryVars = Set("$a1s", "$rel", "$a2s")
+
+    val fieldStrings = fields.map { case (tvar, field) => (field.getOrElse(tvar)) }
+    val usedMandatoryVars = fieldStrings.filter(mandatoryVars.contains)
+    usedMandatoryVars.mkString(",") + " : " + fieldStrings.mkString(", ")
+  }
+
+
   object Constraint {
     def parse(string: String) = {
       val lcase = string.toLowerCase.trim
@@ -280,6 +287,7 @@ object TripleQuery {
 
   def noneIfEmpty(string: String): Option[String] =
     if (string.isEmpty) None
+    else if (string.trim == "?") None
     else Some(string)
 
   def fromStrings(arg1: Option[String], rel: Option[String], arg2: Option[String], corpora: Option[String]): TripleQuery =
@@ -288,18 +296,18 @@ object TripleQuery {
   def fromStrings(arg1: String, rel: String, arg2: String, corpora: String): TripleQuery =
     this.fromStrings(noneIfEmpty(arg1), noneIfEmpty(rel), noneIfEmpty(arg2), noneIfEmpty(corpora))
 
-  def fromFile(file: File) = {
-    using(new FileInputStream(file)) { fis =>
-      using(new ObjectInputStream(fis) {
-        override def resolveClass(desc: java.io.ObjectStreamClass): Class[_] = {
-          try { Class.forName(desc.getName, false, getClass.getClassLoader) }
-          catch { case ex: ClassNotFoundException => super.resolveClass(desc) }
-        }
-      }) { in =>
-        in.readObject().asInstanceOf[Iterable[ExtractionGroup[ReVerbExtraction]]]
-      }
-    }
-  }
+//  def fromFile(file: File) = {
+//    using(new FileInputStream(file)) { fis =>
+//      using(new ObjectInputStream(fis) {
+//        override def resolveClass(desc: java.io.ObjectStreamClass): Class[_] = {
+//          try { Class.forName(desc.getName, false, getClass.getClassLoader) }
+//          catch { case ex: ClassNotFoundException => super.resolveClass(desc) }
+//        }
+//      }) { in =>
+//        in.readObject().asInstanceOf[Iterable[ExtractionGroup[ReVerbExtraction]]]
+//      }
+//    }
+//  }
 
   private final val stripExtraWS = Pattern.compile("\\s+")
   private final val stripChars = Pattern.compile("[^\\p{Graph}\\p{Cntrl} ]+")

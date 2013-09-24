@@ -8,5 +8,5 @@ import edu.knowitall.apps.Components
  */
 object DemoComponents {
 
-  val parsers = Components.parsers + ("demo-triple" -> DemoQueryParser())
+  val parsers = Components.parsers + ("demo-triple" -> DemoTripleParser())
 }

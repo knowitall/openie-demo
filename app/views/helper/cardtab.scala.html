@@ -1,4 +1,4 @@
-@(query: TripleQuery, answer: Answer, index: Int, maxSentenceCount: Int, debug: Boolean)
+@(query: Query, answer: Answer, index: Int, maxSentenceCount: Int, debug: Boolean)
 
 @import models.TypeFilters._
 @import edu.knowitall.openie.models.NellType.fbToNellType
@@ -7,7 +7,7 @@
 	@if(part.comesFromRel) {
 		@part.text
 	} else {
-		<a href='@routes.Application.search(Some(part.text),None,None),"all",0,debug)' class="@if(large) {entity-link-focused} else {entity-link}">@part.text</a>
+		<a href='@routes.Application.search("("+part.text+",?,?)", "formal","all",0,debug)' class="@if(large) {entity-link-focused} else {entity-link}">@part.text</a>
 	}
 }
 
@@ -97,5 +97,5 @@
 @helper.sentences(answer.copy(contents=answer.contents.take(maxSentenceCount)), debug)
 
 @if(answer.contents.size > maxSentenceCount) {
-    <p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.arg1.map(_.toString), query.rel.map(_.toString), query.arg2.map(_.toString), answer.title, debug)}">Show all sentences (@{answer.contents.size - maxSentenceCount} more)</a></p>
+    <p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.question, query.parserName, answer.title, debug)}">Show all sentences (@{answer.contents.size - maxSentenceCount} more)</a></p>
 }
