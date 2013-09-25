@@ -38,7 +38,7 @@ object TriplestoreSource extends FetchSource {
 
   def fetch(query: Query): Executor.Result[Answer] = {
     val scoredAnswers = qaSystem(query.parser).answer(query.question)
-    val answers = scoredAnswers map answerConverter.getAnswer
+    val answers = answerConverter.getAnswers(scoredAnswers)
     Success(answers)
   }
 }

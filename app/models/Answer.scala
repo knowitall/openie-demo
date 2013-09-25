@@ -35,7 +35,7 @@ case class AnswerPart(lemma: String, attrs: Set[String], synonyms: Seq[String], 
   * @param  queryEntity  the entity for these extractions in the singular full section of the query
   */
 @SerialVersionUID(44L)
-case class Answer(parts: Seq[AnswerPart], contents: List[Content], queryEntity: List[(FreeBaseEntity, Int)]) {
+case class Answer(parts: Seq[AnswerPart], contents: Seq[Content], queryEntity: List[(FreeBaseEntity, Int)]) {
 
   def title = parts.map(_.text).mkString(", ")
 

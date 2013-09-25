@@ -22,6 +22,25 @@ class AnswerConverter(solr: SolrServer) {
 
   import AnswerConverter._
 
+  /**
+   * Todo: factor out combining code better,
+   * and properly merge all answerparts.
+   */
+  def getAnswers(sags: Seq[ScoredAnswerGroup]): Seq[Answer] = {
+    val answers = sags map getAnswer
+    val titleGroups = answers.groupBy(_.title)
+    def combine(answers: Seq[Answer]): Answer = {
+      val allQEs = answers.flatMap(_.queryEntity)
+      val groupedQEs = allQEs.groupBy(_._1)
+      val combinedQEs = groupedQEs.map { case (entity, qes) => (entity, qes.map(_._2).sum) }
+      val sortedCombinedQEs = combinedQEs.toSeq.sortBy(-_._2).toList
+      Answer(answers.head.parts, answers.flatMap(_.contents), sortedCombinedQEs)
+    }
+    val combinedAnswers = titleGroups.map { case (title, answers) => (title, combine(answers)) }
+    val sortedAnswers = combinedAnswers.values.toSeq.sortBy(-_.contents.size)
+    sortedAnswers
+  }
+
   def getAnswer(sag: ScoredAnswerGroup): Answer = {
     val answerParts = sag.answer.indices.map(i => getAnswerPart(i, sag))
     val contents = sag.derivations.flatMap(getContents)
