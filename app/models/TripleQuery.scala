@@ -16,7 +16,7 @@ case class TripleQuery(
   rel: Option[TripleQuery.Constraint],
   arg2: Option[TripleQuery.Constraint],
   corpora: Option[TripleQuery.CorporaConstraint])
-  extends Query(TripleQuery.toDemoQueryString(arg1, rel, arg2, corpora), "demo-triple") {
+  extends Query(TripleQuery.toDemoQueryString(arg1, rel, arg2, corpora), "identity", "demo-triple") {
 
   import TripleQuery._
   import edu.knowitall.tool.postag.PostaggedToken

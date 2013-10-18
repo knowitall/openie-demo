@@ -3,7 +3,7 @@ package controllers
 import models.{FreeBaseEntity, FreeBaseType}
 import edu.knowitall.execution.Search.{Field, arg1, rel, arg2}
 import edu.knowitall.execution.Tuple
-import edu.knowitall.execution.AnswerDerivation
+import edu.knowitall.apps.AnswerDerivation
 import edu.knowitall.scoring.ScoredAnswerGroup
 import java.util.ArrayList
 import scala.collection.JavaConversions._
@@ -78,7 +78,7 @@ class AnswerConverter(solr: SolrServer) {
   private val sourceIdRegex = """\w+\.source_ids""".r
 
   def getContents(deriv: AnswerDerivation): Seq[Content] = {
-    val tuple = deriv.etuple.tuple
+    val tuple = deriv.execTuple.tuple
     val sourceAttrs = tuple.attrs.keySet.filter(k => sourceIdRegex.pattern.matcher(k).matches)
     val sourceIds = sourceAttrs.toSeq.flatMap(tuple.get).flatMap(_.asInstanceOf[List[String]])
     val docs = sourceIds.par.flatMap(getSolrDoc)
@@ -122,7 +122,7 @@ class AnswerConverter(solr: SolrServer) {
   val maxRelLength = 60
 
   def filterContent(content: Content): Boolean = {
-    content.confidence >= minContentConfidence && content.rel.length <= maxRelLength
+    content.rel.length <= maxRelLength
   }
 }
 
@@ -181,8 +181,8 @@ object AnswerConverter {
 
   private def getNonAnswerLinks(deriv: AnswerDerivation): Seq[Link] = {
     // get attrs that aren't part of the answer
-    val allAttrs = deriv.etuple.tuple.attrs.keySet
-    val answerAttrs = deriv.attrs.toSet
+    val allAttrs = deriv.execTuple.tuple.attrs.keySet
+    val answerAttrs = deriv.execTuple.query.qAttrs.toSet
     val nonAnswerAttrs = allAttrs &~ answerAttrs
     // get non-answer attrs that are either arg1/arg2
     val nonAnswerTripleParts = nonAnswerAttrs.flatMap { attr =>
@@ -194,7 +194,7 @@ object AnswerConverter {
     }
     // get any links for these parts
     val links = nonAnswerTripleParts.flatMap { case (prefix, field) =>
-      getLink(prefix, field, deriv.etuple.tuple)
+      getLink(prefix, field, deriv.execTuple.tuple)
     }
     links.toSeq
   }
@@ -209,9 +209,9 @@ object AnswerConverter {
      * Then combine links from these tuples over their attrs
      * and done.
      */
-    val attrGroups = derivs.groupBy(_.attrs(part))
+    val attrGroups = derivs.groupBy(_.execTuple.query.qAttrs(part))
     attrGroups.toSeq.flatMap { case (attr, ds) =>
-      val tuples = ds.map(_.etuple.tuple)
+      val tuples = ds.map(_.execTuple.tuple)
       tuples.flatMap { t =>
         getPrefixAndField(attr).flatMap { case (prefix, field) =>
           getLink(prefix, field, t)
@@ -230,7 +230,7 @@ object AnswerConverter {
     // "lemma"
     val lemma = sag.answer(part)
 
-    val attrs = sag.derivations.map(_.attrs(part)).toSet
+    val attrs = sag.derivations.map(_.execTuple.query.qAttrs(part)).toSet
 
     val synonyms = sag.alternates.map(_(part))
 

@@ -4,6 +4,7 @@ import models.Query
 import edu.knowitall.apps.QASystem
 import edu.knowitall.apps.Components
 import edu.knowitall.execution.IdentityExecutor
+import edu.knowitall.paraphrasing.Paraphraser
 import edu.knowitall.parsing.QuestionParser
 import edu.knowitall.execution.Tuple
 import edu.knowitall.scoring.ScoredAnswerGroup
@@ -34,10 +35,10 @@ object TriplestoreSource extends FetchSource {
   private val scorer = Components.scorers("numDerivations")
   private val answerConverter = new AnswerConverter(solrServer)
 
-  private def qaSystem(parser: QuestionParser) = QASystem(parser, executor, grouper, scorer)
+  private def qaSystem(paraphraser: Paraphraser, parser: QuestionParser) = QASystem(paraphraser, parser, executor, grouper, scorer)
 
   def fetch(query: Query): Executor.Result[Answer] = {
-    val scoredAnswers = qaSystem(query.parser).answer(query.question)
+    val scoredAnswers = qaSystem(query.paraphraser, query.parser).answer(query.question)
     val answers = answerConverter.getAnswers(scoredAnswers)
     Success(answers)
   }

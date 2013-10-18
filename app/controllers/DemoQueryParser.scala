@@ -91,7 +91,7 @@ case class DemoQueryParser() extends QuestionParser {
           throw new IllegalArgumentException(s"Expected variable: $left")
       }
       val conjuncts = parseAllConjuncts(parts(1))
-      Some(ListConjunctiveQuery(s, qVars, conjuncts.toList))
+      Some(ListConjunctiveQuery(qVars, conjuncts.toList))
 
     // if the answer variable is NOT named
     } else if (parts.size == 1) {
@@ -101,7 +101,7 @@ case class DemoQueryParser() extends QuestionParser {
         case v :: rest => v :: rest
         case _ => throw new IllegalArgumentException(s"Expected variable: $s")
       }
-      Some(ListConjunctiveQuery(s, qVars.distinct, conjuncts.toList))
+      Some(ListConjunctiveQuery(qVars.distinct, conjuncts.toList))
     } else {
       None
     }

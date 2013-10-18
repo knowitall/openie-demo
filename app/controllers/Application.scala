@@ -43,7 +43,7 @@ object Application extends Controller {
     // Defines a mapping that will handle Contact values
       (mapping (
         "question" -> text
-      )(t => Query.apply(t, "regex"))(q => Query.unapply(q).map(_._1)))
+      )(t => Query.apply(t, "identity", "regex"))(q => Query.unapply(q).map(_._1)))
     )
   }
 
@@ -163,11 +163,11 @@ object Application extends Controller {
   }
 
   def search(question: String, parser: String, filter: String, page: Int, debug: Boolean, log: Boolean) = Action { implicit request =>
-    doSearch(new Query(question, parser), filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
+    doSearch(new Query(question, "identity", parser), filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
   }
 
   def sentences(question: String, parser: String, title: String, debug: Boolean) = Action {
-    val query = new Query(question, parser)
+    val query = new Query(question, "identity", parser)
     Logger.info("Sentences request for title '" + title + "' in: " + query)
     val group = searchGroups(query, ExecutionSettings.default, debug)._1.answers.find(_.title == title) match {
       case None => throw new IllegalArgumentException("could not find group title: " + title)
@@ -230,7 +230,7 @@ object Application extends Controller {
   }
 
   def results(question: String, parser: String, filterString: String, pageNumber: Int, justResults: Boolean, debug: Boolean = false) = Action { implicit request =>
-    doSearch(new Query(question, parser), filterString, pageNumber, settingsFromRequest(debug, request), debug=debug, log=true, justResults=justResults)
+    doSearch(new Query(question, "identity", parser), filterString, pageNumber, settingsFromRequest(debug, request), debug=debug, log=true, justResults=justResults)
   }
 
   def doSearch(query: Query, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
