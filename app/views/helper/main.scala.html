@@ -10,19 +10,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/bootstrap.min.css")">
-        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/bootstrap-responsive.min.css")">
         <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
         <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/suggest.min.css")">
 
-        <script src="@routes.Assets.at("javascripts/jquery-1.7.1.min.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/jquery-1.10.2.min.js")" type="text/javascript"></script>
         <script src="@routes.Assets.at("javascripts/openie.js")" type="text/javascript"></script>
         <script src="@routes.Assets.at("javascripts/suggest.min.js")" type="text/javascript"></script>
-        <script src="@routes.Assets.at("javascripts/bootstrap-tooltip.js")" type="text/javascript"></script>
-        <script src="@routes.Assets.at("javascripts/bootstrap-popover.js")" type="text/javascript"></script>
-        <script src="@routes.Assets.at("javascripts/bootstrap-tab.js")" type="text/javascript"></script>
-        <script src="@routes.Assets.at("javascripts/bootstrap-dropdown.js")" type="text/javascript"></script>
-        <script src="@routes.Assets.at("javascripts/bootstrap-button.js")" type="text/javascript"></script>
-        <script src="@routes.Assets.at("javascripts/bootstrap-alert.js")" type="text/javascript"></script>
         <script src="@routes.Assets.at("javascripts/spin.js")" type="text/javascript"></script>
 
         <script type="text/javascript">
@@ -40,7 +33,7 @@
     <body>
         <div class="container">
             <div class="page-header">
-                <div class="hidden-phone">
+                <div class="hidden-sm">
                     <h1>
                       @if(compact){
                       <a href="@routes.Application.index()"><img src="@routes.Assets.at("images/textrunner.jpg")" width="45" height="50")"></a>
@@ -55,7 +48,7 @@
                       }
                     </h1>
                 </div>
-                <div class="visible-phone">
+                <div class="visible-sm">
                     <h1><a href="@routes.Application.index()"><img src="@routes.Assets.at("images/textrunner.jpg")" width="45" height="50"></a> UW Open IE</h1>
                 </div>
             </div>

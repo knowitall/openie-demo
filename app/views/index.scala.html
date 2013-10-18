@@ -4,62 +4,40 @@
   <p />
   <div id="query-well" class="row well">
     <div class="row">
-      <div class="span4 offset2">
-          <b style="font-size:1.5em;">Example Queries: <a href="#" class="tooltiparea" rel="tooltip" title="Click an example question to see a sample relation search query."><i class="icon-question-sign"></i></a></b>
+      <div class="col-md-4 col-md-offset-4">
+          <b style="font-size:1.5em;">Example Questions:<i class="icon-question-sign"></i></b>
           <table style="padding: 5 px;font-size:1em;">
               <tr>
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('?','kills','bacteria')">What kills bacteria?</a></td>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Food from Africa?')">Food from Africa?</a></td>
               </tr>
               <tr>
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('?','built','pyramids')">Who built the Pyramids?</a></td>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Is there any cure for cancer?')">Is there any cure for cancer?</a></td>
               </tr>
-              <tr class="hidden-phone">
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Thomas Edison','invent','?')">What did Thomas Edison invent?</a></td>
+              <tr class="hidden-sm">
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Are there any famous people from Detroit?')">Are there any famous people from Detroit?</a></td>
               </tr>
-              <tr class="hidden-phone">
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('?','contains','antioxidant')">What contains antioxidants?</a></td>
+              <tr class="hidden-sm">
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Sources of Antioxidants?')">Sources of Antioxidants?</a></td>
+              </tr>
+              <tr class="hidden-sm">
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Is Obama married and to who?')">Is Obama married and to who?</a></td>
               </tr>
           </table>
           <br />
       </div>
-      <div class="span4">
-          <b style="font-size:1.5em;">Typed Example Queries: <a href="#" class="tooltiparea" rel="tooltip", title="Click an example question to see a sample relation search query.  These examples constrain one field to a FreeBase type."><i class="icon-question-sign"></i></a></b>
-          <table style="padding: 5 px;font-size:1em;">
-              <tr>
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('type:Country','is located in','Africa')">What countries are located in Africa?</a></td>
-              </tr>
-              <tr>
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('type:Actor','starred in','type:Film')">What actors starred in which films?</a></td>
-              </tr>
-              <tr class="hidden-phone">
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('?','symbol of','type:Country')">What is the symbol of which country?</a></td>
-              </tr>
-              <tr class="hidden-phone">
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('type:Food','grown in','type:Country')">What foods are grown in which countries?</a></td>
-              </tr>
-              <tr class="hidden-phone">
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('FDA','approved','type:Drug_Ingredient')">What drug ingredients has the FDA approved?</a></td>
-              </tr>
-          </table>
-      </div>
     </div>
     <div class="row" style="margin-top:2em;">  
-      <div class="offset1">
+      <div class="col-md-offset-3">
         @helper.form(action = routes.Application.submit(false)) {
         <div class="search-arg">
         @helper.inputText(
             searchForm("question"),
-            '_label -> "Question:",
+            '_label -> "Ask a Question:",
             'placeholder -> "question",
-            'autocomplete -> "off")
+            'autocomplete -> "off",
+            'class -> "input-question")
         </div>
-        <div class="search-arg">
-        @helper.inputText(
-            searchForm("parser"),
-            '_label -> "Parser:",
-            'placeholder -> "regex")
-        </div>
-        <button id="search-button" class="btn btn-large"><i id="search-icon" class="icon-search"></i> Search</button> <div id="search-spinner" style="width: 35px;height: 35px;margin-left:10px;display:inline-block;position:relative;top:10px;"></div>
+        <button id="search-button" class="btn btn-large"><i id="search-icon" class="glyphicon glyphicon-search"></i> Search</button> <div id="search-spinner" style="width: 35px;height: 35px;margin-left:10px;display:inline-block;position:relative;top:10px;"></div>
         }
       </div>
     </div> 
@@ -71,7 +49,7 @@
 
   <script type="text/javascript">
     $(document).ready(function() {
-      $('.tooltiparea').tooltip()
+      //$('.tooltiparea').tooltip()
 
       $("#search-button").click(function() {
         var opts = {
@@ -100,9 +78,8 @@
       });
     });
 
-    function fillForm(arg1, rel, arg2) {
-      document.getElementById('question').value="("+arg1+", "+rel+", "+arg2+")";
-      document.getElementById('parser').value="demo-triple";
+    function fillForm(question) {
+      document.getElementById('question').value=question;
     }
   </script>
 }

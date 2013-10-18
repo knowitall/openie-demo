@@ -42,9 +42,8 @@ object Application extends Controller {
     Form(
     // Defines a mapping that will handle Contact values
       (mapping (
-        "question" -> text,
-        "parser" -> text
-      )(Query.apply)(Query.unapply))
+        "question" -> text
+      )(t => Query.apply(t, "regex"))(q => Query.unapply(q).map(_._1)))
     )
   }
 
@@ -93,7 +92,7 @@ object Application extends Controller {
   def submit(debug: Boolean = false) = Action { implicit request =>
 
     searchForm.bindFromRequest.fold(
-      errors => BadRequest(views.html.index(errors, footer())),
+      errors => { println(errors); BadRequest(views.html.index(errors, footer())) },
       query => submitHelper(query, debug)
     )
   }
