@@ -29,16 +29,43 @@ class AnswerConverter(solr: SolrServer) {
   def getAnswers(sags: Seq[ScoredAnswerGroup]): Seq[Answer] = {
     val answers = sags map getAnswer
     val titleGroups = answers.groupBy(_.title)
-    def combine(answers: Seq[Answer]): Answer = {
-      val allQEs = answers.flatMap(_.queryEntity)
-      val groupedQEs = allQEs.groupBy(_._1)
-      val combinedQEs = groupedQEs.map { case (entity, qes) => (entity, qes.map(_._2).sum) }
-      val sortedCombinedQEs = combinedQEs.toSeq.sortBy(-_._2).toList
-      Answer(answers.head.parts, answers.flatMap(_.contents), sortedCombinedQEs)
-    }
-    val combinedAnswers = titleGroups.map { case (title, answers) => (title, combine(answers)) }
+    val combinedAnswers = titleGroups.map { case (title, answers) => (title, combineAnswers(answers)) }
     val sortedAnswers = combinedAnswers.values.toSeq.sortBy(-_.contents.size)
     sortedAnswers
+  }
+
+  def combineAnswers(answers: Seq[Answer]): Answer = {
+    def combineQueryEntities: List[(FreeBaseEntity, Int)] = {
+      val allQEs = answers.flatMap(_.queryEntity)
+      val groupedQEs = allQEs.groupBy(_._1).map { case (entity, entityCounts) => (entity, entityCounts.map(_._2)) }
+      val combinedQEs = groupedQEs.map { case (entity, counts) => (entity, counts.sum) }
+      combinedQEs.toSeq.sortBy(-_._2).toList
+    }
+    def combineAnswerParts(parts: Seq[AnswerPart]): AnswerPart = {
+      // take the most common lemma
+      val topLemma = parts.map(_.lemma).groupBy(identity).iterator.maxBy(_._2.size)._1
+      val allAttrs = parts.flatMap(_.attrs).toSet
+      val allSynonyms = parts.flatMap(_.synonyms).distinct
+      val allEntityTypes = parts.flatMap { p => p.entity.map(pe => (pe, p.types)) }
+      val (bestEntity, bestTypes) = {
+        if (allEntityTypes.isEmpty) (None, Set.empty[FreeBaseType])
+        else {
+          val (be, typs) = allEntityTypes.maxBy(_._1.score)
+          (Some(be), typs)
+        }
+      }
+      AnswerPart(topLemma, allAttrs, allSynonyms, bestEntity, bestTypes)
+    }
+
+    def combineAllAnswerParts: Seq[AnswerPart] = {
+      val maxParts = answers.map(_.parts.size).max
+      val partsByIndex = (0 until maxParts).map { index =>
+        answers.flatMap(_.parts.lift(index))
+      }
+      partsByIndex.map(combineAnswerParts)
+    }
+
+    Answer(combineAllAnswerParts, answers.flatMap(_.contents), combineQueryEntities)
   }
 
   def getAnswer(sag: ScoredAnswerGroup): Answer = {
@@ -55,7 +82,7 @@ class AnswerConverter(solr: SolrServer) {
     val sourceAttrs = tuple.attrs.keySet.filter(k => sourceIdRegex.pattern.matcher(k).matches)
     val sourceIds = sourceAttrs.toSeq.flatMap(tuple.get).flatMap(_.asInstanceOf[List[String]])
     val docs = sourceIds.par.flatMap(getSolrDoc)
-    val contents = docs.map(getContent)
+    val contents = docs.map(getContent).filter(filterContent)
     contents.toList
   }
 
@@ -89,6 +116,13 @@ class AnswerConverter(solr: SolrServer) {
     val confidence = doc.getFieldValue("confidence").asInstanceOf[Double]
     val corpus = getString("corpus")
     Content(tokens, urlString, List(arg1Interval, arg2Interval), rel, confidence, corpus)
+  }
+
+  val minContentConfidence = 0.5
+  val maxRelLength = 60
+
+  def filterContent(content: Content): Boolean = {
+    content.confidence >= minContentConfidence && content.rel.length <= maxRelLength
   }
 }
 
@@ -186,6 +220,12 @@ object AnswerConverter {
     }
   }
 
+  private val minEntityScore = 5.0
+
+  private def filterLink(link: Link): Boolean = {
+    link.entity.score > minEntityScore
+  }
+
   private def getAnswerPart(part: Int, sag: ScoredAnswerGroup): AnswerPart = {
     // "lemma"
     val lemma = sag.answer(part)
@@ -194,7 +234,7 @@ object AnswerConverter {
 
     val synonyms = sag.alternates.map(_(part))
 
-    val links = getAllLinks(part, sag.derivations)
+    val links = getAllLinks(part, sag.derivations).filter(filterLink)
 
     val sortedLinks = links.groupBy(_.entity).toSeq.sortBy(-_._2.size)
 
