@@ -48,17 +48,6 @@ object Application extends Controller {
     )
   }
 
-  // Form[(Question, Corpora)]
-  def qaForm: Form[(String, Option[String])] = {
-    Form(
-    // Defines a mapping that will handle Contact values
-      tuple (
-        "question" -> text,
-        "corpora" -> optional(text)
-      )
-    )
-  }
-
   def footer(reload: Boolean = false): String = {
     def loadFooter =
       try {
@@ -88,10 +77,6 @@ object Application extends Controller {
     Ok(views.html.index(searchForm, footer(reloadFooter)))
   }
 
-  def qa(reloadFooter: Boolean) = Action {
-    Ok(views.html.qa(qaForm, footer(reloadFooter)))
-  }
-
   private def settingsFromRequest(debug: Boolean, request: Request[AnyContent]) = {
     var settings = Executor.ExecutionSettings.default
     if (debug) {
@@ -113,17 +98,6 @@ object Application extends Controller {
     )
   }
 
-  def submitQA(debug: Boolean = false) = Action { implicit request =>
-
-    qaForm.bindFromRequest.fold(
-      { errors => BadRequest(views.html.qa(errors, footer())) },
-      { case (question, corpora) =>
-        val query = QAQuery.fromQuestionForm(question, corpora)
-        submitHelper(query, debug)
-      }
-    )
-  }
-
   private def submitHelper(query: Query, debug: Boolean)(implicit request: Request[AnyContent]) = {
 
     val answers = scala.concurrent.future {
@@ -139,9 +113,9 @@ object Application extends Controller {
 
           //choose a cut-off to filter out the entities that have few
           //results, and only display to a max of 7 entities
-//          val ambiguousEntities = filtered.queryEntities.zipWithIndex.filter {
-//            case ((fbe, entityCount), index) => index < 7 && entityCount > 5
-//          }
+          val ambiguousEntities = filtered.queryEntities.zipWithIndex.filter {
+            case ((fbe, entityCount), index) => index < 7 && entityCount > 5
+          }
 
           doSearch(query, "all", 0, settingsFromRequest(debug, request), debug = debug)
 
