@@ -9,7 +9,7 @@
 
 <!-- filters -->
 @if(answers.filters.size > 0) {
-  <ul class="nav nav-tabs nav-stacked visible-phone">
+  <ul class="nav nav-tabs nav-stacked visible-sm">
     <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabSpin('@{routes.Application.results(query.question, query.parserName, "all", 0, true, debug)}')">all types</a></li>
 
   @for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(4)) {
@@ -19,7 +19,7 @@
   }
   </ul>
 
-  <ul class="nav nav-tabs hidden-phone">
+  <ul class="nav nav-tabs hidden-sm">
     <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabSpin('@{routes.Application.results(query.question, query.parserName, "all", 0, true, debug)}')">all</a></li>
 
     @for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(5)) {
@@ -48,19 +48,19 @@
 
 <!-- tabbable -->
   <!-- left tabs with entities -->
-  <div class="tabbable tabs-left">
-    <ul class="nav nav-tabs">
+  <div class="tabbable" style="margin-left: -15px;">
+    <ul class="nav nav-pills nav-stacked col-md-3">
       @for((answer, i) <- answers.answers.zipWithIndex) {
-      <li class="hidden-phone"><a href="#L@{i}" class="answer" data-toggle="tab" data-fbid="@{answer.parts.map(_.entity.map(_.fbid).getOrElse("")).mkString(";")}">@helper.grouptitle(answer.parts, debug) (@answer.contents.size)</a></li>
-      <li class="visible-phone"><a href="@{routes.Application.sentences(query.question, query.parserName, answer.title, debug)}" class="answer">@Html(answer.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", ")) (@answer.contents.size)</a></li>
+      <li class="hidden-sm"><a href="#L@{i}" class="answer" data-toggle="tab" data-fbid="@{answer.parts.map(_.entity.map(_.fbid).getOrElse("")).mkString(";")}">@helper.grouptitle(answer.parts, debug) (@answer.contents.size)</a></li>
+      <li class="visible-sm"><a href="@{routes.Application.sentences(query.question, query.parserName, answer.title, debug)}" class="answer">@Html(answer.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", ")) (@answer.contents.size)</a></li>
       }
     </ul>
 
     <!-- tab content -->
-    <div class="tab-content hidden-phone">
+    <div class="tab-content hidden-sm">
       @for((answer, i) <- answers.answers.zipWithIndex) {
         <div class="tab-pane" id="L@{i}">
-          <div class="close-tab"><a href="#close@{i}" class="close-tab" title="close sentences"><i class="icon-remove"></i></a></div>
+          <div class="close-tab"><a href="#close@{i}" class="close-tab" title="close sentences"><i class="glyphicon glyphicon-remove"></i></a></div>
           @helper.cardtab(query, answer, i, maxSentenceCount, debug)
         </div>
       }
@@ -70,8 +70,8 @@
 
 <!-- Pagination -->
 @if(pageCount > 1) {
-  <div class="pagination" align="center">
-    <ul>
+  <div align="center">
+    <ul class="pagination">
     @if(pageno > 0) {
       <li><a href="@{routes.Application.search(query.question, query.parserName, filterString, pageno - 1, debug)}">Prev</a></li>
     }

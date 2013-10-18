@@ -25,7 +25,7 @@
     <h2>@answer.queryEntity</h2>
 }
 @for((part, i) <- answer.parts.zipWithIndex) {
-<div id="E@i" style="@if(i > 0) { display: none }">
+<div class="col-md-offset-3" id="E@i" style="@if(i > 0) { display: none }">
 	<!-- title -->
 	<h2>
 		@if(i > 0) {@prev(i)}
@@ -89,13 +89,14 @@
 			}
 		</ul>
 	}
-</div>
-}
-
+	<h3>Extracted from these sentences:</h3>
+	
 <!-- display sentences -->
-<h3>Extracted from these sentences:</h3>
 @helper.sentences(answer.copy(contents=answer.contents.take(maxSentenceCount)), debug)
 
 @if(answer.contents.size > maxSentenceCount) {
     <p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.question, query.parserName, answer.title, debug)}">Show all sentences (@{answer.contents.size - maxSentenceCount} more)</a></p>
+}
+	
+</div>
 }
