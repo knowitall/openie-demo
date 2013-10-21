@@ -108,7 +108,7 @@ object Application extends Controller {
         case (answers, message) => {
           val filtered = setupFilters(answers, "all", 0)._2
 
-          LogEntry.fromRequest(query, "all", answers.answerCount, answers.sentenceCount, request).log()
+          LogEntry.fromRequest(query, "all", answers.answerCount, answers.resultsCount, request).log()
 
           //choose a cut-off to filter out the entities that have few
           //results, and only display to a max of 7 entities
@@ -156,7 +156,7 @@ object Application extends Controller {
       }
 
       val filtered = answers filter filters
-      Logger.info("Query with " + filters + " has " + filtered.answerCount + " answers " + filtered.sentenceCount + " results")
+      Logger.info("Query with " + filters + " has " + filtered.answerCount + " answers " + filtered.resultsCount + " results")
       val page = filtered.page(pageNumber, PAGE_SIZE)
 
       (filters, filtered, page)
@@ -198,7 +198,7 @@ object Application extends Controller {
         Logger.info(query.toString +
           " retrieved from cache" +
           " with " + groups.size + " answers" +
-          " and " + groups.iterator.map(_.contents.size).sum + " results")
+          " and " + groups.iterator.map(_.resultsCount).sum + " results")
         (answers, Some("cached"))
       case _ =>
         Logger.debug("executing " + query + " in lucene")
@@ -217,7 +217,7 @@ object Application extends Controller {
         Logger.info(query.toString +
           " executed in " + Timing.Seconds.format(ns) +
           " with " + groups.size + " answers" +
-          " and " + groups.iterator.map(_.contents.size).sum + " sentences" + message.map(" (" + _ + ")").getOrElse(""))
+          " and " + groups.iterator.map(_.resultsCount).sum + " results" + message.map(" (" + _ + ")").getOrElse(""))
 
         // cache unless we had a timeout
         if (!result.isInstanceOf[Executor.Timeout[_]]) {
@@ -247,7 +247,7 @@ object Application extends Controller {
         val filter = setupFilters(answers, filterString, pageNumber)
 
         if (log) {
-          LogEntry.fromRequest(query, filterString, answers.answerCount, answers.sentenceCount, request).log()
+          LogEntry.fromRequest(query, filterString, answers.answerCount, answers.resultsCount, request).log()
         }
 
         //if only the category of results is clicked, change the page's result content
@@ -257,7 +257,7 @@ object Application extends Controller {
         } else {
           Ok(
             views.html.frame.resultsframe(
-             searchForm, query, message, filter._3, filter._2.answerCount, filter._2.sentenceCount, true)(
+             searchForm, query, message, filter._3, filter._2.answerCount, filter._2.resultsCount, true)(
                views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
         }
       }

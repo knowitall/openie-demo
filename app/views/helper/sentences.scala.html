@@ -1,49 +1,65 @@
 @(group: Answer, debug: Boolean)
 
 @import helper.twitterBootstrap._
+@import models.OpenIETriple
 
-@for((rel, cs) <- group.contentsByRelation) {
-	<dl class="dl-horizontal">
-	<dt>@rel</dt>
-	@for(c <- cs) {
-	<dd><div class="sentence"><a class="sent" href="@c.url">
-		@if(!debug) {
-			@for((string, i) <- c.strings.zipWithIndex) {
-				@if(c.intervals.exists(_.start==i)) {<b>}
-				@if(c.intervals.exists(_.end==i)) {</b>}
-				@string.replaceAll("\t", " ").replaceAll("[\\p{C}]","") 
-			}
-			
-			@if(c.intervals.exists(_.end==c.strings.size)) {</b>}
-			<span style="color: #888">@{
-				if (c.corpus == "cw") {" (via ClueWeb12)"}
-				else if (c.corpus == "g1b") {" (via Google)"}
-				else if (c.corpus == "wiki") {" (via Wikipedia)"}
-				else if (c.corpus == "news") {" (via News)"}
-				else {" (via %s)" format c.corpus}
-			}</span>
-		} else {
-			@{"%1.2f" format c.confidence} from @c.url:<br/>
-			@for((string, i) <- c.strings.zipWithIndex) {
-				@if(c.intervals.exists(_.end==i)) {|} @if(c.intervals.exists(_.start==i)) {|} @if(c.intervals.exists(_.start==i)) {<b>} @if(c.intervals.exists(_.end==i)) {</b>}
-			@string 
-			}
-		}
+@for((rel, ts) <- group.allTriplesByRel) {
+  <dl class="dl-horizontal">
+  <dt>@rel</dt>
+  
+  @for(t <- ts.filterNot(_.isInstanceOf[OpenIETriple])) {
+    <dd><div class="sentence">
+    <a class="sent">
+    <b>@t.arg1</b>@{", " + t.rel + ", "}<b>@t.arg2</b>
+    </a>
+    <span style="color: #888">
+    @{"via "}
+    <a href="@t.url">@t.source</a>
+    </span>
+  }	
+  @for(t <- ts.collect { case (x: OpenIETriple) => x }) {
+    <dd><div class="sentence">
+    <a class="sent" href="@t.url">
+    @if(!debug) {
+      @for((string, i) <- t.sentenceStrings.zipWithIndex) {
+	    @if(t.boldIntervals.exists(_.start==i)) {<b>}
+        @if(t.boldIntervals.exists(_.end==i)) {</b>}
+        @string.replaceAll("\t", " ").replaceAll("[\\p{C}]","") 
+      }
+      @if(t.boldIntervals.exists(_.end==t.sentenceStrings.size)) {</b>}
+      <span style="color: #888">@{
+        if (t.corpus == "cw") {" (via ClueWeb12)"}
+        else if (t.corpus == "g1b") {" (via Google)"}
+        else if (t.corpus == "wiki") {" (via Wikipedia)"}
+        else if (t.corpus == "news") {" (via News)"}
+        else {" (via %s)" format t.corpus}
+      }</span>
+    } else {
+      @{"%1.2f" format t.confidence} from @t.url:<br/>
+      @for((string, i) <- t.sentenceStrings.zipWithIndex) {
+        @if(t.boldIntervals.exists(_.end==i)) {|} 
+        @if(t.boldIntervals.exists(_.start==i)) {|} 
+        @if(t.boldIntervals.exists(_.start==i)) {<b>} 
+        @if(t.boldIntervals.exists(_.end==i)) {</b>}
+        @string 
+      }
+    }
 	</a>
-		<div class="hover-source">
-			Extracted from the
-			@{c.corpus match {
-				case "cw" => { "ClueWeb12" }
-				case "g1b" => { "Google" }
-				case "wiki" => {"Wikipedia"}
-				case "news" => {"News"}
-				case _ => { c.corpus }
-				}
-			}
-			 corpus. Source: @c.url
-			<div class="arrow"></div>
-		</div>
-	</div>
-	}
-</dd>
+	  <div class="hover-source">
+        From Open IE 4 (
+         @{t.corpus match {
+            case "cw" => { "ClueWeb12" }
+            case "g1b" => { "Google" }
+            case "wiki" => {"Wikipedia"}
+            case "news" => {"News"}
+            case _ => { t.corpus }
+          }
+        }
+        corpus. Source: @{t.url})
+        <div class="arrow"></div>
+      </div>
+    </div>
+    </dd>
+  }
+  </dl>
 }

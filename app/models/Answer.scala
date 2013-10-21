@@ -35,7 +35,7 @@ case class AnswerPart(lemma: String, attrs: Set[String], synonyms: Seq[String], 
   * @param  queryEntity  the entity for these extractions in the singular full section of the query
   */
 @SerialVersionUID(44L)
-case class Answer(parts: Seq[AnswerPart], contents: Seq[Content], queryEntity: List[(FreeBaseEntity, Int)]) {
+case class Answer(parts: Seq[AnswerPart], dgroups: Seq[DerivationGroup], queryEntity: List[(FreeBaseEntity, Int)]) {
 
   def title = parts.map(_.text).mkString(", ")
 
@@ -43,14 +43,28 @@ case class Answer(parts: Seq[AnswerPart], contents: Seq[Content], queryEntity: L
   def relFull  = parts.forall(_.comesFromRel)
   def arg2Full = parts.forall(_.comesFromArg2)
 
+  def resultsCount = dgroups.map(_.resultsCount).sum
+
   val attrs = parts.flatMap(_.attrs).toSet
 
-  def contentsByRelation = contents.groupBy(_.rel).toList.sortBy{ case (r, cs) => -cs.size }
-}
+  val allTriples = dgroups.flatMap(_.queryTuples.flatMap(_._2))
 
-/** The Content class stores source information for a particular Answer. */
-@SerialVersionUID(45L)
-case class Content(strings: List[String], url: String, intervals: List[Interval], rel: String, confidence: Double, corpus: String) {
+  val allTriplesByRel = allTriples.groupBy(_.rel)
 
-  def sentence = strings.mkString(" ")
+  def limitResults(max: Int): Answer = {
+    // expand dgroups and limit then regroup
+    val expanded = dgroups.flatMap { case DerivationGroup(pps, queryTriples) =>
+      queryTriples.flatMap { case (query, triples) =>
+        triples.map(t => (pps, query, t))
+      }
+    }
+    val limited = expanded.take(max)
+    val regrouped = limited.groupBy(_._1).iterator.toSeq.map { case (pps, group) =>
+      val queryTriples = group.groupBy(_._2).iterator.toSeq.map { case (query, group2) =>
+        (query, group2.map(_._3))
+      }.toSeq
+      DerivationGroup(pps, queryTriples)
+    }
+    this.copy(dgroups = regrouped)
+  }
 }

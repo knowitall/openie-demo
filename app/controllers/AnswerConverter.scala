@@ -2,7 +2,7 @@ package controllers
 
 import models.{FreeBaseEntity, FreeBaseType}
 import edu.knowitall.execution.Search.{Field, arg1, rel, arg2}
-import edu.knowitall.execution.Tuple
+import edu.knowitall.execution._
 import edu.knowitall.apps.AnswerDerivation
 import edu.knowitall.scoring.ScoredAnswerGroup
 import java.util.ArrayList
@@ -11,7 +11,8 @@ import models.AnswerPart
 import org.apache.solr.client.solrj.SolrServer
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.common.SolrDocument
-import models.Content
+import models.DerivationGroup
+import models.{Triple, DefaultTriple, OpenIETriple}
 import edu.knowitall.collection.immutable.Interval
 import models.Answer
 import play.api.Logger
@@ -28,62 +29,132 @@ class AnswerConverter(solr: SolrServer) {
    */
   def getAnswers(sags: Seq[ScoredAnswerGroup]): Seq[Answer] = {
     val answers = sags map getAnswer
-    val titleGroups = answers.groupBy(_.title)
-    val combinedAnswers = titleGroups.map { case (title, answers) => (title, combineAnswers(answers)) }
-    val sortedAnswers = combinedAnswers.values.toSeq.sortBy(-_.contents.size)
-    sortedAnswers
+    answers
+//    val titleGroups = answers.groupBy(_.title)
+//    val combinedAnswers = titleGroups.map { case (title, answers) => (title, combineAnswers(answers)) }
+//    val sortedAnswers = combinedAnswers.values.toSeq.sortBy(-_.resultsCount)
+//    sortedAnswers
   }
-
-  def combineAnswers(answers: Seq[Answer]): Answer = {
-    def combineQueryEntities: List[(FreeBaseEntity, Int)] = {
-      val allQEs = answers.flatMap(_.queryEntity)
-      val groupedQEs = allQEs.groupBy(_._1).map { case (entity, entityCounts) => (entity, entityCounts.map(_._2)) }
-      val combinedQEs = groupedQEs.map { case (entity, counts) => (entity, counts.sum) }
-      combinedQEs.toSeq.sortBy(-_._2).toList
-    }
-    def combineAnswerParts(parts: Seq[AnswerPart]): AnswerPart = {
-      // take the most common lemma
-      val topLemma = parts.map(_.lemma).groupBy(identity).iterator.maxBy(_._2.size)._1
-      val allAttrs = parts.flatMap(_.attrs).toSet
-      val allSynonyms = parts.flatMap(_.synonyms).distinct
-      val allEntityTypes = parts.flatMap { p => p.entity.map(pe => (pe, p.types)) }
-      val (bestEntity, bestTypes) = {
-        if (allEntityTypes.isEmpty) (None, Set.empty[FreeBaseType])
-        else {
-          val (be, typs) = allEntityTypes.maxBy(_._1.score)
-          (Some(be), typs)
-        }
-      }
-      AnswerPart(topLemma, allAttrs, allSynonyms, bestEntity, bestTypes)
-    }
-
-    def combineAllAnswerParts: Seq[AnswerPart] = {
-      val maxParts = answers.map(_.parts.size).max
-      val partsByIndex = (0 until maxParts).map { index =>
-        answers.flatMap(_.parts.lift(index))
-      }
-      partsByIndex.map(combineAnswerParts)
-    }
-
-    Answer(combineAllAnswerParts, answers.flatMap(_.contents), combineQueryEntities)
-  }
+//
+//  def combineAnswers(answers: Seq[Answer]): Answer = {
+//    def combineQueryEntities: List[(FreeBaseEntity, Int)] = {
+//      val allQEs = answers.flatMap(_.queryEntity)
+//      val groupedQEs = allQEs.groupBy(_._1).map { case (entity, entityCounts) => (entity, entityCounts.map(_._2)) }
+//      val combinedQEs = groupedQEs.map { case (entity, counts) => (entity, counts.sum) }
+//      combinedQEs.toSeq.sortBy(-_._2).toList
+//    }
+//    def combineAnswerParts(parts: Seq[AnswerPart]): AnswerPart = {
+//      // take the most common lemma
+//      val topLemma = parts.map(_.lemma).groupBy(identity).iterator.maxBy(_._2.size)._1
+//      val allAttrs = parts.flatMap(_.attrs).toSet
+//      val allSynonyms = parts.flatMap(_.synonyms).distinct
+//      val allEntityTypes = parts.flatMap { p => p.entity.map(pe => (pe, p.types)) }
+//      val (bestEntity, bestTypes) = {
+//        if (allEntityTypes.isEmpty) (None, Set.empty[FreeBaseType])
+//        else {
+//          val (be, typs) = allEntityTypes.maxBy(_._1.score)
+//          (Some(be), typs)
+//        }
+//      }
+//      AnswerPart(topLemma, allAttrs, allSynonyms, bestEntity, bestTypes)
+//    }
+//
+//    def combineAllAnswerParts: Seq[AnswerPart] = {
+//      val maxParts = answers.map(_.parts.size).max
+//      val partsByIndex = (0 until maxParts).map { index =>
+//        answers.flatMap(_.parts.lift(index))
+//      }
+//      partsByIndex.map(combineAnswerParts)
+//    }
+//
+//    Answer(combineAllAnswerParts, answers.flatMap(_.contents), combineQueryEntities)
+//  }
 
   def getAnswer(sag: ScoredAnswerGroup): Answer = {
     val answerParts = sag.answer.indices.map(i => getAnswerPart(i, sag))
-    val contents = sag.derivations.flatMap(getContents)
+    val dgroups = getDGroups(sag.answer, sag.derivations)
     val queryEntities = getNonAnswerEntities(sag.derivations)
-    Answer(answerParts, contents, queryEntities)
+    Answer(answerParts, dgroups, queryEntities)
+  }
+
+  def getDGroups(answerStrings: Seq[String], derivs: Seq[AnswerDerivation]): Seq[DerivationGroup] = {
+
+    // group by execQuery
+    val eqgroup = derivs.groupBy(_.execTuple.query)
+    // break out get paraphrases for each group
+    val eqgroupPPs = eqgroup.iterator.toSeq.map { case (equery, ds) => (equery, ds, ds.map(_.paraphrase.target).distinct.toSet) }
+    // group by the paraphrase set
+    val ppgroup = eqgroupPPs.groupBy(_._3)
+    // convert to (paraphrases, uquery, derivs)
+    val dgroups = ppgroup.iterator.toSeq.flatMap { case (pps, qderivspps) =>
+      qderivspps.map { case (_, ds, _) =>
+        // get the most common parsedQuery
+        val qTriples = ds.flatMap(d => getTriples(answerStrings, d))
+        val qGroups = qTriples.groupBy(_._1).iterator.toSeq
+        val qConjTriples = qGroups.map { case (q, qtriples) => (q, qtriples.map(_._2)) }
+        DerivationGroup(pps.toSeq, qConjTriples)
+      }
+    }
+    dgroups
   }
 
   private val sourceIdRegex = """\w+\.source_ids""".r
 
-  def getContents(deriv: AnswerDerivation): Seq[Content] = {
+  def getTriples(answerStrings: Seq[String], deriv: AnswerDerivation): Seq[(String, Triple)] = {
+
+    val equery = deriv.execTuple.query
     val tuple = deriv.execTuple.tuple
-    val sourceAttrs = tuple.attrs.keySet.filter(k => sourceIdRegex.pattern.matcher(k).matches)
-    val sourceIds = sourceAttrs.toSeq.flatMap(tuple.get).flatMap(_.asInstanceOf[List[String]])
-    val docs = sourceIds.par.flatMap(getSolrDoc)
-    val contents = docs.map(getContent).filter(filterContent)
-    contents.toList
+
+    // get map from variable => answer string
+    val answerMap = equery.qVars.zip(answerStrings).toMap
+    // expand conjuncts to (c, c's qattrs)
+    val conjunctsMap = equery.conjuncts.map { c => (c, equery.qAttrs.filter(_.startsWith(c.name))) }
+    // expand to (c, c's attrs, triple)
+    val triplesMap = conjunctsMap.map { case (conj, cAttrs) =>
+      val sourceIdsOpt = tuple.get(conj.name + ".source_ids").map(_.asInstanceOf[List[String]])
+      val triples = sourceIdsOpt match {
+        case Some(sourceIds) => sourceIds flatMap getSolrDoc map getOpenIETriple
+        case None => Seq(getDefaultTriple(conj.name, tuple))
+      }
+      (conj, cAttrs, triples)
+    }
+
+    // convert to ConjunctString, Triple
+    triplesMap.flatMap { case (conj, cAttrs, triples) =>
+      val cstring = getConjunctString(conj, answerMap)
+      triples map (t => (cstring, t))
+    }
+  }
+
+  def getConjunctString(conj: TConjunct, qVarsToAnswers: Map[TVariable, String]): String = {
+    def fieldString(f: Field) = conj.values(f) match {
+      case v: TVariable => qVarsToAnswers(v)
+      case l: TLiteral => literalToString(l)
+    }
+
+    Seq(arg1, rel, arg2).map(fieldString).mkString("(", ", ", ")")
+  }
+
+  def literalToString(l: TLiteral): String = l match {
+      case UnquotedTLiteral(s) => s
+      case QuotedTLiteral(s) => s
+      case SetTLiteral(lits) => (lits map literalToString).mkString("(", "\" or \"", ")")
+      case _ => l.toString
+  }
+
+  def getDefaultTriple(conjName: String, tuple: Tuple): Triple = {
+    val arg1 = tuple.getString(conjName + ".arg1").get
+    val rel = tuple.getString(conjName + ".arg1").get
+    val arg2 = tuple.getString(conjName + ".arg1").get
+    val source = tuple.getString(conjName + ".namespace").get
+    val url = source.toLowerCase match {
+      // TODO: Construct link to relevant source pages
+      case "freebase" => "http://www.freebase.com/"
+      case "nell" => "http://rtw.ml.cmu.edu/rtw/"
+      case "probase" => "http://research.microsoft.com/en-us/projects/probase/"
+      case _ => ""
+    }
+    DefaultTriple(arg1, rel, arg2, source, url)
   }
 
   def getSolrDoc(id: String): Option[SolrDocument] = {
@@ -103,7 +174,7 @@ class AnswerConverter(solr: SolrServer) {
     }
   }
 
-  def getContent(doc: SolrDocument): Content = {
+  def getOpenIETriple(doc: SolrDocument): OpenIETriple = {
 
     def getString(field: String) = doc.getFieldValue(field).asInstanceOf[String]
     def getInterval(field: String) = Interval.deserialize(getString(field))
@@ -115,14 +186,18 @@ class AnswerConverter(solr: SolrServer) {
     val rel = relInterval.map(i => tokens(i)).mkString(" ")
     val confidence = doc.getFieldValue("confidence").asInstanceOf[Double]
     val corpus = getString("corpus")
-    Content(tokens, urlString, List(arg1Interval, arg2Interval), rel, confidence, corpus)
+    OpenIETriple(tokens, arg1Interval, relInterval, arg2Interval, confidence, corpus, "Open IE", urlString)
   }
 
   val minContentConfidence = 0.5
   val maxRelLength = 60
 
-  def filterContent(content: Content): Boolean = {
-    content.rel.length <= maxRelLength
+  def filterResults(triple: Triple): Boolean = {
+    triple match {
+      case oie: OpenIETriple => oie.confidence >= minContentConfidence && oie.rel.length <= maxRelLength
+      case _ => triple.rel.length <= maxRelLength
+    }
+
   }
 }
 

@@ -11,7 +11,7 @@ import edu.knowitall.common.enrich.Traversables._
   */
 case class AnswerSet(answers: Seq[Answer], filters: immutable.SortedSet[TypeFilterTab], queryEntities: immutable.List[(FreeBaseEntity, Int)]) {
   def answerCount = answers.size
-  def sentenceCount = answers.iterator.map(_.contents.size).sum
+  def resultsCount = answers.map(_.resultsCount).sum
 
   val attrs = answers.flatMap(_.attrs).toSet
 

@@ -92,10 +92,10 @@
 	<h3>Extracted from these sentences:</h3>
 	
 <!-- display sentences -->
-@helper.sentences(answer.copy(contents=answer.contents.take(maxSentenceCount)), debug)
+@helper.sentences(answer.limitResults(maxSentenceCount), debug)
 
-@if(answer.contents.size > maxSentenceCount) {
-    <p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.question, query.parserName, answer.title, debug)}">Show all sentences (@{answer.contents.size - maxSentenceCount} more)</a></p>
+@if(answer.resultsCount > maxSentenceCount) {
+    <p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.question, query.parserName, answer.title, debug)}">Show all sentences (@{answer.resultsCount - maxSentenceCount} more)</a></p>
 }
 	
 </div>

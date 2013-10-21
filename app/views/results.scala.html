@@ -51,8 +51,8 @@
   <div class="tabbable" style="margin-left: -15px;">
     <ul class="nav nav-pills nav-stacked col-md-3">
       @for((answer, i) <- answers.answers.zipWithIndex) {
-      <li class="hidden-sm"><a href="#L@{i}" class="answer" data-toggle="tab" data-fbid="@{answer.parts.map(_.entity.map(_.fbid).getOrElse("")).mkString(";")}">@helper.grouptitle(answer.parts, debug) (@answer.contents.size)</a></li>
-      <li class="visible-sm"><a href="@{routes.Application.sentences(query.question, query.parserName, answer.title, debug)}" class="answer">@Html(answer.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", ")) (@answer.contents.size)</a></li>
+      <li class="hidden-sm"><a href="#L@{i}" class="answer" data-toggle="tab" data-fbid="@{answer.parts.map(_.entity.map(_.fbid).getOrElse("")).mkString(";")}">@helper.grouptitle(answer.parts, debug) (@answer.resultsCount)</a></li>
+      <li class="visible-sm"><a href="@{routes.Application.sentences(query.question, query.parserName, answer.title, debug)}" class="answer">@Html(answer.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", ")) (@answer.resultsCount)</a></li>
       }
     </ul>
 
