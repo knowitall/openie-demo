@@ -3,6 +3,14 @@ package models
 import sjson.json.DefaultProtocol
 import sjson.json.Format
 
+trait AbstractType {
+  def name: String
+  def url: String
+  def source: String
+}
+
+
+
 @SerialVersionUID(4021L) // last: 4011
 case class FreeBaseEntity(val name: String, val fbid: String, val score: Double, val inlinkRatio: Double) {
   override def toString = "FreeBaseEntity" + Iterable(name, fbid, "%1.2f" format score, inlinkRatio).mkString("(", ", ", ")")
@@ -14,11 +22,15 @@ object FreeBaseEntityProtocol extends DefaultProtocol {
 }
 
 @SerialVersionUID(4012L)
-case class FreeBaseType(val domain: String, val typ: String) {
+case class FreeBaseType(val domain: String, val typ: String) extends AbstractType {
   require(!domain.isEmpty)
   require(!typ.isEmpty)
 
   def name = "/"+domain+"/"+typ
+
+  def url = "http://www.freebase.com/view" + name
+
+  def source = "FreeBase"
 
   override def toString: String = "FreeBaseType(%s, %s)".format(domain, typ)
 }

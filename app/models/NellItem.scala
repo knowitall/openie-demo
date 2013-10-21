@@ -35,4 +35,9 @@ object NellType {
   }
 }
 
-case class NellType(val id: String, val name: String)
+case class NellType(val id: String, val name: String) extends AbstractType {
+
+  def url = "http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+id
+
+  def source = "Nell"
+}

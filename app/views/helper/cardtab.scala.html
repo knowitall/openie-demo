@@ -3,6 +3,7 @@
 @import models.TypeFilters._
 @import models.NellType.fbToNellType
 
+
 @titleLink(part: models.AnswerPart, large: Boolean) = {
 	@if(part.comesFromRel) {
 		@part.text
@@ -35,50 +36,39 @@
 		@if(answer.parts.size > i+1){@next(i)}
 	</h2>
 	
-	<!-- if there is an entity, display its FreeBase URI -->
-	@defining(part.entity) { entityOpt =>
-		@entityOpt match{
-			case Some(entity) => {
-				<!-- FreeBase URI -->
-				<h3 class='uri-title'>URI:</h3>
-				<ul class='uri-body'>
-					<li><a href='http://www.freebase.com/view/m/@entity.fbid'>http://www.freebase.com/view/m/@entity.fbid</a></li>
-				</ul>
-
-				<!-- Types -->
-				<h3 class='types-title'>Types:</h3>
-				<ul class='types-body'>
-					@part.types.toSeq.sortBy(-_.weight).map{ fbType =>
-					<li>@{Html(fbToNellType.get(fbType).map( nellType =>
-						"<a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType.id+"' title='Nell type: "+nellType.name+"'>"+nellType.name+"</a> <span style='color: #888'>(Nell)</span>"
-						).getOrElse(""))
-						}</li>
-					}
-					@part.types.toSeq.sortBy(-_.weight).map{ fbType =>
-					<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a> <span style='color: #888'>(FreeBase)</span></li>
-					}
-				</ul>
-			}
-
-			case None => {
-				@if(part.types.size > 0) {
-					<!-- Inferred Types (no linked entity) -->
-					<h3 class='types-title'>Inferred Types:</h3>
-					<ul class='types-body'>
-					@part.types.toSeq.sortBy(-_.weight).map{ fbType =>
-						<li>@{Html(fbToNellType.get(fbType).map( nellType =>
-						"<a href='http://rtw.ml.cmu.edu/rtw/kbbrowser/pred:"+nellType.id+"' title='Nell type: "+nellType.name+"'>"+nellType.name+"</a> <span style='color: #888'>(Nell)</span>"
-						).getOrElse(""))
-						}</li>
-					}
-					@part.types.toSeq.sortBy(-_.weight).map{ fbType =>
-						<li><a href='http://www.freebase.com/view@{fbType.name}' title='FreeBase type: @{fbType.name}'>@{fbType.name}</a> <span style='color: #888'>(FreeBase)</span></li>
-					}
-					</ul>
-				}
-			}
-		}
-	}
+	
+  @defining(part.entity) { entityOpt =>
+    @entityOpt match {
+    
+      case Some(entity) => {
+        <!-- Types -->
+        <h3 class='types-title'>Types:</h3>
+        @defining(part.types.grouped(2)) { typeGroups =>
+          @for(types <- typeGroups) {
+            <div class="row">
+            @for(t <- types) {
+              <div class="col-md-5">
+                <a href='@{t.url}' title='@{t.source} type: @{t.name}'>@{t.name}</a> <span style='color: #888'>(@{t.source})</span>
+              </div>
+            }
+            </div>
+          }
+        }
+	  }
+	  
+      case None => {
+        @if(part.types.size > 0) {
+          <!-- Inferred Types (no linked entity) -->
+          <h3 class='types-title'>Inferred Types:</h3>
+          <ul class='types-body'>
+          @part.types.map{ t =>
+            <li><a href='@{t.url}' title='@{t.source} type: @{t.name}'>@{t.name}</a> <span style='color: #888'>(@{t.source})</span></li>
+          }
+          </ul>
+        }
+      }
+    }
+  }
 
 	<!-- if there are synonyms, display them -->
 	@if(part.otherSynonyms.size > 0) {
@@ -89,7 +79,7 @@
 			}
 		</ul>
 	}
-	<h3>Extracted from these sentences:</h3>
+	<h3>Extracted from these sources:</h3>
 	
 <!-- display sentences -->
 @helper.sentences(answer.limitResults(maxSentenceCount), debug)

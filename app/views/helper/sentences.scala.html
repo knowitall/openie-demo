@@ -3,26 +3,34 @@
 @import helper.twitterBootstrap._
 @import models.OpenIETriple
 
-@for((rel, ts) <- group.allTriplesByRel) {
-  <dl class="dl-horizontal">
-  <dt>@rel</dt>
+@for(d <- group.dgroups) {
+
+  @{d.resultsCount + " results from \"" + d.paraphrases.head.target + "\""}
+  <br/>
+  @for((query, triples) <- d.queryTriples) {
   
-  @for(t <- ts.filterNot(_.isInstanceOf[OpenIETriple])) {
-    <dd><div class="sentence">
+    @{"Evidence for: " + query}
+    
+    @for(r <- triples) {
+    
+  
+    @if(!r.isInstanceOf[OpenIETriple]) {
+    <div class="sentence">
     <a class="sent">
-    <b>@t.arg1</b>@{", " + t.rel + ", "}<b>@t.arg2</b>
+    <b>@r.arg1</b>@{", " + r.rel + ", "}<b>@r.arg2</b>
     </a>
     <span style="color: #888">
     @{"via "}
-    <a href="@t.url">@t.source</a>
+    <a href="@r.url">@r.source</a>
     </span>
-  }	
-  @for(t <- ts.collect { case (x: OpenIETriple) => x }) {
-    <dd><div class="sentence">
+  } else {
+    @defining(r.asInstanceOf[OpenIETriple]) { t =>
+    
+    <div class="sentence">
     <a class="sent" href="@t.url">
     @if(!debug) {
       @for((string, i) <- t.sentenceStrings.zipWithIndex) {
-	    @if(t.boldIntervals.exists(_.start==i)) {<b>}
+        @if(t.boldIntervals.exists(_.start==i)) {<b>}
         @if(t.boldIntervals.exists(_.end==i)) {</b>}
         @string.replaceAll("\t", " ").replaceAll("[\\p{C}]","") 
       }
@@ -44,8 +52,8 @@
         @string 
       }
     }
-	</a>
-	  <div class="hover-source">
+    </a>
+      <div class="hover-source">
         From Open IE 4 (
          @{t.corpus match {
             case "cw" => { "ClueWeb12" }
@@ -59,7 +67,18 @@
         <div class="arrow"></div>
       </div>
     </div>
-    </dd>
+    }
   }
-  </dl>
+
+    
+    
+    
+    
+    
+    }
+  }
 }
+
+
+  
+  

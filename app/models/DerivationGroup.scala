@@ -1,6 +1,7 @@
 package models
 
 import edu.knowitall.collection.immutable.Interval
+import edu.knowitall.paraphrasing.Paraphrase
 
 /**
  * Represents an individual Triple and associated metadata.
@@ -42,8 +43,8 @@ case class OpenIETriple(
   def arg2 = sentenceSlice(arg2Interval)
 }
 
-case class DerivationGroup(val paraphrases : Seq[String], val queryTuples: Seq[(String, Seq[Triple])]) {
-  def resultsCount = queryTuples.flatMap(_._2).size
+case class DerivationGroup(val paraphrases : Seq[Paraphrase], val queryTriples: Seq[(String, Seq[Triple])]) {
+  def resultsCount = queryTriples.flatMap(_._2).size
 }
 
 object DerivationGroup {

@@ -29,7 +29,7 @@ case class PositiveStringTypeFilter(val string: String, override val attrs: Set[
 
   def apply(answer: Answer): Boolean =
     answer.parts.exists(part => (attrs.exists(part.attrs.contains)) &&
-      part.types.exists(_.typ equalsIgnoreCase this.string)
+      part.fbTypes.exists(_.typ equalsIgnoreCase this.string)
     )
 }
 
@@ -88,7 +88,7 @@ object TypeFilters {
         part <- group.parts
         if (freeParts.exists(part.attrs.contains))
         // avoid user-submitted type categories
-        typ <- part.types
+        typ <- part.fbTypes
         if typ.valid
       } yield (PositiveTypeFilter(typ, freeParts))
 

@@ -82,7 +82,7 @@ class AnswerConverter(solr: SolrServer) {
     // group by execQuery
     val eqgroup = derivs.groupBy(_.execTuple.query)
     // break out get paraphrases for each group
-    val eqgroupPPs = eqgroup.iterator.toSeq.map { case (equery, ds) => (equery, ds, ds.map(_.paraphrase.target).distinct.toSet) }
+    val eqgroupPPs = eqgroup.iterator.toSeq.map { case (equery, ds) => (equery, ds, ds.map(_.paraphrase).distinct.toSet) }
     // group by the paraphrase set
     val ppgroup = eqgroupPPs.groupBy(_._3)
     // convert to (paraphrases, uquery, derivs)
@@ -203,6 +203,8 @@ class AnswerConverter(solr: SolrServer) {
 
 object AnswerConverter {
 
+   import models.TypeFilters.enrichFreeBaseType
+
    private val linkFieldTemplates = Map(
       "id"     -> "_entity_id",
       "name"   -> "_entity_name",
@@ -317,8 +319,13 @@ object AnswerConverter {
 
     val entity = topLink.map(_.entity)
 
-    val types = topLink.map(_.types).getOrElse(Set.empty)
+    val fbTypes = topLink.map(_.types).getOrElse(Set.empty).toSeq.sortBy(-_.weight)
 
-    AnswerPart(lemma, attrs, synonyms, entity, types)
+    // hack: add nell types at the start of the list
+    val nellTypes = fbTypes.flatMap { fbt =>
+      models.NellType.fbToNellType.get(fbt)
+    }
+
+    AnswerPart(lemma, attrs, synonyms, entity, nellTypes ++ fbTypes)
   }
 }

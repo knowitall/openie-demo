@@ -2,6 +2,7 @@ package models
 
 import scala.collection.immutable
 import edu.knowitall.common.enrich.Traversables._
+import edu.knowitall.paraphrasing.Paraphrase
 
 /** The Answer set is a collection of the answers.
   *
@@ -23,6 +24,19 @@ case class AnswerSet(answers: Seq[Answer], filters: immutable.SortedSet[TypeFilt
     else this.copy(answers = answers filter (group =>
       filters.forall(filter => filter(group))
   ))}
+
+  val paraphraseHits: Seq[(Paraphrase, Int)] = {
+    // flatten out (paraphrase, ..., triple)
+    val ppTriples = for (
+        answer <- answers;
+        dgroup <- answer.dgroups;
+        paraphrase <- dgroup.paraphrases;
+        (query, triples) <- dgroup.queryTriples;
+        triple <- triples) yield (paraphrase, triple)
+
+    val ppHitsMap = ppTriples.groupBy(_._1).map { case (pp, pphits) => (pp, pphits.size) }
+    ppHitsMap.iterator.toSeq.sortBy(-_._2)
+  }
 }
 
 object AnswerSet {
