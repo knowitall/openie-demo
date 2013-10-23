@@ -3,6 +3,7 @@
 @import models.TypeFilters._
 @import models.NellType.fbToNellType
 
+<div class="close-tab"><a href="#close@{index}" class="close-tab" title="close sentences"><i class="glyphicon glyphicon-remove"></i></a></div>
 
 @titleLink(part: models.AnswerPart, large: Boolean) = {
 	@if(part.comesFromRel) {
@@ -12,8 +13,9 @@
 	}
 }
 
+
 @move(curPartIndex: Int, nextPartIndex: Int, forward: Boolean) = {
-	<a href="#@if(forward) { forward } else { back }" onclick="$('#L@index>#E@curPartIndex').hide(); $('#L@index>#E@nextPartIndex').show();"><i class="card-nav @if(forward) { icon-forward } else { icon-backward }"></i></a>
+	<a href="#@if(forward) { forward } else { back }" onclick="$('#L@index>#E@curPartIndex').hide(); $('#L@index>#E@nextPartIndex').show();"><i class="card-nav glyphicon @if(forward) { glyphicon-forward } else { glyphicon-backward }"></i></a>
 }
 @next(i: Int) = {
 	@move(i, i + 1, true)
@@ -25,8 +27,10 @@
 @if(debug) {
     <h2>@answer.queryEntity</h2>
 }
+
+
 @for((part, i) <- answer.parts.zipWithIndex) {
-<div class="col-md-offset-3" id="E@i" style="@if(i > 0) { display: none }">
+<div id="E@i" style="@if(i > 0) { display: none }">
 	<!-- title -->
 	<h2>
 		@if(i > 0) {@prev(i)}
@@ -43,7 +47,7 @@
       case Some(entity) => {
         <!-- Types -->
         <h3 class='types-title'>Types:</h3>
-        @defining(part.types.grouped(2)) { typeGroups =>
+        @defining(part.types.take(8).grouped(2)) { typeGroups =>
           @for(types <- typeGroups) {
             <div class="row">
             @for(t <- types) {
@@ -61,7 +65,7 @@
           <!-- Inferred Types (no linked entity) -->
           <h3 class='types-title'>Inferred Types:</h3>
           <ul class='types-body'>
-          @part.types.map{ t =>
+          @part.types.take(8).map{ t =>
             <li><a href='@{t.url}' title='@{t.source} type: @{t.name}'>@{t.name}</a> <span style='color: #888'>(@{t.source})</span></li>
           }
           </ul>
@@ -79,10 +83,10 @@
 			}
 		</ul>
 	}
-	<h3>Extracted from these sources:</h3>
-	
+	<h3 class='sentences-title'>Extracted from these sources:</h3>
+
 <!-- display sentences -->
-@helper.sentences(answer.limitResults(maxSentenceCount), debug)
+@helper.sentences(answer.limitSentences(maxSentenceCount), debug)
 
 @if(answer.resultsCount > maxSentenceCount) {
     <p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.question, query.parserName, answer.title, debug)}">Show all sentences (@{answer.resultsCount - maxSentenceCount} more)</a></p>
@@ -90,3 +94,5 @@
 	
 </div>
 }
+
+

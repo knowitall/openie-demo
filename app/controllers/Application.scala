@@ -30,7 +30,7 @@ import play.api.mvc.AnyContent
 
 object Application extends Controller {
   final val PAGE_SIZE = 20
-  final val MAX_SENTENCE_COUNT = 15
+  final val MAX_SENTENCE_COUNT = 10
 
   Logger.info("Server started.")
 
@@ -43,7 +43,7 @@ object Application extends Controller {
     // Defines a mapping that will handle Contact values
       (mapping (
         "question" -> text
-      )(t => Query.apply(t, "identity", "regex"))(q => Query.unapply(q).map(_._1)))
+      )(t => Query.apply(t, "templatesLm", "regex"))(q => Query.unapply(q).map(_._1)))
     )
   }
 

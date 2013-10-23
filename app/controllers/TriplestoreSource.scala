@@ -9,6 +9,8 @@ import edu.knowitall.parsing.QuestionParser
 import edu.knowitall.execution.Tuple
 import edu.knowitall.scoring.ScoredAnswerGroup
 import edu.knowitall.triplestore.SolrClient
+import edu.knowitall.execution.DefaultFilters
+import edu.knowitall.execution.StopwordExecutor
 import org.apache.solr.client.solrj.SolrServer
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.common.SolrDocument
@@ -30,7 +32,7 @@ object TriplestoreSource extends FetchSource {
   private val maxHits = 500
   private val solrClient = SolrClient(solrUrl, maxHits)
   private val solrServer = solrClient.server
-  private val executor = IdentityExecutor(solrClient) // Need to be able to hang on to the solr server.
+  private val executor = DefaultFilters.wrap(StopwordExecutor(IdentityExecutor(solrClient))) // Need to be able to hang on to the solr server.
   private val grouper = Components.groupers("basic")
   private val scorer = Components.scorers("numDerivations")
   private val answerConverter = new AnswerConverter(solrServer)

@@ -3,82 +3,67 @@
 @import helper.twitterBootstrap._
 @import models.OpenIETriple
 
+<ul>
 @for(d <- group.dgroups) {
-
-  @{d.resultsCount + " results from \"" + d.paraphrases.head.target + "\""}
-  <br/>
+  <li>
+  <h3>@{d.resultsCount + " results from \"" + d.paraphrases.head.target + "\""}</h3>
+  </li>
+  <ul>
   @for((query, triples) <- d.queryTriples) {
-  
-    @{"Evidence for: " + query}
-    
+    <li>
+    <h4>@{"Evidence for: " + query}</h4>
+    </li>
+    <ul>
     @for(r <- triples) {
     
-  
-    @if(!r.isInstanceOf[OpenIETriple]) {
-    <div class="sentence">
-    <a class="sent">
-    <b>@r.arg1</b>@{", " + r.rel + ", "}<b>@r.arg2</b>
-    </a>
-    <span style="color: #888">
-    @{"via "}
-    <a href="@r.url">@r.source</a>
-    </span>
-  } else {
-    @defining(r.asInstanceOf[OpenIETriple]) { t =>
-    
-    <div class="sentence">
-    <a class="sent" href="@t.url">
-    @if(!debug) {
-      @for((string, i) <- t.sentenceStrings.zipWithIndex) {
-        @if(t.boldIntervals.exists(_.start==i)) {<b>}
-        @if(t.boldIntervals.exists(_.end==i)) {</b>}
-        @string.replaceAll("\t", " ").replaceAll("[\\p{C}]","") 
-      }
-      @if(t.boldIntervals.exists(_.end==t.sentenceStrings.size)) {</b>}
-      <span style="color: #888">@{
-        if (t.corpus == "cw") {" (via ClueWeb12)"}
-        else if (t.corpus == "g1b") {" (via Google)"}
-        else if (t.corpus == "wiki") {" (via Wikipedia)"}
-        else if (t.corpus == "news") {" (via News)"}
-        else {" (via %s)" format t.corpus}
-      }</span>
-    } else {
-      @{"%1.2f" format t.confidence} from @t.url:<br/>
-      @for((string, i) <- t.sentenceStrings.zipWithIndex) {
-        @if(t.boldIntervals.exists(_.end==i)) {|} 
-        @if(t.boldIntervals.exists(_.start==i)) {|} 
-        @if(t.boldIntervals.exists(_.start==i)) {<b>} 
-        @if(t.boldIntervals.exists(_.end==i)) {</b>}
-        @string 
-      }
-    }
-    </a>
-      <div class="hover-source">
-        From Open IE 4 (
-         @{t.corpus match {
-            case "cw" => { "ClueWeb12" }
-            case "g1b" => { "Google" }
-            case "wiki" => {"Wikipedia"}
-            case "news" => {"News"}
-            case _ => { t.corpus }
+      <li>
+      @if(!r.isInstanceOf[OpenIETriple]) {
+        <div class="sentence">
+        <a class="sent">
+        <b>@r.arg1</b>@{", " + r.rel + ", "}<b>@r.arg2</b>
+        </a>
+        <span style="color: #888">
+        @{"via "}
+        <a href="@r.url">@r.source</a>
+        </span>
+      } else {
+        @defining(r.asInstanceOf[OpenIETriple]) { t =>
+          <div class="sentence">
+          <a class="sent" href="@t.url">
+          @for((string, i) <- t.sentenceStrings.zipWithIndex) {
+            @if(t.boldIntervals.exists(_.start==i)) {<b>}
+            @if(t.boldIntervals.exists(_.end==i)) {</b>}
+            @string.replaceAll("\t", " ").replaceAll("[\\p{C}]","") 
           }
-        }
-        corpus. Source: @{t.url})
-        <div class="arrow"></div>
-      </div>
-    </div>
-    }
-  }
-
-    
-    
-    
-    
-    
-    }
-  }
-}
-
-
-  
-  
+          @if(t.boldIntervals.exists(_.end==t.sentenceStrings.size)) {</b>}
+          <span style="color: #888">@{
+            if (t.corpus == "cw") {" (via ClueWeb12)"}
+            else if (t.corpus == "g1b") {" (via Google)"}
+            else if (t.corpus == "wiki") {" (via Wikipedia)"}
+            else if (t.corpus == "news") {" (via News)"}
+            else {" (via %s)" format t.corpus}
+          }</span>
+          </a>
+          <div class="hover-source">
+          From Open IE 4 (
+          @{t.corpus match {
+              case "cw" => { "ClueWeb12" }
+              case "g1b" => { "Google" }
+              case "wiki" => {"Wikipedia"}
+              case "news" => {"News"}
+              case _ => { t.corpus }
+            }  
+          } <!--- t.corpus --->
+          corpus. Source: @{t.url})
+          <div class="arrow"></div>
+          </div> <!-- hover source -->
+          </div> <!-- sentence -->
+        } <!-- defining -->
+      } <!-- if not open ie, else, ... -->
+      </li>
+    }  <!--- triple --->
+    </ul>
+  }  <!-- query --->
+  </ul>  
+}  <!-- paraphrases --->
+</ul>    

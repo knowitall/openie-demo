@@ -35,7 +35,7 @@ case class AnswerSet(answers: Seq[Answer], filters: immutable.SortedSet[TypeFilt
         triple <- triples) yield (paraphrase, triple)
 
     val ppHitsMap = ppTriples.groupBy(_._1).map { case (pp, pphits) => (pp, pphits.size) }
-    ppHitsMap.iterator.toSeq.sortBy(-_._2)
+    ppHitsMap.iterator.toSeq.sortBy(_._1.derivation.score)
   }
 }
 

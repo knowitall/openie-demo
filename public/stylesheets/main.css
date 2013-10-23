@@ -60,6 +60,11 @@ margin-left: 85px;
 .syns-title {
   font-weight: bold;
 }
+
+.sentences-title {
+  font-weight: bold;
+}
+
 .syns-body {
   font-weight: normal;
 }
@@ -82,16 +87,16 @@ margin-left: 85px;
   padding-bottom: 3em;
 }
 
-.dl-horizontal .sentence {
+.sentence {
   display: inline-block;
   position: relative;
 }
 
-.dl-horizontal .sentence:hover {
+.sentence:hover {
   background: #ddd;
 }
 
-.dl-horizontal .sentence > .hover-source {
+.sentence > .hover-source {
   float: left;
   position: absolute;
   top: 100%;
@@ -106,7 +111,7 @@ margin-left: 85px;
   z-index: 1;
 }
 
-.dl-horizontal .hover-source > .arrow {
+.hover-source > .arrow {
   position: absolute;
   width: 0;
   height: 0;
@@ -118,7 +123,7 @@ margin-left: 85px;
   z-index: 1;
 }
 
-.dl-horizontal .sentence:hover > .hover-source, .dl-horizontal .sentence:hover > .arrow {
+.sentence:hover > .hover-source, .sentence:hover > .arrow {
   display: block;
 }
 
@@ -158,8 +163,9 @@ margin-left: 85px;
   color: #08c;
 }
 
-#stats {
+.stats {
   margin: 0.5em 0;
+  line-height:133%;
 }
 
 .tab-content blockquote {
@@ -186,8 +192,7 @@ margin-left: 85px;
 }
 
 .search-arg {
-  display: inline-block;
-  margin: auto 1em;
+
 }
 
 .search-question {
@@ -259,6 +264,9 @@ margin-left: 85px;
 
 label { font-weight: bold }
 
-.entity-link-focused { font-size: 150% }
+.entity-link-focused {
+  font-weight: bold;
+  font-size: 150%; 
+}
 
 .card-nav { vertical-align: middle }

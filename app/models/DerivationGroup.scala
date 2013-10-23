@@ -49,10 +49,35 @@ case class DerivationGroup(val paraphrases : Seq[Paraphrase], val queryTriples: 
 
 object DerivationGroup {
 
-  import edu.knowitall.apps.AnswerDerivation
+  def regroup(dgroups: Seq[DerivationGroup]): Seq[DerivationGroup] = {
 
-  def from(derivs: Seq[AnswerDerivation]): Seq[DerivationGroup] = {
-    Nil
+    // get derivation groups sharing the same equery
+    val queryGroups = dgroups.groupBy(_.queryTriples.map(_._1))
+    // break out combined paraphrases for these derivations
+    val ppGroups = queryGroups.iterator.toSeq.map { case (queries, dgs) => (dgs.flatMap(_.paraphrases).distinct, queries, dgs) }
+    // merge queryTriples for each and done.
+    ppGroups.iterator.toSeq.map { case (pps, queries, dgs) =>
+      val allQueryTriples = dgs.flatMap(_.queryTriples)
+      val regroupedQTs = allQueryTriples.groupBy(_._1).map(p => (p._1, p._2.flatMap(_._2))).iterator.toSeq
+      DerivationGroup(pps, regroupedQTs)
+    }
   }
 
+
+  def dedupe(dgroups: Seq[DerivationGroup]): Seq[DerivationGroup] = {
+
+    val expanded = for (
+        dg <- dgroups;
+        pp <- dg.paraphrases;
+        (query, triples) <- dg.queryTriples;
+        triple <- triples) yield (pp, query, triple)
+
+    val triplegrouped = expanded.groupBy(_._3)
+    // keep the triple with just the best (lowest) scored paraphrase
+    val deduped = triplegrouped.iterator.toSeq.map { case (triple, ppqt) =>
+      val (pp, query, _) = ppqt.minBy(_._1.derivation.score)
+      DerivationGroup(Seq(pp), Seq((query, Seq(triple))))
+    }
+    regroup(deduped)
+  }
 }

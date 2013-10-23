@@ -1,6 +1,6 @@
 package controllers
 
-import models.{FreeBaseEntity, FreeBaseType}
+import models.{AbstractType, FreeBaseEntity, FreeBaseType}
 import edu.knowitall.execution.Search.{Field, arg1, rel, arg2}
 import edu.knowitall.execution._
 import edu.knowitall.apps.AnswerDerivation
@@ -29,46 +29,45 @@ class AnswerConverter(solr: SolrServer) {
    */
   def getAnswers(sags: Seq[ScoredAnswerGroup]): Seq[Answer] = {
     val answers = sags map getAnswer
-    answers
-//    val titleGroups = answers.groupBy(_.title)
-//    val combinedAnswers = titleGroups.map { case (title, answers) => (title, combineAnswers(answers)) }
-//    val sortedAnswers = combinedAnswers.values.toSeq.sortBy(-_.resultsCount)
-//    sortedAnswers
+    val titleGroups = answers.groupBy(_.title)
+    val combinedAnswers = titleGroups.map { case (title, answers) => (title, combineAnswers(answers)) }
+    val sortedAnswers = combinedAnswers.values.toSeq.sortBy(-_.resultsCount)
+    sortedAnswers
   }
-//
-//  def combineAnswers(answers: Seq[Answer]): Answer = {
-//    def combineQueryEntities: List[(FreeBaseEntity, Int)] = {
-//      val allQEs = answers.flatMap(_.queryEntity)
-//      val groupedQEs = allQEs.groupBy(_._1).map { case (entity, entityCounts) => (entity, entityCounts.map(_._2)) }
-//      val combinedQEs = groupedQEs.map { case (entity, counts) => (entity, counts.sum) }
-//      combinedQEs.toSeq.sortBy(-_._2).toList
-//    }
-//    def combineAnswerParts(parts: Seq[AnswerPart]): AnswerPart = {
-//      // take the most common lemma
-//      val topLemma = parts.map(_.lemma).groupBy(identity).iterator.maxBy(_._2.size)._1
-//      val allAttrs = parts.flatMap(_.attrs).toSet
-//      val allSynonyms = parts.flatMap(_.synonyms).distinct
-//      val allEntityTypes = parts.flatMap { p => p.entity.map(pe => (pe, p.types)) }
-//      val (bestEntity, bestTypes) = {
-//        if (allEntityTypes.isEmpty) (None, Set.empty[FreeBaseType])
-//        else {
-//          val (be, typs) = allEntityTypes.maxBy(_._1.score)
-//          (Some(be), typs)
-//        }
-//      }
-//      AnswerPart(topLemma, allAttrs, allSynonyms, bestEntity, bestTypes)
-//    }
-//
-//    def combineAllAnswerParts: Seq[AnswerPart] = {
-//      val maxParts = answers.map(_.parts.size).max
-//      val partsByIndex = (0 until maxParts).map { index =>
-//        answers.flatMap(_.parts.lift(index))
-//      }
-//      partsByIndex.map(combineAnswerParts)
-//    }
-//
-//    Answer(combineAllAnswerParts, answers.flatMap(_.contents), combineQueryEntities)
-//  }
+
+  def combineAnswers(answers: Seq[Answer]): Answer = {
+    def combineQueryEntities: List[(FreeBaseEntity, Int)] = {
+      val allQEs = answers.flatMap(_.queryEntity)
+      val groupedQEs = allQEs.groupBy(_._1).map { case (entity, entityCounts) => (entity, entityCounts.map(_._2)) }
+      val combinedQEs = groupedQEs.map { case (entity, counts) => (entity, counts.sum) }
+      combinedQEs.toSeq.sortBy(-_._2).toList
+    }
+    def combineAnswerParts(parts: Seq[AnswerPart]): AnswerPart = {
+      // take the most common lemma
+      val topLemma = parts.map(_.lemma).groupBy(identity).iterator.maxBy(_._2.size)._1
+      val allAttrs = parts.flatMap(_.attrs).toSet
+      val allSynonyms = parts.flatMap(_.synonyms).distinct
+      val allEntityTypes = parts.flatMap { p => p.entity.map(pe => (pe, p.types)) }
+      val (bestEntity, bestTypes) = {
+        if (allEntityTypes.isEmpty) (None, Set.empty[AbstractType])
+        else {
+          val (be, typs) = allEntityTypes.maxBy(_._1.score)
+          (Some(be), typs)
+        }
+      }
+      AnswerPart(topLemma, allAttrs, allSynonyms, bestEntity, bestTypes.toSeq)
+    }
+
+    def combineAllAnswerParts: Seq[AnswerPart] = {
+      val maxParts = answers.map(_.parts.size).max
+      val partsByIndex = (0 until maxParts).map { index =>
+        answers.flatMap(_.parts.lift(index))
+      }
+      partsByIndex.map(combineAnswerParts)
+    }
+
+    Answer(combineAllAnswerParts, DerivationGroup.dedupe(answers.flatMap(_.dgroups)), combineQueryEntities)
+  }
 
   def getAnswer(sag: ScoredAnswerGroup): Answer = {
     val answerParts = sag.answer.indices.map(i => getAnswerPart(i, sag))

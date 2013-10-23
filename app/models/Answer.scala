@@ -69,4 +69,14 @@ case class Answer(parts: Seq[AnswerPart], dgroups: Seq[DerivationGroup], queryEn
     }
     this.copy(dgroups = regrouped)
   }
+
+  def limitSentences(max: Int): Answer = {
+    val truncatedDgroups = dgroups.map { dg =>
+      val truncatedTriples = dg.queryTriples.map { case (query, triples) =>
+        (query, triples.take(max))
+      }
+      dg.copy(queryTriples = truncatedTriples)
+    }
+    this.copy(dgroups = truncatedDgroups)
+  }
 }

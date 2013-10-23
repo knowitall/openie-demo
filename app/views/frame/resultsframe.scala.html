@@ -6,18 +6,29 @@
   @helper.form(action = routes.Application.submit(false), 'class -> "well form-inline hidden-phone") {
     <div align="center">
     <div class="results-form">
-      <label for="question">Ask another question:&nbsp;</label>
-      <span class="input">
-          <input type="text" id="question" name="question" value="@query.question" size="40em">
-          <span class="help-inline"></span>
-      </span>
+      <div class="row"><label for="question">Ask another question:&nbsp;</label></div>
+      <div class="col-md-offset-3 col-md-6 input-group">
+          <input class="form-control" type="text" id="question" name="question" value="@query.question" size="40em">
+          <span class="input-group-btn">
+          <button id="search-button" class="btn btn-large" style="margin-left:5px"><i id="search-icon" class="glyphicon glyphicon-search"></i> Search</button>
+          </span>
+      </div>
     </div>
 
-    <button id="search-button" class="btn btn-large" style="margin-left:5px"><i id="search-icon" class="glyphicon glyphicon-search"></i> Search</button>
+    
     </div>
   }
-
-    <div id="stats"><b>@totalAnswerCount answers</b> from <b>@totalSentenceCount sentences</b>@message.map(" ("+_+")").getOrElse("")</div>
+    
+   
+    <div class="dropdown">
+    <a class="dropdown-toggle stats" data-toggle="dropdown" href="#">Found <b>@{answers.paraphraseHits.size} paraphrases</b> for <b>@{query.question}</b></a>
+    <ul class="dropdown-menu list-group">
+    @for((paraphrase, count) <- answers.paraphraseHits){
+      <a href="#" class="list-group-item">(@count) @{paraphrase.target}</a>
+    }
+    </ul>
+    </div>
+    <div class="stats"><b>@totalAnswerCount answers</b> from <b>@totalSentenceCount sentences</b>@message.map(" ("+_+")").getOrElse("")</div>
     
   <!-- Display the query card if its the results frame for results page -->
       
