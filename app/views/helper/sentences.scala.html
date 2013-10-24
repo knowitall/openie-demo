@@ -3,20 +3,23 @@
 @import helper.twitterBootstrap._
 @import models.OpenIETriple
 
-<ul>
+
 @for(d <- group.dgroups) {
-  <li>
+  <div class="panel panel-default">
+  <div class="panel-heading">
   <h3>@{d.resultsCount + " results from \"" + d.paraphrases.head.target + "\""}</h3>
-  </li>
-  <ul>
+  </div>
+  <li class="list-group-item">
+  
   @for((query, triples) <- d.queryTriples) {
-    <li>
+    <ul class="list-group">
+    <li class="list-group-item">
     <h4>@{"Evidence for: " + query}</h4>
     </li>
-    <ul>
+    <li class="list-group-item">
     @for(r <- triples) {
     
-      <li>
+      
       @if(!r.isInstanceOf[OpenIETriple]) {
         <div class="sentence">
         <a class="sent">
@@ -60,10 +63,13 @@
           </div> <!-- sentence -->
         } <!-- defining -->
       } <!-- if not open ie, else, ... -->
-      </li>
+      
     }  <!--- triple --->
+    </li>
+    
     </ul>
   }  <!-- query --->
-  </ul>  
+    
+  </li>  
+  </div>
 }  <!-- paraphrases --->
-</ul>    

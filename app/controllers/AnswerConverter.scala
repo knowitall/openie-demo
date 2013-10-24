@@ -66,7 +66,7 @@ class AnswerConverter(solr: SolrServer) {
       partsByIndex.map(combineAnswerParts)
     }
 
-    Answer(combineAllAnswerParts, DerivationGroup.dedupe(answers.flatMap(_.dgroups)), combineQueryEntities)
+    Answer(combineAllAnswerParts, DerivationGroup.dedupe(DerivationGroup.regroup(answers.flatMap(_.dgroups))), combineQueryEntities)
   }
 
   def getAnswer(sag: ScoredAnswerGroup): Answer = {

@@ -66,18 +66,9 @@ object DerivationGroup {
 
   def dedupe(dgroups: Seq[DerivationGroup]): Seq[DerivationGroup] = {
 
-    val expanded = for (
-        dg <- dgroups;
-        pp <- dg.paraphrases;
-        (query, triples) <- dg.queryTriples;
-        triple <- triples) yield (pp, query, triple)
-
-    val triplegrouped = expanded.groupBy(_._3)
-    // keep the triple with just the best (lowest) scored paraphrase
-    val deduped = triplegrouped.iterator.toSeq.map { case (triple, ppqt) =>
-      val (pp, query, _) = ppqt.minBy(_._1.derivation.score)
-      DerivationGroup(Seq(pp), Seq((query, Seq(triple))))
+    dgroups.map { case d @ DerivationGroup(pps, queryTriples) =>
+      val deduped = queryTriples.map { case (query, triples) => (query, triples.distinct) }
+      d.copy(queryTriples = deduped)
     }
-    regroup(deduped)
   }
 }
