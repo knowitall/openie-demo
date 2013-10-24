@@ -113,7 +113,7 @@ class AnswerConverter(solr: SolrServer) {
       val sourceIdsOpt = tuple.get(conj.name + ".source_ids").map(_.asInstanceOf[List[String]])
       val triples = sourceIdsOpt match {
         case Some(sourceIds) =>
-          getSolrDocs(sourceIds) map getOpenIETriple
+          sourceIds.grouped(10).flatMap(getSolrDocs).map(getOpenIETriple)
         case None => Seq(getDefaultTriple(conj.name, tuple))
       }
       (conj, cAttrs, triples)
