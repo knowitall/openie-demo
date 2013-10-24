@@ -112,7 +112,8 @@ class AnswerConverter(solr: SolrServer) {
     val triplesMap = conjunctsMap.map { case (conj, cAttrs) =>
       val sourceIdsOpt = tuple.get(conj.name + ".source_ids").map(_.asInstanceOf[List[String]])
       val triples = sourceIdsOpt match {
-        case Some(sourceIds) => sourceIds flatMap getSolrDoc map getOpenIETriple
+        case Some(sourceIds) =>
+          getSolrDocs(sourceIds) map getOpenIETriple
         case None => Seq(getDefaultTriple(conj.name, tuple))
       }
       (conj, cAttrs, triples)
@@ -156,21 +157,18 @@ class AnswerConverter(solr: SolrServer) {
     DefaultTriple(arg1, rel, arg2, source, url)
   }
 
-  def getSolrDoc(id: String): Option[SolrDocument] = {
+  def getSolrDocs(ids: Seq[String]): Seq[SolrDocument] = {
 
     // make the solr query
-    val idQueryString = s"id:$id"
+    val idQueryString = s"id:" + ids.mkString("(", " OR ", ")")
     val solrQuery = new SolrQuery(idQueryString)
     val response = solr.query(solrQuery)
-    val docs = response.getResults()
-
-    if (docs.size == 0) {
-      Logger.error("Metadata doc not found for id: " + id)
-      None
-    } else {
-      if (docs.size > 1) Logger.warn("Should only be one metadata doc per id, found %d docs for id %s".format(docs.size, id))
-      Some(docs.get(0))
-    }
+    val docs = response.getResults() // SolrDocumentList is a poor implementation of a java collection, and breaks for comprehensions and javaconver(ters/sions)
+    val scalaDocs = (0 until docs.size).map(docs.get)  // so get the elements out the hard way
+    val foundIds = scalaDocs.map(_.getFieldValue("id").asInstanceOf[String]).toSet
+    for (notFoundId <- ids.toSet &~ foundIds)
+      Logger.warn(s"Solr returned no metadata doc for id:$notFoundId")
+    scalaDocs
   }
 
   def getOpenIETriple(doc: SolrDocument): OpenIETriple = {

@@ -153,9 +153,9 @@ var download_freebase = function(id, fbid, partIndex, spin) {
       // populate entity data from freebase
       datacontent =
        '<div class="media entity-desc">'
-        + '<a class="pull-left" href="http://www.freebase.com/view/m/' + fbid + '"><img class="media-object" src="' + src + '"/></a>'
-        + '<div class="media-body"><p>' + $('<div/>').text(response.result).html()
-        + ' <a href="http://www.freebase.com/view/m/' + fbid + '"><span class="glyphicon glyphicon-new-window"/></a>' + '</p></div>'
+        + '<a class="pull-left" style="max-width:175px;"href="http://www.freebase.com/view/m/' + fbid + '"><img class="media-object" style="max-width:100%;height:auto;width:auto\9;"src="' + src + '"/></a>'
+        + '<div class="media-body entity-desc">' + $('<div/>').text(response.result).html()
+        + ' <a href="http://www.freebase.com/view/m/' + fbid + '" title="read more"><span class="glyphicon glyphicon-new-window"/></a>' + '</div>'
         + '</div>';
     } else {
       // if there is no freebase information, create an empty entity-desc

@@ -1,20 +1,27 @@
-@(group: Answer, debug: Boolean)
+@(group: Answer, debug: Boolean, index: Int)
 
 @import helper.twitterBootstrap._
 @import models.OpenIETriple
-
-
-@for(d <- group.dgroups) {
+<div class="panel-group" id="accordion-@index">
+@for((d, ppindex) <- group.dgroups.zipWithIndex) {
   <div class="panel panel-default">
-  <div class="panel-heading">
-  <h3>@{d.resultsCount + " results from \"" + d.paraphrases.head.target + "\""}</h3>
+  <a class="list-group-item accordion-toggle" data-toggle="collapse" data-parent="#accordion-@index" href="#collapse-@index-@ppindex">
+  
+  
+  <div class="panel-title">
+    
+    <h3>@{d.resultsCount + " results from \"" + d.paraphrases.head.target + "\""}</h3>
+    
   </div>
+  
+  </a>
+  <div id="collapse-@index-@ppindex" class="panel-collapse collapse @{if (ppindex==0) {"in"} else {""}}">
   <li class="list-group-item">
   
   @for((query, triples) <- d.queryTriples) {
     <ul class="list-group">
-    <li class="list-group-item">
-    <h4>@{"Evidence for: " + query}</h4>
+    <li class="list-group-item panel-title">
+    @{"Evidence for: " + query}
     </li>
     <li class="list-group-item">
     @for(r <- triples) {
@@ -58,18 +65,18 @@
             }  
           } <!--- t.corpus --->
           corpus. Source: @{t.url})
-          <div class="arrow"></div>
-          </div> <!-- hover source -->
-          </div> <!-- sentence -->
+          </div> <!--- hover source --->
+          </div> <!--- sentence --->
         } <!-- defining -->
       } <!-- if not open ie, else, ... -->
       
     }  <!--- triple --->
     </li>
-    
     </ul>
   }  <!-- query --->
     
   </li>  
   </div>
+  </div>
 }  <!-- paraphrases --->
+</div>

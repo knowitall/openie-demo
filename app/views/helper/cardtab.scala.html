@@ -86,7 +86,7 @@
 	<h3 class='sentences-title'>Extracted from these sources:</h3>
 
 <!-- display sentences -->
-@helper.sentences(answer.limitSentences(maxSentenceCount), debug)
+@helper.sentences(answer.limitSentences(maxSentenceCount), debug, index)
 
 @if(answer.resultsCount > maxSentenceCount) {
     <p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.question, query.parserName, answer.title, debug)}">Show all sentences (@{answer.resultsCount - maxSentenceCount} more)</a></p>

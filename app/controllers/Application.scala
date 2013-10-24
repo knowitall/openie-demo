@@ -174,7 +174,7 @@ object Application extends Controller {
       case Some(group) => group
     }
 
-    Ok(views.html.sentences(group, debug))
+    Ok(views.html.sentences(group, debug, index=0))
   }
 
   def logsFromDate(date: DateTime = DateTime.now) =
