@@ -23,12 +23,26 @@ class AnswerConverter(solr: SolrServer) {
 
   import AnswerConverter._
 
+  val srcIdRegex = "(.*source_ids.*)".r
+  
   /**
    * Todo: factor out combining code better,
    * and properly merge all answerparts.
    */
   def getAnswers(sags: Seq[ScoredAnswerGroup]): Seq[Answer] = {
-    val answers = sags map getAnswer
+    
+    // Preload all of the metadata using big parallel batch queries.
+    val allTuples = sags.flatMap(_.derivations.map(_.execTuple.tuple))
+    val allSourceIds = allTuples.flatMap { t =>
+      val srcIdAttrs = t.attrs.keys.collect { case srcIdRegex(srcIds) => srcIds }
+      srcIdAttrs.flatMap(t.get).flatMap(_.asInstanceOf[List[String]])
+    }
+    val srcIdMap = allSourceIds.grouped(20).toSeq.flatMap { group =>
+      getSolrDocs(group).iterator.map { case (id, doc) => (id, getOpenIETriple(doc)) }
+    }.toMap    
+
+    // Send preloaded data down to methods that build the DerivationGroups 
+    val answers = sags map getAnswer(Map.empty ++ srcIdMap)
     val titleGroups = answers.groupBy(_.title)
     val combinedAnswers = titleGroups.map { case (title, answers) => (title, combineAnswers(answers)) }
     val sortedAnswers = combinedAnswers.values.toSeq.sortBy(-_.resultsCount)
@@ -69,14 +83,14 @@ class AnswerConverter(solr: SolrServer) {
     Answer(combineAllAnswerParts, DerivationGroup.dedupe(DerivationGroup.regroup(answers.flatMap(_.dgroups))), combineQueryEntities)
   }
 
-  def getAnswer(sag: ScoredAnswerGroup): Answer = {
+  def getAnswer(srcIdMap: Map[String, Triple])(sag: ScoredAnswerGroup): Answer = {
     val answerParts = sag.answer.indices.map(i => getAnswerPart(i, sag))
-    val dgroups = getDGroups(sag.answer, sag.derivations)
+    val dgroups = getDGroups(sag.answer, sag.derivations, srcIdMap)
     val queryEntities = getNonAnswerEntities(sag.derivations)
     Answer(answerParts, dgroups, queryEntities)
   }
 
-  def getDGroups(answerStrings: Seq[String], derivs: Seq[AnswerDerivation]): Seq[DerivationGroup] = {
+  def getDGroups(answerStrings: Seq[String], derivs: Seq[AnswerDerivation], srcIdMap: Map[String, Triple]): Seq[DerivationGroup] = {
 
     // group by execQuery
     val eqgroup = derivs.groupBy(_.execTuple.query)
@@ -88,7 +102,7 @@ class AnswerConverter(solr: SolrServer) {
     val dgroups = ppgroup.iterator.toSeq.flatMap { case (pps, qderivspps) =>
       qderivspps.map { case (_, ds, _) =>
         // get the most common parsedQuery
-        val qTriples = ds.flatMap(d => getTriples(answerStrings, d))
+        val qTriples = ds.flatMap(d => getTriples(answerStrings, d, srcIdMap))
         val qGroups = qTriples.groupBy(_._1).iterator.toSeq
         val qConjTriples = qGroups.map { case (q, qtriples) => (q, qtriples.map(_._2)) }
         DerivationGroup(pps.toSeq, qConjTriples)
@@ -99,7 +113,7 @@ class AnswerConverter(solr: SolrServer) {
 
   private val sourceIdRegex = """\w+\.source_ids""".r
 
-  def getTriples(answerStrings: Seq[String], deriv: AnswerDerivation): Seq[(String, Triple)] = {
+  def getTriples(answerStrings: Seq[String], deriv: AnswerDerivation, srcIdMap: Map[String, Triple]): Seq[(String, Triple)] = {
 
     val equery = deriv.execTuple.query
     val tuple = deriv.execTuple.tuple
@@ -113,7 +127,7 @@ class AnswerConverter(solr: SolrServer) {
       val sourceIdsOpt = tuple.get(conj.name + ".source_ids").map(_.asInstanceOf[List[String]])
       val triples = sourceIdsOpt match {
         case Some(sourceIds) =>
-          sourceIds.grouped(10).flatMap(getSolrDocs).map(getOpenIETriple)
+          sourceIds.flatMap(srcIdMap.get)
         case None => Seq(getDefaultTriple(conj.name, tuple))
       }
       (conj, cAttrs, triples)
@@ -157,18 +171,22 @@ class AnswerConverter(solr: SolrServer) {
     DefaultTriple(arg1, rel, arg2, source, url)
   }
 
-  def getSolrDocs(ids: Seq[String]): Seq[SolrDocument] = {
-
+  def getSolrDocs(ids: Seq[String]): Map[String, SolrDocument] = {
+    
     // make the solr query
     val idQueryString = s"id:" + ids.mkString("(", " OR ", ")")
+    Logger.info("Issuing query: "+idQueryString)
     val solrQuery = new SolrQuery(idQueryString)
     val response = solr.query(solrQuery)
     val docs = response.getResults() // SolrDocumentList is a poor implementation of a java collection, and breaks for comprehensions and javaconver(ters/sions)
     val scalaDocs = (0 until docs.size).map(docs.get)  // so get the elements out the hard way
-    val foundIds = scalaDocs.map(_.getFieldValue("id").asInstanceOf[String]).toSet
-    for (notFoundId <- ids.toSet &~ foundIds)
+    val foundDocsMap = scalaDocs.map { doc =>
+      val foundId = doc.getFieldValue("id").asInstanceOf[String]
+      (foundId, doc)
+    }.toMap
+    for (notFoundId <- ids.toSet &~ foundDocsMap.keySet)
       Logger.warn(s"Solr returned no metadata doc for id:$notFoundId")
-    scalaDocs
+    foundDocsMap
   }
 
   def getOpenIETriple(doc: SolrDocument): OpenIETriple = {
