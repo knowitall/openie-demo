@@ -1,7 +1,7 @@
-@(group: Answer, debug: Boolean, index: Int)
+@(group: Answer, maxSentenceCount: Int, debug: Boolean, index: Int)
 
 @import helper.twitterBootstrap._
 
 @helper.main("Open Information Extraction", compact=true) {
-  @helper.sentences(group, debug, index)
+  @helper.sentences(group, maxSentenceCount, debug, index)
 }

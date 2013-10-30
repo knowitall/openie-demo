@@ -22,15 +22,16 @@ case class Link(entity: FreeBaseEntity, types: Set[FreeBaseType])
 class AnswerConverter(solr: SolrServer) {
 
   import AnswerConverter._
+  import DerivationGroup.ppDerivationSort
 
   val srcIdRegex = "(.*source_ids.*)".r
-  
+
   /**
    * Todo: factor out combining code better,
    * and properly merge all answerparts.
    */
   def getAnswers(sags: Seq[ScoredAnswerGroup]): Seq[Answer] = {
-    
+
     // Preload all of the metadata using big parallel batch queries.
     val allTuples = sags.flatMap(_.derivations.map(_.execTuple.tuple))
     val allSourceIds = allTuples.flatMap { t =>
@@ -39,13 +40,14 @@ class AnswerConverter(solr: SolrServer) {
     }
     val srcIdMap = allSourceIds.grouped(20).toSeq.flatMap { group =>
       getSolrDocs(group).iterator.map { case (id, doc) => (id, getOpenIETriple(doc)) }
-    }.toMap    
+    }.toMap
 
-    // Send preloaded data down to methods that build the DerivationGroups 
+    // Send preloaded data down to methods that build the DerivationGroups
     val answers = sags map getAnswer(Map.empty ++ srcIdMap)
     val titleGroups = answers.groupBy(_.title)
     val combinedAnswers = titleGroups.map { case (title, answers) => (title, combineAnswers(answers)) }
-    val sortedAnswers = combinedAnswers.values.toSeq.sortBy(-_.resultsCount)
+    val filteredAnswers = combinedAnswers.filterNot(_._2.dgroups.isEmpty)
+    val sortedAnswers = filteredAnswers.values.toSeq.sortBy(-_.resultsCount)
     sortedAnswers
   }
 
@@ -100,15 +102,18 @@ class AnswerConverter(solr: SolrServer) {
     val ppgroup = eqgroupPPs.groupBy(_._3)
     // convert to (paraphrases, uquery, derivs)
     val dgroups = ppgroup.iterator.toSeq.flatMap { case (pps, qderivspps) =>
-      qderivspps.map { case (_, ds, _) =>
+      qderivspps.map { case (conjq, ds, _) =>
         // get the most common parsedQuery
         val qTriples = ds.flatMap(d => getTriples(answerStrings, d, srcIdMap))
         val qGroups = qTriples.groupBy(_._1).iterator.toSeq
         val qConjTriples = qGroups.map { case (q, qtriples) => (q, qtriples.map(_._2)) }
-        DerivationGroup(pps.toSeq, qConjTriples)
+        val filteredQConjTriples = qConjTriples.filterNot(_._2.isEmpty)
+        val queryString = conjq.conjuncts.mkString(" and ")
+        DerivationGroup(queryString, pps.toSeq.sortBy(ppDerivationSort), filteredQConjTriples)
       }
     }
-    dgroups
+    val noEmpties = dgroups.filterNot(_.resultsCount == 0)
+    noEmpties.sortBy(dg => ppDerivationSort(dg.paraphrases.head))
   }
 
   private val sourceIdRegex = """\w+\.source_ids""".r
@@ -158,8 +163,8 @@ class AnswerConverter(solr: SolrServer) {
 
   def getDefaultTriple(conjName: String, tuple: Tuple): Triple = {
     val arg1 = tuple.getString(conjName + ".arg1").get
-    val rel = tuple.getString(conjName + ".arg1").get
-    val arg2 = tuple.getString(conjName + ".arg1").get
+    val rel = tuple.getString(conjName + ".rel").get
+    val arg2 = tuple.getString(conjName + ".arg2").get
     val source = tuple.getString(conjName + ".namespace").get
     val url = source.toLowerCase match {
       // TODO: Construct link to relevant source pages
@@ -172,7 +177,7 @@ class AnswerConverter(solr: SolrServer) {
   }
 
   def getSolrDocs(ids: Seq[String]): Map[String, SolrDocument] = {
-    
+
     // make the solr query
     val idQueryString = s"id:" + ids.mkString("(", " OR ", ")")
     Logger.info("Issuing query: "+idQueryString)

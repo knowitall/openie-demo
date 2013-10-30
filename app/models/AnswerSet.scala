@@ -11,6 +11,7 @@ import edu.knowitall.paraphrasing.Paraphrase
   * @param  queryEntities  the entities associated with the singularly filled query position, or none
   */
 case class AnswerSet(answers: Seq[Answer], filters: immutable.SortedSet[TypeFilterTab], queryEntities: immutable.List[(FreeBaseEntity, Int)]) {
+
   def answerCount = answers.size
   def resultsCount = answers.map(_.resultsCount).sum
 
@@ -35,7 +36,8 @@ case class AnswerSet(answers: Seq[Answer], filters: immutable.SortedSet[TypeFilt
         triple <- triples) yield (paraphrase, triple)
 
     val ppHitsMap = ppTriples.groupBy(_._1).map { case (pp, pphits) => (pp, pphits.size) }
-    ppHitsMap.iterator.toSeq.sortBy(_._1.derivation.score)
+    val sortedHits = ppHitsMap.iterator.toSeq.sortBy { case (pp, hits) => DerivationGroup.ppDerivationSort(pp) }
+    sortedHits.drop(1) // don't include the identity paraphrase...
   }
 }
 

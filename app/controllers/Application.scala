@@ -31,6 +31,9 @@ import play.api.mvc.AnyContent
 object Application extends Controller {
   final val PAGE_SIZE = 20
   final val MAX_SENTENCE_COUNT = 10
+  final val MAX_GROUP_COUNT = 5
+  final val DEFAULT_PARAPHRASER = "templatesLm"
+  final val DEFAULT_PARSER = "regex"
 
   Logger.info("Server started.")
 
@@ -43,7 +46,7 @@ object Application extends Controller {
     // Defines a mapping that will handle Contact values
       (mapping (
         "question" -> text
-      )(t => Query.apply(t, "templatesLm", "regex"))(q => Query.unapply(q).map(_._1)))
+      )(t => Query.apply(t, DEFAULT_PARAPHRASER, DEFAULT_PARSER))(q => Query.unapply(q).map(_._1)))
     )
   }
 
@@ -163,18 +166,18 @@ object Application extends Controller {
   }
 
   def search(question: String, parser: String, filter: String, page: Int, debug: Boolean, log: Boolean) = Action { implicit request =>
-    doSearch(new Query(question, "identity", parser), filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
+    doSearch(new Query(question, DEFAULT_PARAPHRASER, parser), filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
   }
 
-  def sentences(question: String, parser: String, title: String, debug: Boolean) = Action {
-    val query = new Query(question, "identity", parser)
+  def sentences(question: String, parser: String, title: String, maxSentenceCount: Int, debug: Boolean) = Action {
+    val query = new Query(question, DEFAULT_PARAPHRASER, parser)
     Logger.info("Sentences request for title '" + title + "' in: " + query)
     val group = searchGroups(query, ExecutionSettings.default, debug)._1.answers.find(_.title == title) match {
       case None => throw new IllegalArgumentException("could not find group title: " + title)
       case Some(group) => group
     }
 
-    Ok(views.html.sentences(group, debug, index=0))
+    Ok(views.html.sentences(group, maxSentenceCount, debug, index=0))
   }
 
   def logsFromDate(date: DateTime = DateTime.now) =
@@ -230,7 +233,7 @@ object Application extends Controller {
   }
 
   def results(question: String, parser: String, filterString: String, pageNumber: Int, justResults: Boolean, debug: Boolean = false) = Action { implicit request =>
-    doSearch(new Query(question, "identity", parser), filterString, pageNumber, settingsFromRequest(debug, request), debug=debug, log=true, justResults=justResults)
+    doSearch(new Query(question, DEFAULT_PARAPHRASER, parser), filterString, pageNumber, settingsFromRequest(debug, request), debug=debug, log=true, justResults=justResults)
   }
 
   def doSearch(query: Query, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
@@ -253,12 +256,12 @@ object Application extends Controller {
         //if only the category of results is clicked, change the page's result content
         //else generate a header with the result content
         if (justResults) {
-          Ok(views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug))
+          Ok(views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_GROUP_COUNT, MAX_SENTENCE_COUNT, debug))
         } else {
           Ok(
             views.html.frame.resultsframe(
              searchForm, query, message, filter._3, filter._2.answerCount, filter._2.resultsCount, true)(
-               views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_SENTENCE_COUNT, debug)))
+               views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_GROUP_COUNT, MAX_SENTENCE_COUNT, debug)))
         }
       }
     }

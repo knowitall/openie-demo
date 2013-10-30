@@ -1,4 +1,4 @@
-@(query: Query, answers: AnswerSet, filters: Set[TypeFilter], filterString: String, pageno: Int, pageCount: Int, maxSentenceCount: Int, debug: Boolean)
+@(query: Query, answers: AnswerSet, filters: Set[TypeFilter], filterString: String, pageno: Int, pageCount: Int, maxGroupCount: Int, maxSentenceCount: Int, debug: Boolean)
 
 @import helper.twitterBootstrap._
 
@@ -51,10 +51,10 @@
     <ul class="nav nav-pills nav-stacked">
       @for((answer, i) <- answers.answers.zipWithIndex) {
         <li><a href="#L@{i}" class="answer list-group-item hidden-sm" data-toggle="tab" data-fbid="@{answer.parts.map(_.entity.map(_.fbid).getOrElse("")).mkString(";")}">
-          <span align="right">&nbsp;&nbsp;@helper.grouptitle(answer.parts, debug)</span>
-          <span class="badge pull-left" >@answer.resultsCount</span>
+          <span align="left">@helper.grouptitle(answer.parts, debug)</span>
+          <span class="text-muted pull-right" >(@answer.resultsCount)</span>
         </a></li>
-        <li><a class="answer list-group-item visible-sm" href="@{routes.Application.sentences(query.question, query.parserName, answer.title, debug)}">
+        <li><a class="answer list-group-item visible-sm" href="@{routes.Application.sentences(query.question, query.parserName, answer.title, maxSentenceCount, debug)}">
           @Html(answer.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", "))
           <span class="badge">@answer.resultsCount</span>
         </a></li>
@@ -66,7 +66,7 @@
       @for((answer, i) <- answers.answers.zipWithIndex) {
         <div class="tab-pane" id="L@{i}">
           
-          @helper.cardtab(query, answer, i, maxSentenceCount, debug)
+          @helper.cardtab(query, answer, i, maxGroupCount, maxSentenceCount, debug)
         </div>
       }
     </div>
@@ -77,7 +77,7 @@
 
 <!-- Pagination -->
 @if(pageCount > 1) {
-  <div align="center">
+  <div align="left">
     <ul class="pagination">
     @if(pageno > 0) {
       <li><a href="@{routes.Application.search(query.question, query.parserName, filterString, pageno - 1, debug)}">Prev</a></li>

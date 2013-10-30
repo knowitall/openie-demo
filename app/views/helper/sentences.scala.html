@@ -1,44 +1,42 @@
-@(group: Answer, debug: Boolean, index: Int)
+@(group: Answer, maxSentenceCount: Int, debug: Boolean, index: Int)
 
 @import helper.twitterBootstrap._
 @import models.OpenIETriple
 <div class="panel-group" id="accordion-@index">
 @for((d, ppindex) <- group.dgroups.zipWithIndex) {
   <div class="panel panel-default">
-  <a class="list-group-item accordion-toggle" data-toggle="collapse" data-parent="#accordion-@index" href="#collapse-@index-@ppindex">
+  <a class="list-group-item accordion-toggle" data-toggle="collapse" href="#collapse-@index-@ppindex">
   
   
   <div class="panel-title">
     
-    <h3>@{d.resultsCount + " results from \"" + d.paraphrases.head.target + "\""}</h3>
-    
+    <h3 style="margin-bottom:0px;">@{d.resultsCount + " results from \"" + d.paraphrases.head.target + "\""}</h3>
+    <div class="text-muted" style="font-size:14px">Interpretation: @{d.interpretation}</div> 
   </div>
   
   </a>
   <div id="collapse-@index-@ppindex" class="panel-collapse collapse @{if (ppindex==0) {"in"} else {""}}">
   <li class="list-group-item">
   
-  @for((query, triples) <- d.queryTriples) {
-    <ul class="list-group">
-    <li class="list-group-item panel-title">
-    @{"Evidence for: " + query}
+  @for(((query, triples), i) <- d.queryTriples.zipWithIndex) {
+    <ul class="list-group" style="margin-bottom:10px;">
+    <li class="list-group-item panel-title" style="border:0px;">
+    <h4>@{"Evidence for: " + query}</h4>
     </li>
-    <li class="list-group-item">
-    @for(r <- triples) {
     
+    <ol>
+    @for(r <- triples.take(maxSentenceCount)) {
       
+      <li class="sentence">
       @if(!r.isInstanceOf[OpenIETriple]) {
-        <div class="sentence">
-        <a class="sent">
-        <b>@r.arg1</b>@{", " + r.rel + ", "}<b>@r.arg2</b>
+        
+        <a class="sent" href="@r.url">
+        (<b>@r.arg1</b>@{", " + r.rel + ", "}<b>@r.arg2</b>)
+        <span style="color: #888">  via @{r.source}</span>
         </a>
-        <span style="color: #888">
-        @{"via "}
-        <a href="@r.url">@r.source</a>
-        </span>
       } else {
         @defining(r.asInstanceOf[OpenIETriple]) { t =>
-          <div class="sentence">
+
           <a class="sent" href="@t.url">
           @for((string, i) <- t.sentenceStrings.zipWithIndex) {
             @if(t.boldIntervals.exists(_.start==i)) {<b>}
@@ -55,7 +53,8 @@
           }</span>
           </a>
           <div class="hover-source">
-          From Open IE 4 (
+          Source: @{t.url}<br/>
+          Extracted using Open IE 4.0 over the 
           @{t.corpus match {
               case "cw" => { "ClueWeb12" }
               case "g1b" => { "Google" }
@@ -64,14 +63,20 @@
               case _ => { t.corpus }
             }  
           } <!--- t.corpus --->
-          corpus. Source: @{t.url})
+          corpus. 
           </div> <!--- hover source --->
-          </div> <!--- sentence --->
+          
         } <!-- defining -->
       } <!-- if not open ie, else, ... -->
-      
-    }  <!--- triple --->
-    </li>
+      </li> <!--- sentence --->
+    }  <!--- triple ---> 
+    @if(triples.size > maxSentenceCount) {
+      <div align="center" class="text-muted" style="padding:10px 15px 5px 10px;">(@{triples.size - maxSentenceCount} more)</div>
+    }
+    
+    
+    </ol>
+    @if(i != (d.queryTriples.size - 1)) { <hr style="margin-bottom:5px;"/> }
     </ul>
   }  <!-- query --->
     

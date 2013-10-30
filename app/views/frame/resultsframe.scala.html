@@ -3,23 +3,22 @@
 @import helper.twitterBootstrap._
 
 @helper.main("Open Information Extraction", compact=true) {
-  @helper.form(action = routes.Application.submit(false), 'class -> "well form-inline hidden-phone") {
-    <div align="center">
-    <div class="results-form">
-      <div class="row"><label for="question">Ask another question:&nbsp;</label></div>
-      <div class="col-md-offset-3 col-md-6 input-group">
-          <input class="form-control" type="text" id="question" name="question" value="@query.question" size="40em">
+  <div class="row well">
+  <div class="col-md-6 col-md-offset-3">
+        @helper.form(action = routes.Application.submit(false)) {
+        <label for="question">Question:&nbsp;</label>
+        <div class="input-group input-group-lg search-arg">
+          <input type="text" id="question" name="question" value="@{query.question}" autocomplete="off" class="form-control">
           <span class="input-group-btn">
-          <button id="search-button" class="btn btn-large" style="margin-left:5px"><i id="search-icon" class="glyphicon glyphicon-search"></i> Search</button>
+            <button id="search-button" class="btn btn-primary"><i id="search-icon" class="glyphicon glyphicon-search"></i> Search</button>
           </span>
-      </div>
-    </div>
-
+        </div>  
+        }
+        </div>
+  </div> <div class="row">
     
-    </div>
-  }
-    
-  Top paraphrases:
+  @if(answers.paraphraseHits.nonEmpty) {
+  <b>Top paraphrases:</b>
   <div class="panel-group" id="pp-accordion">
     <div class="panel panel-default">
         <a class="list-group-item accordion-toggle" data-toggle="collapse" data-parent="#pp-accordion" href="#pp-collapse">
@@ -47,10 +46,12 @@
     </div>
     
   </div>
-   
-
-    
-    <div class="stats"><b>@totalAnswerCount answers</b> from <b>@totalSentenceCount sentences</b>@message.map(" ("+_+")").getOrElse("")</div>
+  } else {
+    <div class="text-muted">No paraphrases found.</div>
+  }
+  </div>
+     
+  <div class="stats"><b>@totalAnswerCount answers</b> from <b>@totalSentenceCount sentences</b>@message.map(" ("+_+")").getOrElse("")</div>
     
   <!-- Display the query card if its the results frame for results page -->
       

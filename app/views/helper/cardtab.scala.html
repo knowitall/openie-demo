@@ -1,4 +1,4 @@
-@(query: Query, answer: Answer, index: Int, maxSentenceCount: Int, debug: Boolean)
+@(query: Query, answer: Answer, index: Int, maxGroupCount: Int, maxSentenceCount: Int, debug: Boolean)
 
 @import models.TypeFilters._
 @import models.NellType.fbToNellType
@@ -73,23 +73,13 @@
       }
     }
   }
-
-	<!-- if there are synonyms, display them -->
-	@if(part.otherSynonyms.size > 0) {
-		<h3 class='syns-title'>Extracted Synonyms:</h3>
-		<ul class='syns-body'>
-			@part.otherSynonyms.map { synonym =>
-			<li>@synonym</li>
-			}
-		</ul>
-	}
 	<h3 class='sentences-title'>Extracted from these sources:</h3>
 
 <!-- display sentences -->
-@helper.sentences(answer.limitSentences(maxSentenceCount), debug, index)
+@helper.sentences(answer.copy(dgroups=answer.dgroups.take(maxGroupCount)), maxSentenceCount, debug, index)
 
-@if(answer.resultsCount > maxSentenceCount) {
-    <p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.question, query.parserName, answer.title, debug)}">Show all sentences (@{answer.resultsCount - maxSentenceCount} more)</a></p>
+@if(answer.dgroups.size > maxGroupCount) {
+    <p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.question, query.parserName, answer.title, maxSentenceCount, debug)}">Show all results (@{answer.copy(dgroups=answer.dgroups.drop(maxGroupCount)).resultsCount} more)</a></p>
 }
 	
 </div>

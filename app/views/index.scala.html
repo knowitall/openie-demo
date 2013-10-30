@@ -4,28 +4,19 @@
   <p />
   <div id="query-well" class="row well">
     <div class="row">
-      <div class="col-md-4 col-md-offset-4">
-          <b style="font-size:1.5em;">Example Questions:<i class="icon-question-sign"></i></b>
-          <table style="padding: 5 px;font-size:1em;">
+      <div class="col-md-6 col-md-offset-3">
+          <h4>Example Questions:</h4>
+          <table class="table table-condensed" align="center" style="border:0px;">
               <tr>
                   <td><a href="#" class="example-link" onclick="javascript:fillForm('Food from Africa?')">Food from Africa?</a></td>
-              </tr>
-              <tr>
                   <td><a href="#" class="example-link" onclick="javascript:fillForm('Is there any cure for cancer?')">Is there any cure for cancer?</a></td>
               </tr>
               <tr class="hidden-sm">
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Are there any famous people from Detroit?')">Are there any famous people from Detroit?</a></td>
-              </tr>
-              <tr class="hidden-sm">
                   <td><a href="#" class="example-link" onclick="javascript:fillForm('Sources of Antioxidants?')">Sources of Antioxidants?</a></td>
-              </tr>
-              <tr class="hidden-sm">
                   <td><a href="#" class="example-link" onclick="javascript:fillForm('Is Obama married and to who?')">Is Obama married and to who?</a></td>
               </tr>
               <tr class="hidden-sm">
                   <td><a href="#" class="example-link" onclick="javascript:fillForm('Who invented the light bulb?')">Who invented the light bulb?</a></td>
-              </tr>
-              <tr class="hidden-sm">
                   <td><a href="#" class="example-link" onclick="javascript:fillForm('What foods are high in protein?')">What foods are high in protein?</a></td>
               </tr>
           </table>
@@ -36,12 +27,15 @@
       <div class="col-md-offset-3 col-md-6">
         @helper.form(action = routes.Application.submit(false)) {
         <label for="question">Ask a question!&nbsp;</label>
-        <div class="input-group input-group-lg sarch-arg">
+        <div class="input-group input-group-lg search-arg">
           <input type="text" id="question" name="question" value="" placeholder=" question" autocomplete="off" class="form-control">
           <span class="input-group-btn">
             <button id="search-button" class="btn btn-primary"><i id="search-icon" class="glyphicon glyphicon-search"></i> Search</button>
           </span>
         </div>  
+        <div align="center">
+        <div id="search-spinner" style="width: 35px;height: 35px;margin-left:10px;display:inline-block;position:relative;top:10px;"></div>
+        </div>
         }
       </div>
     </div> 

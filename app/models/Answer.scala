@@ -53,30 +53,30 @@ case class Answer(parts: Seq[AnswerPart], dgroups: Seq[DerivationGroup], queryEn
 
   val allTriplesByRel = allTriples.groupBy(_.rel)
 
-  def limitResults(max: Int): Answer = {
-    // expand dgroups and limit then regroup
-    val expanded = dgroups.flatMap { case DerivationGroup(pps, queryTriples) =>
-      queryTriples.flatMap { case (query, triples) =>
-        triples.map(t => (pps, query, t))
-      }
-    }
-    val limited = expanded.take(max)
-    val regrouped = limited.groupBy(_._1).iterator.toSeq.map { case (pps, group) =>
-      val queryTriples = group.groupBy(_._2).iterator.toSeq.map { case (query, group2) =>
-        (query, group2.map(_._3))
-      }.toSeq
-      DerivationGroup(pps, queryTriples)
-    }
-    this.copy(dgroups = regrouped)
-  }
-
-  def limitSentences(max: Int): Answer = {
-    val truncatedDgroups = dgroups.map { dg =>
-      val truncatedTriples = dg.queryTriples.map { case (query, triples) =>
-        (query, triples.take(max))
-      }
-      dg.copy(queryTriples = truncatedTriples)
-    }
-    this.copy(dgroups = truncatedDgroups)
-  }
+//  def limitResults(max: Int): Answer = {
+//    // expand dgroups and limit then regroup
+//    val expanded = dgroups.flatMap { case DerivationGroup(interp, pps, queryTriples) =>
+//      queryTriples.flatMap { case (query, triples) =>
+//        triples.map(t => (pps, query, t))
+//      }
+//    }
+//    val limited = expanded.take(max)
+//    val regrouped = limited.groupBy(_._1).iterator.toSeq.map { case (pps, group) =>
+//      val queryTriples = group.groupBy(_._2).iterator.toSeq.map { case (query, group2) =>
+//        (query, group2.map(_._3))
+//      }.toSeq
+//      DerivationGroup(pps, queryTriples)
+//    }
+//    this.copy(dgroups = regrouped)
+//  }
+//
+//  def limitSentences(max: Int): Answer = {
+//    val truncatedDgroups = dgroups.map { dg =>
+//      val truncatedTriples = dg.queryTriples.map { case (query, triples) =>
+//        (query, triples.take(max))
+//      }
+//      dg.copy(queryTriples = truncatedTriples)
+//    }
+//    this.copy(dgroups = truncatedDgroups)
+//  }
 }

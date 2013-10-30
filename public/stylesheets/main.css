@@ -57,6 +57,14 @@ margin-left: 85px;
   font-weight: normal;
 }
 
+.truncate-title {
+  width:inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-wrap:break-word;
+}
+
 .syns-title {
   font-weight: bold;
 }
@@ -88,7 +96,6 @@ margin-left: 85px;
 }
 
 .sentence {
-  display: inline-block;
   position: relative;
 }
 
