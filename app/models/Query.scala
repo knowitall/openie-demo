@@ -21,6 +21,8 @@ class Query(val question: String, val paraphraserName: String, val parserName: S
     require(DemoComponents.parsers.contains(parserName), parserName + " is not a valid parser name.")
     DemoComponents.parsers(parserName)
   }
+
+  override def toString: String = s"Query($question, $paraphraserName, $parserName)"
 }
 
 object Query {

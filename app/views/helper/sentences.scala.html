@@ -9,8 +9,15 @@
   
   
   <div class="panel-title">
-    
-    <h3 style="margin-bottom:0px;">@{d.resultsCount + " results from \"" + d.paraphrases.head.target + "\""}</h3>
+    <div class="paraphrase">
+    <h3 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:0px;">
+    @{d.resultsCount + " results from "}
+    @{d.ppsDeduped.take(1).map(pp=> "\"%s\"".format(pp.target)).mkString(", ") }
+    </h3>
+    @if(d.ppsDeduped.size > 1) {
+      <div class="hover-source">similar paraphrases: @{d.ppsDeduped.drop(1).map(pp=> "\"%s\"".format(pp.target)).mkString(", ") }</div>
+    }
+    </div>
     <div class="text-muted" style="font-size:14px">Interpretation: @{d.interpretation}</div> 
   </div>
   

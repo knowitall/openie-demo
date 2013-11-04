@@ -195,7 +195,7 @@ object Application extends Controller {
       case Some(answers) if !debug =>
         Logger.debug("retrieving " + query + " from cache")
 
-        val AnswerSet(groups, filters, entities) = answers
+        val AnswerSet(groups, filters, entities, paraphraseHits) = answers
 
         // cache hit
         Logger.info(query.toString +

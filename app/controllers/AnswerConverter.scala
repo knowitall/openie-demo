@@ -16,6 +16,8 @@ import models.{Triple, DefaultTriple, OpenIETriple}
 import edu.knowitall.collection.immutable.Interval
 import models.Answer
 import play.api.Logger
+import edu.knowitall.execution.StrSim
+import edu.knowitall.execution.ClassInstanceExecutor.ciRelSet
 
 case class Link(entity: FreeBaseEntity, types: Set[FreeBaseType])
 
@@ -105,11 +107,16 @@ class AnswerConverter(solr: SolrServer) {
       qderivspps.map { case (conjq, ds, _) =>
         // get the most common parsedQuery
         val qTriples = ds.flatMap(d => getTriples(answerStrings, d, srcIdMap))
-        val qGroups = qTriples.groupBy(_._1).iterator.toSeq
-        val qConjTriples = qGroups.map { case (q, qtriples) => (q, qtriples.map(_._2)) }
-        val filteredQConjTriples = qConjTriples.filterNot(_._2.isEmpty)
-        val queryString = conjq.conjuncts.mkString(" and ")
-        DerivationGroup(queryString, pps.toSeq.sortBy(ppDerivationSort), filteredQConjTriples)
+        val qGroups = qTriples.groupBy(_._1)
+        val qConjTriples = qGroups.map { case (conj, qtriples) => (conj, qtriples.map(t => (t._2, t._3))) }
+        val qConjGroupedTriples = qConjTriples.map { case (conj, qtriples) => (conj, qtriples.groupBy(_._1).map(p => (p._1, p._2.map(_._2))).iterator) }
+        val filteredQConjTriples = qConjGroupedTriples.filterNot(_._2.isEmpty)
+        val flattenedTriples = conjq.conjuncts.flatMap(filteredQConjTriples.get).flatten
+        val queryString = {
+          val varMap = conjq.qVars.map(v => (v, v.toString)).toMap
+          conjq.conjuncts.map(c => getNormConjunctString(c, varMap)).mkString(" and ")
+        }
+        DerivationGroup(queryString, pps.toSeq.sortBy(ppDerivationSort), flattenedTriples)
       }
     }
     val noEmpties = dgroups.filterNot(_.resultsCount == 0)
@@ -118,7 +125,7 @@ class AnswerConverter(solr: SolrServer) {
 
   private val sourceIdRegex = """\w+\.source_ids""".r
 
-  def getTriples(answerStrings: Seq[String], deriv: AnswerDerivation, srcIdMap: Map[String, Triple]): Seq[(String, Triple)] = {
+  def getTriples(answerStrings: Seq[String], deriv: AnswerDerivation, srcIdMap: Map[String, Triple]): Seq[(TConjunct, String, Triple)] = {
 
     val equery = deriv.execTuple.query
     val tuple = deriv.execTuple.tuple
@@ -140,17 +147,24 @@ class AnswerConverter(solr: SolrServer) {
 
     // convert to ConjunctString, Triple
     triplesMap.flatMap { case (conj, cAttrs, triples) =>
-      val cstring = getConjunctString(conj, answerMap)
-      triples map (t => (cstring, t))
+      val cstring = getNormConjunctString(conj, answerMap)
+      triples map (t => (conj, cstring, t))
     }
   }
 
-  def getConjunctString(conj: TConjunct, qVarsToAnswers: Map[TVariable, String]): String = {
+  def getNormConjunctString(conj: TConjunct, qVarsToAnswers: Map[TVariable, String]): String = {
     def fieldString(f: Field) = conj.values(f) match {
       case v: TVariable => qVarsToAnswers(v)
-      case l: TLiteral => literalToString(l)
+      case l: TLiteral => {
+        val litString = literalToString(l).toLowerCase
+        if (ciRelSet.contains(litString))
+          "is"
+        else {
+          val lemmas = StrSim.lemmatize(litString)
+          lemmas.map(_.lemma).mkString(" ")
+        }
+      }
     }
-
     Seq(arg1, rel, arg2).map(fieldString).mkString("(", ", ", ")")
   }
 

@@ -38,11 +38,6 @@ case class TripleQuery(
   def arg2EntityField: Option[String] = arg2 collect entStr
   def corpusField:     Option[String] = corpora.map(_.corpora)
 
-  override def toString = "(" + arg1String + ", " +
-    relString + ", " +
-    arg2String +
-    corpora.map(c => ", " + c.toString).getOrElse("") + ")"
-
   def full = arg1.isDefined && rel.isDefined && arg2.isDefined
 
 //  def freeParts: Set[String] = {

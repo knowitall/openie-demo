@@ -99,7 +99,15 @@ margin-left: 85px;
   position: relative;
 }
 
+.paraphrase {
+  position: relative;
+}
+
 .sentence:hover {
+  background: #ddd;
+}
+
+.paraphrase:hover {
   background: #ddd;
 }
 
@@ -118,6 +126,22 @@ margin-left: 85px;
   z-index: 1;
 }
 
+.paraphrase > .hover-source {
+  float: right;
+  position: absolute;
+  top: 100%;
+  margin-top: 5px;
+  padding: 0 5px;
+  background: white;
+  border: 1px solid #333;
+  display: none;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  z-index: 1;
+  transition-delay:1s;
+}
+
 .hover-source > .arrow {
   position: absolute;
   width: 0;
@@ -132,6 +156,11 @@ margin-left: 85px;
 
 .sentence:hover > .hover-source, .sentence:hover > .arrow {
   display: block;
+}
+
+.paraphrase:hover > .hover-source, .paraphrase:hover > .arrow {
+  display: block;
+  transition-delay:1s;
 }
 
 .freebase-attribution {

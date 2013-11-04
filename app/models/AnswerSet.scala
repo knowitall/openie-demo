@@ -3,6 +3,7 @@ package models
 import scala.collection.immutable
 import edu.knowitall.common.enrich.Traversables._
 import edu.knowitall.paraphrasing.Paraphrase
+import edu.knowitall.paraphrasing.IdentityDerivation
 
 /** The Answer set is a collection of the answers.
   *
@@ -10,7 +11,7 @@ import edu.knowitall.paraphrasing.Paraphrase
   * @param  filters  the filter tabs for the answers
   * @param  queryEntities  the entities associated with the singularly filled query position, or none
   */
-case class AnswerSet(answers: Seq[Answer], filters: immutable.SortedSet[TypeFilterTab], queryEntities: immutable.List[(FreeBaseEntity, Int)]) {
+case class AnswerSet(answers: Seq[Answer], filters: immutable.SortedSet[TypeFilterTab], queryEntities: immutable.List[(FreeBaseEntity, Int)], paraphraseHits: Seq[(Paraphrase, Int)]) {
 
   def answerCount = answers.size
   def resultsCount = answers.map(_.resultsCount).sum
@@ -26,19 +27,19 @@ case class AnswerSet(answers: Seq[Answer], filters: immutable.SortedSet[TypeFilt
       filters.forall(filter => filter(group))
   ))}
 
-  val paraphraseHits: Seq[(Paraphrase, Int)] = {
-    // flatten out (paraphrase, ..., triple)
-    val ppTriples = for (
-        answer <- answers;
-        dgroup <- answer.dgroups;
-        paraphrase <- dgroup.paraphrases;
-        (query, triples) <- dgroup.queryTriples;
-        triple <- triples) yield (paraphrase, triple)
-
-    val ppHitsMap = ppTriples.groupBy(_._1).map { case (pp, pphits) => (pp, pphits.size) }
-    val sortedHits = ppHitsMap.iterator.toSeq.sortBy { case (pp, hits) => DerivationGroup.ppDerivationSort(pp) }
-    sortedHits.drop(1) // don't include the identity paraphrase...
-  }
+//  val paraphraseHits: Seq[(Paraphrase, Int)] = {
+//    // flatten out (paraphrase, ..., triple)
+//    val ppTriples = for (
+//        answer <- answers;
+//        dgroup <- answer.dgroups;
+//        paraphrase <- dgroup.ppsDeduped;
+//        (query, triples) <- dgroup.queryTriples;
+//        triple <- triples) yield (paraphrase, triple)
+//
+//    val ppHitsMap = ppTriples.groupBy(_._1).map { case (pp, pphits) => (pp, pphits.size) }
+//    val sortedHits = ppHitsMap.iterator.toSeq.sortBy { case (pp, hits) => DerivationGroup.ppDerivationSort(pp) }
+//    sortedHits.filterNot(_._1.derivation.equals(IdentityDerivation))
+//  }
 }
 
 object AnswerSet {
@@ -58,12 +59,26 @@ object AnswerSet {
       // (entity, total size)
       sortBy(_._2)(Ordering[Int].reverse)
 
+  val paraphraseHits: Seq[(Paraphrase, Int)] = {
+    // flatten out (paraphrase, ..., triple)
+    val ppTriples = for (
+        answer <- answers;
+        dgroup <- answer.dgroups;
+        paraphrase <- dgroup.ppsDeduped;
+        (query, triples) <- dgroup.queryTriples;
+        triple <- triples) yield (paraphrase, triple)
+
+    val ppHitsMap = ppTriples.groupBy(_._1).map { case (pp, pphits) => (pp, pphits.size) }
+    val sortedHits = ppHitsMap.iterator.toSeq.sortBy { case (pp, hits) => DerivationGroup.ppDerivationSort(pp) }
+    sortedHits.filterNot(_._1.derivation.equals(IdentityDerivation))
+  }
+
     AnswerSet(
       // we need to re-apply the query filters because some entities may have been
       // unlinked due to a low confidence.
       answers,
       filterTabs,
-      queryEntities)
+      queryEntities, paraphraseHits)
   }
 }
 

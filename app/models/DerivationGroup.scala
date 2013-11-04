@@ -2,6 +2,7 @@ package models
 
 import edu.knowitall.collection.immutable.Interval
 import edu.knowitall.paraphrasing.{Paraphrase, IdentityDerivation, ScoredParaphraseDerivation}
+import edu.knowitall.execution.StrSim
 
 /**
  * Represents an individual Triple and associated metadata.
@@ -45,9 +46,17 @@ case class OpenIETriple(
 
 case class DerivationGroup(val interpretation: String, val paraphrases : Seq[Paraphrase], val queryTriples: Seq[(String, Seq[Triple])]) {
   def resultsCount = queryTriples.flatMap(_._2).size
+
+  def ppsDeduped = paraphrases.groupBy(DerivationGroup.ppGroupKey).valuesIterator.map(_.head).toSeq.sortBy(DerivationGroup.ppDerivationSort)
 }
 
 object DerivationGroup {
+
+  def ppGroupKey(pp: Paraphrase) = {
+    val lemmas = StrSim.lemmatize(pp.target)
+    val lemmaString = lemmas.map(_.lemma).mkString(" ")
+    lemmaString.replaceAll("which", "what")
+  }
 
   def ppDerivationSort(pp: Paraphrase): Double = {
     pp.derivation match {
@@ -62,10 +71,13 @@ object DerivationGroup {
     val queryGroups = dgroups.groupBy(_.interpretation)
     // break out combined paraphrases for these derivations
     val ppGroups = queryGroups.iterator.toSeq.map { case (interp, dgs) => (interp, dgs.flatMap(_.paraphrases).distinct, dgs) }
-    // merge queryTriples for each and done.
+    // merge queryTriples within each group. Most of this
+    // mess is just trying to preserve the order of TConjuncts ("Evidence for...") as it was in the input.
     val regrouped = ppGroups.iterator.toSeq.map { case (interp, pps, dgs) =>
       val allQueryTriples = dgs.flatMap(_.queryTriples)
-      val regroupedQTs = allQueryTriples.groupBy(_._1).map(p => (p._1, p._2.flatMap(_._2))).iterator.toSeq
+      val originalOrder = allQueryTriples.map(_._1).distinct
+      val allQueryTriplesGrouped = allQueryTriples.groupBy(_._1).map(p=>(p._1,p._2.flatMap(_._2)))
+      val regroupedQTs = originalOrder.flatMap(k => allQueryTriplesGrouped.get(k).map((k, _)))
       DerivationGroup(interp, pps.sortBy(ppDerivationSort), regroupedQTs.filterNot(_._2.isEmpty))
     }
     regrouped.sortBy(dg => ppDerivationSort(dg.paraphrases.head))
