@@ -40,31 +40,6 @@ case class TripleQuery(
 
   def full = arg1.isDefined && rel.isDefined && arg2.isDefined
 
-//  def freeParts: Set[String] = {
-//    Iterable((arg1, "r0.arg1"), (rel, "r0.rel"), (arg2, "r0.arg2")).filter {
-//      case (constraint, part) =>
-//        constraint match {
-//          case None => true
-//          case Some(constraint) => constraint.free
-//        }
-//    }.map(_._2).toSet
-//  }
-
-//  def filters: Seq[TypeFilter] = {
-//    var seq = Seq.empty[TypeFilter]
-//
-//    def filtersFor(part: String, constraint: Constraint) = constraint match {
-//      case constraint: TypeConstraint => Some(PositiveStringTypeFilter(constraint.typ, Set(part)))
-//      case _ => None
-//    }
-//
-//    seq ++= this.arg1.flatMap(constraint => filtersFor("r0.arg1", constraint))
-//    seq ++= this.rel.flatMap(constraint => filtersFor("r0.rel", constraint))
-//    seq ++= this.arg2.flatMap(constraint => filtersFor("r0.arg2", constraint))
-//
-//    seq
-//  }
-
   /**
    * Checks if the query matches specific conditions and returns a list of
    *  appropriate suggestion strings.
