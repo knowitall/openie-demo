@@ -65,7 +65,28 @@
         </a></li>
       }
     </ul>
+      <!-- Pagination -->
+    @if(pageCount > 1) {
+    <ul class="pagination">
+      @if(pageno > 0) {
+        <li><a href="@{routes.Application.search(query.question, query.parserName, filterString, pageno - 1, debug)}">Prev</a></li>
+      }
+      @for(i <- pageno-4 to pageno-1; if i >= 0) {
+        <li><a href="@{routes.Application.search(query.question, query.parserName, filterString, i, debug)}">@i</a></li>
+      }
+      <li class="active"><a href="#">@pageno</a></li>
+      @for(i <- pageno+1 to pageno+4; if i < pageCount) {
+        <li><a href="@{routes.Application.search(query.question, query.parserName, filterString, i, debug)}">@i</a></li>
+      }
+      @if(pageno + 1 < pageCount) {
+        <li><a href="@{routes.Application.search(query.question, query.parserName, filterString, pageno + 1, debug)}">Next</a></li>
+      }
+      </ul>
+    }
   </div> <!-- col-md-3 -->
+  
+
+  
   <div class="col-md-9">
     <div class="tab-content hidden-sm">
       @for((answer, i) <- answers.answers.zipWithIndex) {
@@ -80,30 +101,7 @@
   
   
 
-<!-- Pagination -->
-@if(pageCount > 1) {
-  <div align="left">
-    <ul class="pagination">
-    @if(pageno > 0) {
-      <li><a href="@{routes.Application.search(query.question, query.parserName, filterString, pageno - 1, debug)}">Prev</a></li>
-    }
 
-    @for(i <- pageno-4 to pageno-1; if i >= 0) {
-      <li><a href="@{routes.Application.search(query.question, query.parserName, filterString, i, debug)}">@i</a></li>
-    }
-
-      <li class="active"><a href="#">@pageno</a></li>
-
-    @for(i <- pageno+1 to pageno+4; if i < pageCount) {
-      <li><a href="@{routes.Application.search(query.question, query.parserName, filterString, i, debug)}">@i</a></li>
-    }
-
-    @if(pageno + 1 < pageCount) {
-      <li><a href="@{routes.Application.search(query.question, query.parserName, filterString, pageno + 1, debug)}">Next</a></li>
-    }
-    </ul>
-  </div>
-}
 
 <script type="text/javascript">
 // spinner options presets
