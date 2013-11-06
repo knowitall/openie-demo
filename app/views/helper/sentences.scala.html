@@ -77,8 +77,64 @@
       } <!-- if not open ie, else, ... -->
       </li> <!--- sentence --->
     }  <!--- triple ---> 
+
+    <!-- MORE SECTIOn -->
     @if(triples.size > maxSentenceCount) {
-      <div align="center" class="text-muted" style="padding:10px 15px 5px 10px;">(@{triples.size - maxSentenceCount} more)</div>
+      <div id="more-@index-@ppindex" class="panel-collapse collapse">
+      @for(r <- triples.drop(maxSentenceCount)) {
+              
+      <li class="sentence">
+      @if(!r.isInstanceOf[OpenIETriple]) {
+        
+        <a class="sent" href="@r.url">
+        (<b>@r.arg1</b>@{", " + r.rel + ", "}<b>@r.arg2</b>)
+        <span style="color: #888">  via @{r.source}</span>
+        </a>
+      } else {
+        @defining(r.asInstanceOf[OpenIETriple]) { t =>
+
+          <a class="sent" href="@t.url">
+          @for((string, i) <- t.sentenceStrings.zipWithIndex) {
+            @if(t.boldIntervals.exists(_.start==i)) {<b>}
+            @if(t.boldIntervals.exists(_.end==i)) {</b>}
+            @string.replaceAll("\t", " ").replaceAll("[\\p{C}]","") 
+          }
+          @if(t.boldIntervals.exists(_.end==t.sentenceStrings.size)) {</b>}
+          <span style="color: #888">@{
+            if (t.corpus == "cw") {" (via ClueWeb12)"}
+            else if (t.corpus == "g1b") {" (via Google)"}
+            else if (t.corpus == "wiki") {" (via Wikipedia)"}
+            else if (t.corpus == "news") {" (via News)"}
+            else {" (via %s)" format t.corpus}
+          }</span>
+          </a>
+          <div class="hover-source">
+          Source: @{t.url}<br/>
+          Extracted using Open IE 4.0 over the 
+          @{t.corpus match {
+              case "cw" => { "ClueWeb12" }
+              case "g1b" => { "Google" }
+              case "wiki" => {"Wikipedia"}
+              case "news" => {"News"}
+              case _ => { t.corpus }
+            }  
+          } <!--- t.corpus --->
+          corpus. 
+          </div> <!--- hover source --->
+          
+        } <!-- defining -->
+      } <!-- if not open ie, else, ... -->
+      </li> <!--- sentence --->
+      }
+      </div>
+    }
+    <!--- /MORE SECTION --->
+
+    @if(triples.size > maxSentenceCount) {
+      <div align="center"><a class="accordion-toggle text-muted" style="padding:10px 15px 5px 10px;" data-toggle="collapse" href="#more-@index-@ppindex">
+     (@{triples.size - maxSentenceCount} more)
+     </a></div>
+     
     }
     
     

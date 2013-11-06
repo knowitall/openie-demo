@@ -51,12 +51,17 @@
     <ul class="nav nav-pills nav-stacked">
       @for((answer, i) <- answers.answers.zipWithIndex) {
         <li><a href="#L@{i}" class="answer list-group-item hidden-sm" data-toggle="tab" data-fbid="@{answer.parts.map(_.entity.map(_.fbid).getOrElse("")).mkString(";")}">
-          <span align="left">@helper.grouptitle(answer.parts, debug)</span>
-          <span class="text-muted pull-right" >(@answer.resultsCount)</span>
+          <table><tr>
+          <td style="width:195px;padding-right:5px">
+          @helper.grouptitle(answer.parts, debug)
+          </td><td>
+          <div align="right" class="text-muted pull-right">(@answer.resultsCount)</div>
+          </td>
+          </tr></table>
         </a></li>
         <li><a class="answer list-group-item visible-sm" href="@{routes.Application.sentences(query.question, query.parserName, answer.title, maxSentenceCount, debug)}">
           @Html(answer.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", "))
-          <span class="badge">@answer.resultsCount</span>
+          <span class="text-muted pull-right">(@answer.resultsCount)</span>
         </a></li>
       }
     </ul>

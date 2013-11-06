@@ -31,8 +31,31 @@ margin-left: 85px;
 }
 
 .hid { display: none }
-.title-entity { font-weight: bold }
-.title-typed { font-style: italic }
+
+.title-entity {
+  width: 195px;
+  white-space: nowrap;
+  overflow: hidden; 
+  text-overflow: ellipsis;
+  font-weight: bold;
+}
+
+
+.title-typed {
+  width: 195px;
+  white-space: nowrap;
+  overflow: hidden; 
+  text-overflow: ellipsis;
+  font-style: italic; 
+}
+
+.title-string { 
+  width: 195px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
 .answer { font-size: large }
 .popover-image {
   float: left;
