@@ -15,14 +15,15 @@
         </div>  
         }
         </div>
-  </div> <div class="row">
+  </div> 
     
   @if(answers.paraphraseHits.nonEmpty) {
-  <b>Top paraphrases:</b>
-  <div class="panel-group" id="pp-accordion">
-    <div class="panel panel-default">
-        <a class="list-group-item accordion-toggle" data-toggle="collapse" data-parent="#pp-accordion" href="#pp-collapse">
-          <div class="panel-title">
+  <div class="row">
+    <b>Top paraphrases:</b>
+    <div class="panel-group" id="pp-accordion">
+      <div class="panel panel-default">
+        
+          <div class="panel-title list-group-item">
             <table style="width:100%;"><tr>
             @for(group <- answers.paraphraseHits.grouped(3).toSeq.take(1); (pp, count) <- group) {
               <td align="center"><span class="stats">@{pp.target}</span>
@@ -30,26 +31,35 @@
             }
             </tr></table>
           </div>
-        </a>
-      
-    <div id="pp-collapse" class="panel-collapse collapse">
-      
-      @for(group <- answers.paraphraseHits.grouped(3).toSeq.drop(1)) {
-        <div class="list-group-item">
-        <table style="width:100%;"><tr>
-        @for((pp, count) <- group) {
-          <td align="center">@{pp.target} <span class="text-muted" style="font-size:small;">(@count results)</span></td>
-        }
-        </tr></table>
+        
+        <div id="pp-collapse" class="panel-collapse collapse">
+          @for(group <- answers.paraphraseHits.grouped(3).toSeq.drop(1)) {
+            <div class="list-group-item">
+              <table style="width:100%;"><tr>
+              @for((pp, count) <- group) {
+                <td align="center">@{pp.target} <span class="text-muted" style="font-size:small;">(@count results)</span></td>
+              }
+              </tr></table>
+            </div>
+          }
         </div>
-      }
+      </div>
     </div>
-    
+    @if(answers.paraphraseHits.grouped(3).size > 1){
+      <div class="row" style="height:10px;">
+      <div style="width:100px;float:none;margin:auto;">
+        <div class="list-group">
+          <a id="pp-more" class="list-group-item accordion-toggle" data-toggle="collapse" data-parent="#pp-accordion" href="#pp-collapse" style="border-top:0px;padding:3px 7px 3px 7px;text-align:center;border-top-left-radius:0px;border-top-right-radius:0px;">
+            @{answers.paraphraseHits.size - 3}&nbsp;<span id="pp-text">more</span>&nbsp;<i id="pp-icon" class="glyphicon glyphicon-arrow-down text-muted" style="top:3px;"></i>
+          </a>
+        </div>
+      </div>
+      </div>
+    }
   </div>
   } else {
     <div class="text-muted">No paraphrases found.</div>
   }
-  </div>
      
   <div class="stats"><b>@totalAnswerCount answers</b> from <b>@totalSentenceCount sentences</b>@message.map(" ("+_+")").getOrElse("")</div>
     
@@ -76,5 +86,18 @@
 					$('#results-content').html(html);
 				})
 			}
+			
+  $('#pp-collapse').on('hide.bs.collapse', function () {
+    $('#pp-text').html("more");
+    $('#pp-icon').toggleClass("glyphicon-arrow-up");
+    $('#pp-icon').toggleClass("glyphicon-arrow-down");
+  });
+  
+  $('#pp-collapse').on('show.bs.collapse', function () {
+    $('#pp-text').html("less");
+    $('#pp-icon').toggleClass("glyphicon-arrow-up");
+    $('#pp-icon').toggleClass("glyphicon-arrow-down");
+  });
+			
 		</script>
 }

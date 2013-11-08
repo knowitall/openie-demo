@@ -28,8 +28,8 @@ import play.api.Logger
  */
 object TriplestoreSource extends FetchSource {
 
-  private val solrUrl = "http://rv-n16.cs.washington.edu:10983/solr/triplestore"
-  private val maxHits = 500
+  private val solrUrl = "http://reliable.cs.washington.edu:10983/solr/triplestore"
+  private val maxHits = 100
   private val solrClient = SolrClient(solrUrl, maxHits)
   private val solrServer = solrClient.server
   private val executor = DefaultFilters.wrap(StopwordExecutor(IdentityExecutor(solrClient))) // Need to be able to hang on to the solr server.

@@ -19,11 +19,13 @@ sealed trait Triple {
    * The name, e.g. "NELL", "FreeBase", "Open IE 4"
    */
   def source: String
+
   /**
    * A link to justify the triple, e.g. link to NELL page, Freebase, a webpage containing Open IE extracted text, etc.
    */
   def url: String
 }
+
 case class DefaultTriple(val arg1: String, val rel: String, val arg2: String, val source: String, val url: String) extends Triple
 case class OpenIETriple(
     val sentenceStrings: Seq[String],
@@ -40,7 +42,7 @@ case class OpenIETriple(
   def boldIntervals = Seq(arg1Interval, arg2Interval)
 
   def arg1 = sentenceSlice(arg1Interval)
-  def rel = sentenceSlice(relInterval)
+  def rel  = sentenceSlice(relInterval)
   def arg2 = sentenceSlice(arg2Interval)
 }
 
@@ -48,6 +50,7 @@ case class DerivationGroup(val interpretation: String, val paraphrases : Seq[Par
   def resultsCount = queryTriples.flatMap(_._2).size
 
   def ppsDeduped = paraphrases.groupBy(DerivationGroup.ppGroupKey).valuesIterator.map(_.head).toSeq.sortBy(DerivationGroup.ppDerivationSort)
+
 }
 
 object DerivationGroup {
@@ -63,6 +66,12 @@ object DerivationGroup {
       case IdentityDerivation => Int.MinValue
       case _ => -pp.derivation.score
     }
+  }
+
+  def answerSort(answer: Answer): Double = {
+
+    val maxPPscore = answer.dgroups.flatMap(_.paraphrases).minBy(ppDerivationSort).derivation.score
+    -(maxPPscore + (answer.resultsCount / 1000.0))
   }
 
   def regroup(dgroups: Seq[DerivationGroup]): Seq[DerivationGroup] = {
@@ -82,7 +91,6 @@ object DerivationGroup {
     }
     regrouped.sortBy(dg => ppDerivationSort(dg.paraphrases.head))
   }
-
 
   def dedupe(dgroups: Seq[DerivationGroup]): Seq[DerivationGroup] = {
 

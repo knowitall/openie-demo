@@ -49,7 +49,7 @@ class AnswerConverter(solr: SolrServer) {
     val titleGroups = answers.groupBy(_.title)
     val combinedAnswers = titleGroups.map { case (title, answers) => (title, combineAnswers(answers)) }
     val filteredAnswers = combinedAnswers.filterNot(_._2.dgroups.isEmpty)
-    val sortedAnswers = filteredAnswers.values.toSeq.sortBy(-_.resultsCount)
+    val sortedAnswers = filteredAnswers.values.toSeq.sortBy(DerivationGroup.answerSort)
     sortedAnswers
   }
 

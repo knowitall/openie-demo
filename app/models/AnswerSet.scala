@@ -11,7 +11,7 @@ import edu.knowitall.paraphrasing.IdentityDerivation
   * @param  filters  the filter tabs for the answers
   * @param  queryEntities  the entities associated with the singularly filled query position, or none
   */
-case class AnswerSet(answers: Seq[Answer], filters: immutable.SortedSet[TypeFilterTab], queryEntities: immutable.List[(FreeBaseEntity, Int)], paraphraseHits: Seq[(Paraphrase, Int)]) {
+case class AnswerSet (answers: Seq[Answer], filters: immutable.SortedSet[TypeFilterTab], queryEntities: immutable.List[(FreeBaseEntity, Int)], paraphraseHits: Seq[(Paraphrase, Int)]) {
 
   def answerCount = answers.size
   def resultsCount = answers.map(_.resultsCount).sum

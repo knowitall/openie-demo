@@ -8,16 +8,12 @@
           <h4>Example Questions:</h4>
           <table class="table table-condensed" align="center" style="border:0px;">
               <tr>
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Food from Africa?')">Food from Africa?</a></td>
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Is there any cure for cancer?')">Is there any cure for cancer?</a></td>
+                <td><a href="#" class="example-link" onclick="javascript:fillForm('Sources of Antioxidants?')">Sources of Antioxidants?</a></td>
+                <td><a href="#" class="example-link" onclick="javascript:fillForm('Locations of summer Olympics?')">Locations of summer Olympics?</a></td>
               </tr>
               <tr class="hidden-sm">
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Sources of Antioxidants?')">Sources of Antioxidants?</a></td>
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Is Obama married and to who?')">Is Obama married and to who?</a></td>
-              </tr>
-              <tr class="hidden-sm">
-                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Who invented the light bulb?')">Who invented the light bulb?</a></td>
                   <td><a href="#" class="example-link" onclick="javascript:fillForm('What foods are high in protein?')">What foods are high in protein?</a></td>
+                  <td><a href="#" class="example-link" onclick="javascript:fillForm('Who invented the light bulb?')">Who invented the light bulb?</a></td>  
               </tr>
           </table>
           <br />
@@ -28,7 +24,7 @@
         @helper.form(action = routes.Application.submit(false)) {
         <label for="question">Ask a question!&nbsp;</label>
         <div class="input-group input-group-lg search-arg">
-          <input type="text" id="question" name="question" value="" placeholder=" question" autocomplete="off" class="form-control">
+          <input type="text" id="question" name="question" value="" placeholder="" autocomplete="off" class="form-control" autofocus>
           <span class="input-group-btn">
             <button id="search-button" class="btn btn-primary"><i id="search-icon" class="glyphicon glyphicon-search"></i> Search</button>
           </span>
