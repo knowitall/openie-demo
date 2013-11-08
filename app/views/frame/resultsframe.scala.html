@@ -26,7 +26,7 @@
           <div class="panel-title list-group-item">
             <table style="width:100%;"><tr>
             @for(group <- answers.paraphraseHits.grouped(3).toSeq.take(1); (pp, count) <- group) {
-              <td align="center"><span class="stats">@{pp.target}</span>
+              <td align="center"><span class="stats">@{pp.target.replaceAll(" be ", " is ")}</span>
               <span class="text-muted" style="font-size:small;">(@count results)</span></td>
             }
             </tr></table>
@@ -37,7 +37,7 @@
             <div class="list-group-item">
               <table style="width:100%;"><tr>
               @for((pp, count) <- group) {
-                <td align="center">@{pp.target} <span class="text-muted" style="font-size:small;">(@count results)</span></td>
+                <td align="center">@{pp.target.replaceAll(" be ", " is ")} <span class="text-muted" style="font-size:small;">(@count results)</span></td>
               }
               </tr></table>
             </div>
