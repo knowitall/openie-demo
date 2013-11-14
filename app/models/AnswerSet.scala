@@ -97,7 +97,7 @@ object AnswerSet {
           (query, triples) <- dgroup.queryTriples;
           triple <- triples) yield (paraphrase, triple)
 
-    val ppHitsMap = ppTriples.groupBy(_._1).map { case (pp, pphits) => (pp, pphits.size) }
+    val ppHitsMap = answers.flatMap(a => a.dgroups.flatMap(dg => dg.paraphrases.map((_, a)))).groupBy(_._1).map(p => (p._1, p._2.size))
     val sortedHits = ppHitsMap.iterator.toSeq.sortBy { case (pp, hits) => DerivationGroup.ppDerivationSort(pp) }
     sortedHits.filterNot(_._1.derivation.equals(IdentityDerivation))
   }

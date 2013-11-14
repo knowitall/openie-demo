@@ -36,7 +36,7 @@
               <a href='@{routes.Application.results(query.question, query.parserName, "all", 0, Some(ppIndex), false, false)}'>
               @renderParaphrase(pp)
               </a>
-              <span class="text-muted" style="font-size:small;">(@count results)</span></td>
+              <span class="text-muted" style="font-size:small;">(@count answers)</span></td>
             }
             </tr></table>
           </div>
@@ -49,7 +49,7 @@
                 <td align="center">
                 <a href='@{routes.Application.results(query.question, query.parserName, "all", 0, Some(ppIndex + (ppgIndex * 3) + 3), false, false)}'>
                 @renderParaphrase(pp) 
-                <span class="text-muted" style="font-size:small;">(@count results)</span>
+                <span class="text-muted" style="font-size:small;">(@count answers)</span>
                 </a>
                 </td>
               }
