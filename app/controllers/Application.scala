@@ -103,23 +103,23 @@ object Application extends Controller {
   private def submitHelper(query: Query, debug: Boolean)(implicit request: Request[AnyContent]) = {
 
     val answers = scala.concurrent.future {
-      searchGroups(query, settingsFromRequest(debug, request), debug)
+      searchGroups(query, settingsFromRequest(debug, request), None, debug)
     }
 
     Async {
       answers.map {
         case (answers, message) => {
-          val filtered = setupFilters(answers, "all", 0)._2
+//          val filtered = setupFilters(answers, "all", 0, None)._2
 
           LogEntry.fromRequest(query, "all", answers.answerCount, answers.resultsCount, request).log()
 
           //choose a cut-off to filter out the entities that have few
           //results, and only display to a max of 7 entities
-          val ambiguousEntities = filtered.queryEntities.zipWithIndex.filter {
-            case ((fbe, entityCount), index) => index < 7 && entityCount > 5
-          }
+//          val ambiguousEntities = filtered.queryEntities.zipWithIndex.filter {
+//            case ((fbe, entityCount), index) => index < 7 && entityCount > 5
+//          }
 
-          doSearch(query, "all", 0, settingsFromRequest(debug, request), debug = debug)
+          doSearch(query, "all", 0, None, settingsFromRequest(debug, request), debug = debug)
 
 //          if (ambiguousEntities.size == 0) {
 //            //when there is no entity that satisfy the cut-off filter above
@@ -166,13 +166,18 @@ object Application extends Controller {
   }
 
   def search(question: String, parser: String, filter: String, page: Int, debug: Boolean, log: Boolean) = Action { implicit request =>
-    doSearch(new Query(question, DEFAULT_PARAPHRASER, parser), filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
+    doSearch(new Query(question, DEFAULT_PARAPHRASER, parser), filter, page, None, settingsFromRequest(debug, request), debug=debug, log=log)
   }
 
-  def sentences(question: String, parser: String, title: String, maxSentenceCount: Int, debug: Boolean) = Action {
+  def results(question: String, parser: String, filterString: String, pageNumber: Int, ppIndex: Option[Int], justResults: Boolean, debug: Boolean = false) = Action { implicit request =>
+    doSearch(new Query(question, DEFAULT_PARAPHRASER, parser), filterString, pageNumber, ppIndex, settingsFromRequest(debug, request), debug=debug, log=true, justResults=justResults)
+  }
+
+  
+  def sentences(question: String, parser: String, title: String, maxSentenceCount: Int, ppIndex: Option[Int], debug: Boolean) = Action {
     val query = new Query(question, DEFAULT_PARAPHRASER, parser)
     Logger.info("Sentences request for title '" + title + "' in: " + query)
-    val group = searchGroups(query, ExecutionSettings.default, debug)._1.answers.find(_.title == title) match {
+    val group = searchGroups(query, ExecutionSettings.default, ppIndex, debug)._1.answers.find(_.title == title) match {
       case None => throw new IllegalArgumentException("could not find group title: " + title)
       case Some(group) => group
     }
@@ -189,7 +194,7 @@ object Application extends Controller {
     Ok(views.html.logs(LogEntry.logs(year, month, day), today))
   }
 
-  def searchGroups(query: Query, settings: ExecutionSettings, debug: Boolean) = {
+  def searchGroups(query: Query, settings: ExecutionSettings, ppIndex: Option[Int], debug: Boolean) = {
     Logger.debug("incoming " + query)
     Cache.getAs[AnswerSet](query.toString.toLowerCase) match {
       case Some(answers) if !debug =>
@@ -202,7 +207,9 @@ object Application extends Controller {
           " retrieved from cache" +
           " with " + groups.size + " answers" +
           " and " + groups.iterator.map(_.resultsCount).sum + " results")
-        (answers, Some("cached"))
+          
+        val ppLimited = ppIndex.map(answers.exactPP).getOrElse(answers)
+        (ppLimited, Some("cached"))
       case _ =>
         Logger.debug("executing " + query + " in lucene")
 
@@ -227,27 +234,23 @@ object Application extends Controller {
           Logger.debug("Saving " + query.toString + " to cache.")
           Cache.set(query.toString.toLowerCase, answers, 60 * 10)
         }
-
-        (answers, message)
+        val ppLimited = ppIndex.map(answers.exactPP).getOrElse(answers)
+        (ppLimited, message)
     }
   }
 
-  def results(question: String, parser: String, filterString: String, pageNumber: Int, justResults: Boolean, debug: Boolean = false) = Action { implicit request =>
-    doSearch(new Query(question, DEFAULT_PARAPHRASER, parser), filterString, pageNumber, settingsFromRequest(debug, request), debug=debug, log=true, justResults=justResults)
-  }
-
-  def doSearch(query: Query, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
+  def doSearch(query: Query, filterString: String, pageNumber: Int, ppIndex: Option[Int], settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
     Logger.info("Search request: " + query)
 
     val maxQueryTime = 20 * 1000 /* ms */
 
     val answers = scala.concurrent.future {
-      searchGroups(query, settings, debug)
+      searchGroups(query, settings, ppIndex, debug)
     }
 
     Async {
       answers.map { case (answers, message) =>
-        val filter = setupFilters(answers, filterString, pageNumber)
+        val (filters, filtered, page) = setupFilters(answers, filterString, pageNumber)
 
         if (log) {
           LogEntry.fromRequest(query, filterString, answers.answerCount, answers.resultsCount, request).log()
@@ -256,12 +259,12 @@ object Application extends Controller {
         //if only the category of results is clicked, change the page's result content
         //else generate a header with the result content
         if (justResults) {
-          Ok(views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_GROUP_COUNT, MAX_SENTENCE_COUNT, debug))
+          Ok(views.html.results(query, page, filters, filterString, pageNumber, ppIndex, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_GROUP_COUNT, MAX_SENTENCE_COUNT, debug))
         } else {
           Ok(
             views.html.frame.resultsframe(
-             searchForm, query, message, filter._3, filter._2.answerCount, filter._2.resultsCount, true)(
-               views.html.results(query, filter._3, filter._1.toSet, filterString, pageNumber, math.ceil(filter._2.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_GROUP_COUNT, MAX_SENTENCE_COUNT, debug)))
+             searchForm, query, message, page, filtered.answerCount, filtered.resultsCount, true, ppIndex.isDefined)(
+               views.html.results(query, page, filters, filterString, pageNumber, ppIndex, math.ceil(filtered.answerCount.toDouble / PAGE_SIZE.toDouble).toInt, MAX_GROUP_COUNT, MAX_SENTENCE_COUNT, debug)))
         }
       }
     }

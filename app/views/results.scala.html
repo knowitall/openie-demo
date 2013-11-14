@@ -1,4 +1,4 @@
-@(query: Query, answers: AnswerSet, filters: Set[TypeFilter], filterString: String, pageno: Int, pageCount: Int, maxGroupCount: Int, maxSentenceCount: Int, debug: Boolean)
+@(query: Query, answers: AnswerSet, filters: Set[TypeFilter], filterString: String, pageno: Int, ppIndex: Option[Int], pageCount: Int, maxGroupCount: Int, maxSentenceCount: Int, debug: Boolean)
 
 @import helper.twitterBootstrap._
 
@@ -10,25 +10,25 @@
 <!-- filters -->
 @if(answers.filters.size > 0) {
   <ul class="nav nav-tabs nav-stacked visible-sm">
-    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabSpin('@{routes.Application.results(query.question, query.parserName, "all", 0, true, debug)}')">all types</a></li>
+    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabSpin('@{routes.Application.results(query.question, query.parserName, "all", 0, ppIndex, true, debug)}')">all types</a></li>
 
   @for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(4)) {
     @defining(filters.contains(filter)) { active =>
-      <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.question, query.parserName, filter.name, 0, true, debug)}')">@filter.displayName (@count)</a></li>
+      <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.question, query.parserName, filter.name, 0, ppIndex, true, debug)}')">@filter.displayName (@count)</a></li>
     }
   }
   </ul>
 
   <ul class="nav nav-tabs hidden-sm">
-    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabSpin('@{routes.Application.results(query.question, query.parserName, "all", 0, true, debug)}')">all</a></li>
+    <li class="@{if(filters.isEmpty) "active" else ""}"><a href="#all" onclick="tabSpin('@{routes.Application.results(query.question, query.parserName, "all", 0, ppIndex, true, debug)}')">all</a></li>
 
     @for(TypeFilterTab(filter, count)<-answers.filters.iterator.take(5)) {
       @defining(filters.contains(filter)) { active =>
-        <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.question, query.parserName, filter.name, 0, true, debug)}')">@filter.displayName (@count)</a></li>
+        <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.question, query.parserName, filter.name, 0, ppIndex, true, debug)}')">@filter.displayName (@count)</a></li>
       }
     }
 
-    <li class="@{if(filterString == "misc") "active" else ""}"><a href="#misc" onclick="tabSpin('@{routes.Application.results(query.question, query.parserName, "misc", 0, true, debug)}')">misc.</a></li>
+    <li class="@{if(filterString == "misc") "active" else ""}"><a href="#misc" onclick="tabSpin('@{routes.Application.results(query.question, query.parserName, "misc", 0, ppIndex, true, debug)}')">misc.</a></li>
 
     @if(answers.filters.size > 5) {
       <li class="dropdown">
@@ -36,7 +36,7 @@
         <ul class="dropdown-menu">
         @for(TypeFilterTab(filter, count)<-answers.filters.iterator.drop(5)) {
           @defining(filters.contains(filter)) { active =>
-            <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.question, query.parserName, filter.name, 0, true, debug)}')">@filter.displayName (@count)</a></li>
+            <li class="@{if(active) "active" else ""}"><a href="#@filter.name" onclick="tabSpin('@{routes.Application.results(query.question, query.parserName, filter.name, 0, ppIndex, true, debug)}')">@filter.displayName (@count)</a></li>
           }
         }
         </ul>
@@ -59,7 +59,7 @@
           </td>
           </tr></table>
         </a></li>
-        <li><a class="answer list-group-item visible-sm" href="@{routes.Application.sentences(query.question, query.parserName, answer.title, maxSentenceCount, debug)}">
+        <li><a class="answer list-group-item visible-sm" href="@{routes.Application.sentences(query.question, query.parserName, answer.title, maxSentenceCount, ppIndex, debug)}">
           @Html(answer.parts.map(part => if (part.entity.isDefined) <span class="title-entity">{part.text}</span> else <span class="title-string">{part.text}</span>).mkString(", "))
           <span class="text-muted pull-right">(@answer.resultsCount)</span>
         </a></li>
@@ -69,17 +69,17 @@
     @if(pageCount > 1) {
     <ul class="pagination">
       @if(pageno > 0) {
-        <li><a href="@{routes.Application.search(query.question, query.parserName, filterString, pageno - 1, debug)}">Prev</a></li>
+        <li><a href="@{routes.Application.results(query.question, query.parserName, filterString, pageno - 1, ppIndex, false, debug)}">Prev</a></li>
       }
       @for(i <- pageno-4 to pageno-1; if i >= 0) {
-        <li><a href="@{routes.Application.search(query.question, query.parserName, filterString, i, debug)}">@i</a></li>
+        <li><a href="@{routes.Application.results(query.question, query.parserName, filterString, i, ppIndex, false, debug)}">@i</a></li>
       }
       <li class="active"><a href="#">@pageno</a></li>
       @for(i <- pageno+1 to pageno+4; if i < pageCount) {
-        <li><a href="@{routes.Application.search(query.question, query.parserName, filterString, i, debug)}">@i</a></li>
+        <li><a href="@{routes.Application.results(query.question, query.parserName, filterString, i, ppIndex, false, debug)}">@i</a></li>
       }
       @if(pageno + 1 < pageCount) {
-        <li><a href="@{routes.Application.search(query.question, query.parserName, filterString, pageno + 1, debug)}">Next</a></li>
+        <li><a href="@{routes.Application.results(query.question, query.parserName, filterString, pageno + 1, ppIndex, false, debug)}">Next</a></li>
       }
       </ul>
     }
@@ -92,7 +92,7 @@
       @for((answer, i) <- answers.answers.zipWithIndex) {
         <div class="tab-pane" id="L@{i}">
           
-          @helper.cardtab(query, answer, i, maxGroupCount, maxSentenceCount, debug)
+          @helper.cardtab(query, answer, i, maxGroupCount, maxSentenceCount, ppIndex, debug)
         </div>
       }
     </div>

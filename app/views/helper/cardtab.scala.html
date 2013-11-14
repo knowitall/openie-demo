@@ -1,4 +1,4 @@
-@(query: Query, answer: Answer, index: Int, maxGroupCount: Int, maxSentenceCount: Int, debug: Boolean)
+@(query: Query, answer: Answer, index: Int, maxGroupCount: Int, maxSentenceCount: Int, ppIndex: Option[Int], debug: Boolean)
 
 @import models.TypeFilters._
 @import models.NellType.fbToNellType
@@ -79,7 +79,7 @@
 @helper.sentences(answer.copy(dgroups=answer.dgroups.take(maxGroupCount)), maxSentenceCount, debug, index)
 
 @if(answer.dgroups.size > maxGroupCount) {
-    <p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.question, query.parserName, answer.title, maxSentenceCount, debug)}">Show all results (@{answer.copy(dgroups=answer.dgroups.drop(maxGroupCount)).resultsCount} more)</a></p>
+    <p style="text-align: center; margin-top: 1em"><a href="@{routes.Application.sentences(query.question, query.parserName, answer.title, maxSentenceCount, ppIndex, debug)}">Show all results (@{answer.copy(dgroups=answer.dgroups.drop(maxGroupCount)).resultsCount} more)</a></p>
 }
 	
 </div>

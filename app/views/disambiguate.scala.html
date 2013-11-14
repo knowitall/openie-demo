@@ -9,9 +9,9 @@
     <div class='row'>
       <div id='query-card-@index' class='offset1 span10' data-attr='@fbe.fbid'>
       @if(query.arg2.map(_.toString).isEmpty){
-        <a href="@{routes.Application.results(query.question, query.parserName, filterString, pageno, false,debug)}">
+        <a href="@{routes.Application.results(query.question, query.parserName, filterString, pageno, None, false,debug)}">
       } else {
-        <a href="@{routes.Application.results(query.question, query.parserName, filterString, pageno, false,debug)}">
+        <a href="@{routes.Application.results(query.question, query.parserName, filterString, pageno, None, false,debug)}">
       }
       <h3>@fbe.name (@answerCount)</h3></a><div id='query-card-spinner-@index'></div></div>
       <div class='disambiguateEntityCard'></div>
@@ -20,9 +20,9 @@
 
 <!-- display a "All" link with a query of un-linked entity -->
 @if(query.arg2.map(_.toString).isEmpty){
-  <a href="@{routes.Application.results(query.question, query.parserName, filterString, pageno, false, debug)}"><h7><b>Query for all "@query.arg1.map(_.toString)"</b></h7></a>
+  <a href="@{routes.Application.results(query.question, query.parserName, filterString, pageno, None, false, debug)}"><h7><b>Query for all "@query.arg1.map(_.toString)"</b></h7></a>
 }else{
-  <a href="@{routes.Application.results(query.question, query.parserName, filterString, pageno, false, debug)}"><h7><b>Query for all "@query.arg2.map(_.toString)"</b></h7></a>
+  <a href="@{routes.Application.results(query.question, query.parserName, filterString, pageno, None, false, debug)}"><h7><b>Query for all "@query.arg2.map(_.toString)"</b></h7></a>
 }
 
 <script type="text/javascript">
