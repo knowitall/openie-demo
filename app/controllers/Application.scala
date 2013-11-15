@@ -176,7 +176,7 @@ object Application extends Controller {
 
     import ExtractionGroupProtocol._
     val answers = Executor.executeRaw(query.toLowerCase).take(count)
-    LogEntry.fromRequest(query, "no filter string", answers.size, answers.flatMap(_.instances).size, request).log()
+    LogEntry.fromRequest(query, "JSON Query", answers.size, answers.flatMap(_.instances).size, request).log()
     Thread.sleep(50)
     Ok(tojson(answers).toString.replaceAll("[\\p{C}]",""))
   }
