@@ -170,12 +170,15 @@ object Application extends Controller {
     doSearch(Query.fromStrings(arg1, rel, arg2, corpora), "", filter, page, settingsFromRequest(debug, request), debug=debug, log=log)
   }
 
-  def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int, corpora: Option[String]) = Action {
+  def json(arg1: Option[String], rel: Option[String], arg2: Option[String], count: Int, corpora: Option[String]) = Action { implicit request =>
     val query = Query.fromStrings(arg1, rel, arg2, corpora)
     Logger.info("Json request: " + query)
 
     import ExtractionGroupProtocol._
-    Ok(tojson(Executor.executeRaw(query.toLowerCase).take(count)).toString.replaceAll("[\\p{C}]",""))
+    val answers = Executor.executeRaw(query.toLowerCase).take(count)
+    LogEntry.fromRequest(query, "no filter string", answers.size, answers.flatMap(_.instances).size, request).log()
+    Thread.sleep(50)
+    Ok(tojson(answers).toString.replaceAll("[\\p{C}]",""))
   }
 
   def instancesJson() = Action { implicit request =>
@@ -269,7 +272,7 @@ object Application extends Controller {
    * @param pageNumber  the number of page that is being displayed on results page
    * @param settings  the execution settings from request
    * @param debug  display the page in debug mode when true, which shows solr query and freeBaseEntities
-   * @param log  log the query 
+   * @param log  log the query
    * @param justResults  only refresh the results content of the results page when true, keep the query card unchanged
    */
   def doSearch(query: Query, queryString: String, filterString: String, pageNumber: Int, settings: ExecutionSettings, debug: Boolean = false, log: Boolean = true, justResults: Boolean = false)(implicit request: RequestHeader) = {
@@ -330,8 +333,8 @@ object Application extends Controller {
 
         //choose a cut-off to filter out the entities that have few
         //results, and only display to a max of 7 entities
-        val ambiguousEntitiesWithEntityCount = filter._2.queryEntities.zipWithIndex.filter{ 
-          case ((fbe, entityCount), index)  => index < 7 && entityCount > 5 
+        val ambiguousEntitiesWithEntityCount = filter._2.queryEntities.zipWithIndex.filter{
+          case ((fbe, entityCount), index)  => index < 7 && entityCount > 5
         }
 
         //size of the largest entity count
