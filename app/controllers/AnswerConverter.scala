@@ -40,7 +40,7 @@ class AnswerConverter(solr: SolrServer) {
       val srcIdAttrs = t.attrs.keys.collect { case srcIdRegex(srcIds) => srcIds }
       srcIdAttrs.flatMap(t.get).flatMap(_.asInstanceOf[List[String]])
     }
-    val srcIdMap = allSourceIds.grouped(20).toSeq.flatMap { group =>
+    val srcIdMap = allSourceIds.grouped(50).toSeq.flatMap { group =>
       getSolrDocs(group).iterator.map { case (id, doc) => (id, getOpenIETriple(doc)) }
     }.toMap
 
@@ -195,7 +195,7 @@ class AnswerConverter(solr: SolrServer) {
     // make the solr query
     val idQueryString = s"id:" + ids.mkString("(", " OR ", ")")
     Logger.info("Issuing query: "+idQueryString)
-    val solrQuery = new SolrQuery(idQueryString)
+    val solrQuery = new SolrQuery(idQueryString).setRows(ids.length)
     val response = solr.query(solrQuery)
     val docs = response.getResults() // SolrDocumentList is a poor implementation of a java collection, and breaks for comprehensions and javaconver(ters/sions)
     val scalaDocs = (0 until docs.size).map(docs.get)  // so get the elements out the hard way
