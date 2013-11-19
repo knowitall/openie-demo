@@ -15,6 +15,7 @@ case class AnswerSet (answers: List[Answer], filters: immutable.SortedSet[TypeFi
 
   val answerCount = answers.size
   val resultsCount = answers.map(_.resultsCount).sum
+  val sourcesCount = answers.flatMap(_.dgroups.flatMap(_.queryTriples.flatMap(_._2))).map(_.source).distinct.size
 
   val attrs = answers.flatMap(_.attrs).toSet
 

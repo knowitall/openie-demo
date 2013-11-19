@@ -7,43 +7,43 @@
 	part.entity match {
 		// always display a card
 		case Some(entity) => 
-			<div 
+			<span 
 				id={entity.fbid}
 				class="title-entity"
 				title={part.text + (if (debug) " / " + part.lemma else "")}
 			>
 				{if (debug) entity.toString else entity.name}
-			</div>
+			</span>
 
 		// display a card if there are predicted types
 		case None if part.types.size > 0 =>
-			 <div
+			 <span
 				class="title-typed"
 				title={part.text + (if (debug) " / " + part.lemma else "")}
 			>
 				{part.text}
-			</div> 
+			</span> 
 
 		// display a card if there are synonyms or it's debug mode
 		case None if part.otherSynonyms.size > 0 =>
-			<div
+			<span
 				class="title-string"
 				title={part.text + (if (debug) " / " + part.lemma else "")}
 			>
 				{part.text}
-			</div>
+			</span>
 		
 		case None if debug =>
-			<div
+			<span
 				class="title-string"
 				title={part.text + (if (debug) " / " + part.lemma else "")}
 			>
 				{part.text}
-			</div>
+			</span>
 		
 		case None =>
-			<div class="title-string">
+			<span class="title-string">
 				{part.text}
-			</div>
+			</span>
 	}
-).mkString(", "))
+).mkString(" "))
