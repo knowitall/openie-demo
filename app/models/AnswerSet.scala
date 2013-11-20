@@ -19,9 +19,12 @@ case class AnswerSet (answers: List[Answer], filters: immutable.SortedSet[TypeFi
 
   val attrs = answers.flatMap(_.attrs).toSet
 
+  /**
+   * Get results for the paraphrase at this.paraphraseHits(ppIndex).
+   * This is used to implement the clickable paraphrases at the top of the results page.
+  */
   def exactPP(ppIndex: Int): AnswerSet = {
     
-    // keep only results from paraphraseHits(ppIndex)._1
     val pp = paraphraseHits.lift(ppIndex).map(_._1).getOrElse {
       throw new IllegalArgumentException(s"Paraphrase index $ppIndex is not defined.")
     }
@@ -51,20 +54,6 @@ case class AnswerSet (answers: List[Answer], filters: immutable.SortedSet[TypeFi
     else this.copy(answers = answers filter (group =>
       filters.forall(filter => filter(group))
   ))}
-
-//  val paraphraseHits: Seq[(Paraphrase, Int)] = {
-//    // flatten out (paraphrase, ..., triple)
-//    val ppTriples = for (
-//        answer <- answers;
-//        dgroup <- answer.dgroups;
-//        paraphrase <- dgroup.ppsDeduped;
-//        (query, triples) <- dgroup.queryTriples;
-//        triple <- triples) yield (paraphrase, triple)
-//
-//    val ppHitsMap = ppTriples.groupBy(_._1).map { case (pp, pphits) => (pp, pphits.size) }
-//    val sortedHits = ppHitsMap.iterator.toSeq.sortBy { case (pp, hits) => DerivationGroup.ppDerivationSort(pp) }
-//    sortedHits.filterNot(_._1.derivation.equals(IdentityDerivation))
-//  }
 }
 
 object AnswerSet {
