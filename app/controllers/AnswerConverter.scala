@@ -1,5 +1,6 @@
 package controllers
 
+import edu.knowitall.common.Timing
 import models.{AbstractType, FreeBaseEntity, FreeBaseType}
 import edu.knowitall.execution.Search.{Field, arg1, rel, arg2}
 import edu.knowitall.execution._
@@ -36,20 +37,27 @@ class AnswerConverter(solr: SolrServer) {
 
     // Preload all of the metadata using big parallel batch queries.
     val allTuples = sags.flatMap(_.derivations.map(_.execTuple.tuple))
+    
     val allSourceIds = allTuples.flatMap { t =>
       val srcIdAttrs = t.attrs.keys.collect { case srcIdRegex(srcIds) => srcIds }
-      srcIdAttrs.flatMap(t.get).flatMap(_.asInstanceOf[List[String]])
+      val srcIds = srcIdAttrs.flatMap(t.get).flatMap(_.asInstanceOf[List[String]])
+      srcIds.take(500)
     }
-    val srcIdMap = allSourceIds.grouped(50).toSeq.flatMap { group =>
+    
+    Logger.info("Loading metadata.")
+    val (nsGetTriples, srcIdMap) = Timing.time { allSourceIds.grouped(50).toSeq.par.flatMap { group =>
       getSolrDocs(group).iterator.map { case (id, doc) => (id, getOpenIETriple(doc)) }
-    }.toMap
-
-    // Send preloaded data down to methods that build the DerivationGroups
-    val answers = sags map getAnswer(Map.empty ++ srcIdMap)
-    val titleGroups = answers.groupBy(_.title)
-    val combinedAnswers = titleGroups.map { case (title, answers) => (title, combineAnswers(answers)) }
-    val filteredAnswers = combinedAnswers.filterNot(_._2.dgroups.isEmpty)
-    val sortedAnswers = filteredAnswers.values.toSeq.sortBy(DerivationGroup.answerSort)
+    }.toMap }
+    Logger.info("Loaded metadata in " + Timing.Seconds.format(nsGetTriples) + ". Postprocessing Answers...")  
+    val (nsSortAnswers, sortedAnswers) = Timing.time {
+      // Send preloaded data down to methods that build the DerivationGroups
+      val answers = sags map getAnswer(Map.empty ++ srcIdMap)
+      val titleGroups = answers.groupBy(_.title)
+      val combinedAnswers = titleGroups.map { case (title, answers) => (title, combineAnswers(answers)) }
+      val filteredAnswers = combinedAnswers.filterNot(_._2.dgroups.isEmpty)
+      filteredAnswers.values.toSeq.sortBy(DerivationGroup.answerSort)
+    }
+    Logger.info("Postprocessed Answers in " + Timing.Seconds.format(nsSortAnswers) + ".")  
     sortedAnswers
   }
 
