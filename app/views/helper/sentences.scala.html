@@ -81,7 +81,7 @@
     <!-- MORE SECTIOn -->
     @if(triples.size > maxSentenceCount) {
       <div id="more-@index-@ppindex" class="panel-collapse collapse">
-      @for(r <- triples.drop(maxSentenceCount)) {
+      @for(r <- triples.drop(maxSentenceCount).take(100)) {
               
       <li class="sentence">
       @if(!r.isInstanceOf[OpenIETriple]) {
