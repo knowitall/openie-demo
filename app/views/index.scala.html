@@ -43,8 +43,8 @@
           </table>
       </div>
     </div>
-    <div class="row" style="margin-top:2em;">  
-      <div class="offset1">
+    <div class="row" style="margin-top:1.5em;margin-bottom:0em;">  
+      <div class="offset1" style="padding-bottom:0px;margin-bottom:0em;">
         @helper.form(action = routes.Application.submit(false)) {
         <div class="search-arg">
         @helper.inputText(
@@ -75,7 +75,9 @@
         <button id="search-button" class="btn btn-large"><i id="search-icon" class="icon-search"></i> Search</button> <div id="search-spinner" style="width: 35px;height: 35px;margin-left:10px;display:inline-block;position:relative;top:10px;"></div>
         }
       </div>
+      
     </div> 
+    <div style="text-align:center;margin-top:0em;">New: <a href="http://trusty.cs.washington.edu:10000"><b>Question-Answering interface</b></a>, powered by <a href="http://knowitall.cs.washington.edu/paralex">Paralex</a>. Get answers to natural-language questions!</div>
   </div>
 
   <footer>
